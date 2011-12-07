@@ -5,6 +5,11 @@ ZenPack Pipeline
 This document tracks `New ZenPacks`_, recently `Updated ZenPacks`_, and
 `Pending ZenPacks`_.
 
+.. note:: 
+    This document is cursory and is pending a full import from the existing
+    ZenPack backlog.
+
+
 Changes
 ===============================================================================
 
@@ -13,6 +18,7 @@ Date        Description of Change
 =========== ====================================================================
 2011-12-07  Created document 
 =========== ====================================================================
+
 
 New ZenPacks
 ===============================================================================
