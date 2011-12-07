@@ -1,9 +1,9 @@
 ===============================================================================
-ZenPack Backlog
+ZenPack Pipeline
 ===============================================================================
 
-This document tracks the `ZenPack Backlog`_, `New ZenPacks`_ and recently
-`Updated ZenPacks`_.
+This document tracks `New ZenPacks`_, recently `Updated ZenPacks`_, and
+`Pending ZenPacks`_.
 
 Changes
 ===============================================================================
@@ -13,17 +13,6 @@ Date        Description of Change
 =========== ====================================================================
 2011-12-07  Created document 
 =========== ====================================================================
-
-ZenPack Backlog
-===============================================================================
-
-=============================== =============================== ======= =======
-Summary                         ZenPack                         Version Date
-=============================== =============================== ======= =======
-Cisco UCS C-Series Monitoring   ZenPacks.zenoss.CiscoUCSSNMP    TBD     TBD
-Solaris LDOM Monitoring         ZenPacks.zenoss.SolarisMonitor  TBD     TBD
-=============================== =============================== ======= =======
-
 
 New ZenPacks
 ===============================================================================
@@ -44,4 +33,15 @@ Updated ZenPacks
 Summary                         ZenPack                         Version Date
 =============================== =============================== ======= =======
 VMware vSphere Monitoring       ZenPacks.zenoss.ZenVMware       1.9.0   2011-08-29
+=============================== =============================== ======= =======
+
+
+Pending ZenPacks
+===============================================================================
+
+=============================== =============================== ======= =======
+Summary                         ZenPack                         Version Date
+=============================== =============================== ======= =======
+Cisco UCS C-Series Monitoring   ZenPacks.zenoss.CiscoUCSSNMP    TBD     TBD
+Solaris LDOM Monitoring         ZenPacks.zenoss.SolarisMonitor  TBD     TBD
 =============================== =============================== ======= =======

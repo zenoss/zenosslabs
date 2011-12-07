@@ -11,4 +11,4 @@ Contents:
    :maxdepth: 2
 
    zenpack_documentation
-   zenpack_backlog
+   zenpack_pipeline
