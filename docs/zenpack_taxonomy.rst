@@ -430,7 +430,21 @@ type of node.
 ETL Adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / etl.
+ETL is used to export model, performance and event data from a Zenoss instance
+to a Zenoss Analytics instance. However, ETL adapters only need to be written to
+manipulate the *model* data that is exported. There are two types of ETL
+adapters. They're both written in Python and added to the system configuration
+through ZCML directives.
+
+The first type is a reportable. These implement the ``IReportable`` interface
+and allow precise control over which properties of an object type are exported,
+and how they're named and manipulated for export.
+
+The second type is a reportable factory. These implement the
+``IReportableFactory`` interface and all manipulation of which objects are
+considered for export. By default all devices and components are considered for
+extraction so a reportable factory is usually only used when fine-grained
+control over the relationships between these objects is needed.
 
   :Complexity: 4
   :Skills: Zenoss, ZCML, Python
