@@ -123,14 +123,16 @@ partners, other organizations or the Zenoss community.
 Maintainer
 -------------------------------------------------------------------------------
 
-TODO: Define maintainer.
+The maintainer of a ZenPack is the organization or individual that controls the
+code repository for a ZenPack and is the gate for all changes including defect
+and enhancement resolution. A ZenPack can have multiple maintainers.
 
 .. _zp_class_maintainer_engineering:
 
 Zenoss Engineering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maintainer / engineering.
+Maintained by the product engineering organization at Zenoss, Inc.
 
   :Example: :ref:`zp_class_example_impact`
 
@@ -140,7 +142,7 @@ TODO: Define maintainer / engineering.
 Zenoss Labs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maintainer / labs.
+Maintained by the labs organization at Zenoss, Inc.
 
   :Example: :ref:`zp_class_example_openstack`
 
@@ -150,7 +152,7 @@ TODO: Define maintainer / labs.
 Zenoss Services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maintainer / services.
+Maintained by the services organization at Zenoss, Inc.
 
   :Example: :ref:`zp_class_example_servicenowintegrator`
 
@@ -160,7 +162,7 @@ TODO: Define maintainer / services.
 Zenoss Partner
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maintainer / partner.
+Maintained by a Zenoss, Inc. partner organizations.
 
   :Example: None
 
@@ -170,7 +172,7 @@ TODO: Define maintainer / partner.
 Zenoss Community
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maintainer / community.
+Maintained by a member of the Zenoss community.
 
   :Example: :ref:`zp_class_example_zenodbc`
 
@@ -183,14 +185,18 @@ TODO: Define maintainer / community.
 Availability
 -------------------------------------------------------------------------------
 
-TODO: Define availability.
+Who has access, license and permission to use the ZenPack. The subtypes are
+mutually exclusive.
+
 
 .. _zp_class_availability_opensource:
 
 Open Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define availability / opensource.
+ZenPack source and packages are available as free open source. Designed to
+function properly on a Zenoss system with or without commercial-only ZenPacks
+installed.
 
   :Example: :ref:`zp_class_example_apachemonitor`
 
@@ -200,7 +206,10 @@ TODO: Define availability / opensource.
 Bundled with Zenoss Subscription
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define availability / bundled.
+ZenPack packages are available at no extra cost to anyone with a Zenoss
+subscription, and installed by default. May have dependencies on
+:ref:`zp_class_availability_opensource` ZenPacks or other ZenPacks that are
+:ref:`zp_class_availability_bundled`.
 
   :Example: :ref:`zp_class_example_iismonitor`
 
@@ -210,7 +219,10 @@ TODO: Define availability / bundled.
 Available with Zenoss Subscription
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define availability / available.
+ZenPack packages are available at no extra cost to anyone with a Zenoss
+subscription, but are not installed by default. May have dependencies on
+:ref:`zp_class_availability_opensource` ZenPacks or other ZenPacks that are
+:ref:`zp_class_availability_bundled`.
 
   :Example: :ref:`zp_class_example_databasemonitor`
 
@@ -220,7 +232,11 @@ TODO: Define availability / available.
 Additional Cost with Zenoss Subscription
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define availability / additionalcost.
+ZenPack packages are available at an additional cost on top of an existing
+Zenoss subscription. May have dependencies on
+:ref:`zp_class_availability_opensource` ZenPacks, ZenPacks that are
+:ref:`zp_class_availability_bundled`, or other ZenPacks that are
+:ref:`zp_class_availability_additionalcost`.
 
   :Example: :ref:`zp_class_example_impact`
 
