@@ -249,23 +249,40 @@ Zenoss subscription. May have dependencies on
 Maturity
 -------------------------------------------------------------------------------
 
-TODO: Define maturity.
+The level of automated, manual and field testing A ZenPack has. The subtypes are
+not mutually exclusive. For instance, a ZenPack could theoretically be untested
+and deployed in multiple production environments.
+
 
 .. _zp_class_maturity_untested:
 
 Untested
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maturity / untested.
+Insufficient automated testing to qualify as
+:ref:`zp_class_maturity_autotested`, and insufficient manual testing to qualify
+as :ref:`zp_class_maturity_qatested`.
 
-  :Example: None
+  :Example: :ref:`zp_class_example_zenodbc`
 
-.. _zp_class_maturity_tested:
 
-Tested
+.. _zp_class_maturity_autotested:
+
+Automatically Tested
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maturity / tested.
+Standard automated testing passes plus a minimum of 90% unit test code coverage
+with all tests passing.
+
+  :Example: :ref:`zp_class_example_solarismonitor`
+
+
+.. _zp_class_maturity_qatested:
+
+Q.A. Tested
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tested, and passed, by the quality assurance group of Zenoss, Inc.
 
   :Example: :ref:`zp_class_example_solarismonitor`
 
@@ -275,7 +292,7 @@ TODO: Define maturity / tested.
 Production
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define maturity / production.
+In use with no significant issues in more than one production Zenoss deployment.
 
   :Example: :ref:`zp_class_example_zenvmware`
 
@@ -482,7 +499,8 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_qatested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_dsplugins`
                                 | :ref:`zp_class_complexity_datasources`
@@ -501,7 +519,9 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
+                                | :ref:`zp_class_maturity_qatested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
 =============================== ===============================================
 
@@ -518,7 +538,9 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
+                                | :ref:`zp_class_maturity_qatested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_ui`
                                 | :ref:`zp_class_complexity_platform`
@@ -537,7 +559,8 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_events`
                                 | :ref:`zp_class_complexity_scripts`
@@ -556,7 +579,8 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_available`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_qatested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_dsplugins`
                                 | :ref:`zp_class_complexity_datasources`
@@ -575,7 +599,8 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_qatested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_events`
                                 | :ref:`zp_class_complexity_datasources`
@@ -599,7 +624,9 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
+                                | :ref:`zp_class_maturity_qatested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_dsplugins`
                                 | :ref:`zp_class_complexity_dsparsers`
@@ -619,7 +646,9 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_additionalcost`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
+                                | :ref:`zp_class_maturity_qatested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_ui`
                                 | :ref:`zp_class_complexity_impact`
@@ -640,7 +669,7 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_labs`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_events`
                                 | :ref:`zp_class_complexity_dsplugins`
@@ -664,7 +693,8 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_services`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_available`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_ui`
                                 | :ref:`zp_class_complexity_modelextensions`
@@ -684,7 +714,8 @@ Classification                  Value
 :ref:`zp_class_supportability`  :ref:`zp_class_supportability_unsupported`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_community`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
-:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
+                                | :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_datasources`
                                 | :ref:`zp_class_complexity_pythonmodelers`
 =============================== ===============================================
