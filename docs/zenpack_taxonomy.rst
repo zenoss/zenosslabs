@@ -25,184 +25,378 @@ section. See `Example ZenPack Classifications`_ for examples. The case of
 technical complexity is slightly different. A ZenPack's total complexity score
 could be the sum of each item it uses.
 
+
+-------------------------------------------------------------------------------
+
+
 .. _zp_class_functionality:
 
 Functionality
--------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+TODO: Define functionality.
+
 
 .. _zp_class_functionality_monitoring:
 
-* *Monitoring*
+Monitoring
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Example: `ZenPacks.zenoss.ApacheMonitor`_
+TODO: Define functionality / monitoring.
+
+Example: :ref:`zp_class_example_apachemonitor`
+
 
 .. _zp_class_functionality_integration:
 
-* *Integration*
+Integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Example: `ZenPacks.zenoss.RANCIDIntegrator`_
+TODO: Define functionality / integration.
+
+Example: :ref:`zp_class_example_rancidintegrator`
+
 
 .. _zp_class_functionality_platform:
 
-* *Platform Extension*
+Platform Extension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Example: `ZenPacks.zenoss.DistributedCollector`_
+TODO: Define functionality / platform.
+
+Example: :ref:`zp_class_example_distributedcollector`
+
+
+-------------------------------------------------------------------------------
+
 
 .. _zp_class_supportability:
 
 Supportability
+-----------------------------------------------------------------------------
+
+TODO: Define supportability.
+
+
+.. _zp_class_supportability_byzenoss:
+
+Supported by Zenoss, Inc.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define supportability / byzenoss.
+
+  Example: :ref:`zp_class_example_databasemonitor`
+
+
+.. _zp_class_supportability_unsupported:
+
+Not Supported
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define supportability / unsupported.
+
+Example: :ref:`zp_class_example_zenodbc`
+
+
 -------------------------------------------------------------------------------
 
-* *Supported by Zenoss, Inc.*
 
-  Example: `ZenPacks.zenoss.DatabaseMonitor`_
+.. _zp_class_maintainer:
 
-* *Not Supported*
-
-  Example: `ZenPacks.community.ZenODBC`_
-
-.. _zp_class_author:
-
-Author
+Maintainer
 -------------------------------------------------------------------------------
 
-* Zenoss Engineering
+TODO: Define maintainer.
 
-  Example: `ZenPacks.zenoss.Impact`_
+.. _zp_class_maintainer_engineering:
 
-* Zenoss Labs
+Zenoss Engineering
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  Example: `ZenPacks.zenoss.OpenStack`_
+TODO: Define maintainer / engineering.
 
-* Zenoss Services
+Example: :ref:`zp_class_example_impact`
 
-  Example: `ZenPacks.zenoss.ServiceNowIntegrator`_
 
-* Zenoss Partner
+.. _zp_class_maintainer_labs:
 
-  Example: None
+Zenoss Labs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Zenoss Community
+TODO: Define maintainer / labs.
 
-  Example: `ZenPacks.community.ZenODBC`_
+Example: :ref:`zp_class_example_openstack`
+
+
+.. _zp_class_maintainer_services:
+
+Zenoss Services
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define maintainer / services.
+
+Example: :ref:`zp_class_example_servicenowintegrator`
+
+
+.. _zp_class_maintainer_partner:
+
+Zenoss Partner
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define maintainer / partner.
+
+Example: None
+
+
+.. _zp_class_maintainer_community:
+
+Zenoss Community
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define maintainer / community.
+
+Example: :ref:`zp_class_example_zenodbc`
+
+
+-------------------------------------------------------------------------------
+
 
 .. _zp_class_availability:
 
 Availability
 -------------------------------------------------------------------------------
 
-#. *Open Source*
+TODO: Define availability.
 
-   Example: `ZenPacks.zenoss.ApacheMonitor`_
+.. _zp_class_availability_opensource:
 
-#. *Bundled with Zenoss Subscription*
+Open Source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Example: `ZenPacks.zenoss.IISMonitor`_
+TODO: Define availability / opensource.
 
-#. *Available with Zenoss Subscription*
+Example: :ref:`zp_class_example_apachemonitor`
 
-   Example: `ZenPacks.zenoss.DatabaseMonitor`_
 
-#. *Additional Cost with Zenoss Subscription*
+.. _zp_class_availability_bundled:
 
-   Example: `ZenPacks.zenoss.Impact`_
+Bundled with Zenoss Subscription
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define availability / bundled.
+
+Example: :ref:`zp_class_example_iismonitor`
+
+
+.. _zp_class_availability_available:
+
+Available with Zenoss Subscription
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define availability / available.
+
+Example: :ref:`zp_class_example_databasemonitor`
+
+
+.. _zp_class_availability_additionalcost:
+
+Additional Cost with Zenoss Subscription
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define availability / additionalcost.
+
+Example: :ref:`zp_class_example_impact`
+
+
+-------------------------------------------------------------------------------
+
 
 .. _zp_class_maturity:
 
 Maturity
 -------------------------------------------------------------------------------
 
-#. *Untested*
+TODO: Define maturity.
 
-   Example: None
+.. _zp_class_maturity_untested:
 
-#. *Fully Tested*
+Untested
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Example: `ZenPacks.zenoss.SolarisMonitor`_
+TODO: Define maturity / untested.
 
-#. *In Production*
+Example: None
 
-   Example: `ZenPacks.zenoss.ServiceNowIntegrator`_
+.. _zp_class_maturity_tested:
 
-#. *In Multiple Production Environments*
+Tested
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Example: `ZenPacks.zenoss.ZenVMware`_
+TODO: Define maturity / tested.
+
+Example: :ref:`zp_class_example_solarismonitor`
+
+
+.. _zp_class_maturity_production:
+
+Production
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define maturity / production.
+
+Example: :ref:`zp_class_example_zenvmware`
+
+
+-------------------------------------------------------------------------------
+
 
 .. _zp_class_complexity:
 
 Complexity
 -------------------------------------------------------------------------------
 
-1. *Meta-data Only*
+TODO: Define complexity.
 
-   Built entirely in the web interface. No programming knowledge required.
+.. _zp_class_complexity_configuration:
 
-   Example: `ZenPacks.zenoss.IISMonitor`_
+Configuration (1)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-2. *Event Class Transforms and Mappings*
+Built entirely in the web interface. No programming knowledge required.
 
-   Built in the web interface. Basic Python knowledge required.
+Example: :ref:`zp_class_example_iismonitor`
 
-   Example: `ZenPacks.zenoss.OpenStack`_
 
-3. *Command DataSource Plugins*
+.. _zp_class_complexity_events:
 
-   Command datasource plugins can be written in any language and executed
-   either on the Zenoss server, or remotely using SSH. Without writing a custom
-   parser (see next item) they must write to STDOUT using either the Nagios or
-   Cacti output formats and exit using the appropriate Nagios or cacti exit
-   code.
+Event Class Transforms and Mappings (2)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Example: `ZenPacks.zenoss.ApacheMonitor`_
+Built in the web interface. Basic Python knowledge required.
 
-4. *Command DataSource Parsers*
+Example: :ref:`zp_class_example_openstack`
 
-   Command datasource parsers must be written in Python and conform to the
-   Zenoss `CommandParser` API. These parsers must be written to extract
-   extended data from the output of command datasource plugins (see previous
-   item), or to handle output that doesn't conform to the Nagios or Cacti
-   output formats.
 
-   Example: `ZenPacks.zenoss.SolarisMonitor`_
+.. _zp_class_complexity_dsplugins:
 
-5. *Custom DataSource Types*
+Command DataSource Plugins (3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Example: `ZenPacks.zenoss.ApacheMonitor`_
+Command datasource plugins can be written in any language and executed either on
+the Zenoss server, or remotely using SSH. Without writing a custom parser (see
+next item) they must write to STDOUT using either the Nagios or Cacti output
+formats and exit using the appropriate Nagios or cacti exit code.
 
-6. *Web Interface Customizations*
+Example: :ref:`zp_class_example_apachemonitor`
 
-   Example: `ZenPacks.zenoss.ServiceNowIntegrator`_
 
-7. *Impact Adapters*
+.. _zp_class_complexity_dsparsers:
 
-   Example: `ZenPacks.zenoss.ZenVMware`_
+Command DataSource Parsers (4)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-8. *ETL Adapters*
+Command datasource parsers must be written in Python and conform to the Zenoss
+`CommandParser` API. These parsers must be written to extract extended data from
+the output of command datasource plugins (see previous item), or to handle
+output that doesn't conform to the Nagios or Cacti output formats.
 
-   Example: `ZenPacks.zenoss.ZenVMware`_
+Example: :ref:`zp_class_example_solarismonitor`
 
-9. *Modeler Plugins (SNMP, COMMAND or WMI)*
 
-   Example: `ZenPacks.zenoss.SolarisMonitor`_
+.. _zp_class_complexity_datasources:
 
-10. *Modeler Plugins (Python)*
+DataSource Types (5)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   Example: `ZenPacks.zenoss.OpenStack`_
+TODO: Define complexity / datasources.
 
-11. *Model Extensions*
+Example: :ref:`zp_class_example_apachemonitor`
 
-   Example: `ZenPacks.zenoss.OpenStack`_
 
-12. *Custom Daemons*
+.. _zp_class_complexity_ui:
 
-   Example: `ZenPacks.zenoss.ZenVMware`_
+User Interface (6)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-13. *Custom ZenHub Services*
+TODO: Define complexity / ui.
 
-   Example: `ZenPacks.zenoss.ZenVMware`_
+Example: :ref:`zp_class_example_servicenowintegrator`
+
+
+.. _zp_class_complexity_impact:
+
+Impact Adapters (7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / impact.
+
+Example: :ref:`zp_class_example_zenvmware`
+
+
+.. _zp_class_complexity_etl:
+
+ETL Adapters (8)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / etl.
+
+Example: :ref:`zp_class_example_zenvmware`
+
+
+.. _zp_class_complexity_modelers:
+
+Modeler Plugins (SNMP, COMMAND or WMI) (9)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / modelers.
+
+Example: :ref:`zp_class_example_solarismonitor`
+
+
+.. _zp_class_complexity_pythonmodelers:
+
+Modeler Plugins (Python) (10)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / pythonmodlers.
+
+Example: :ref:`zp_class_example_openstack`
+
+
+.. _zp_class_complexity_modelextensions:
+
+Model Extensions (11)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / modelextensions.
+
+Example: :ref:`zp_class_example_openstack`
+
+
+.. _zp_class_complexity_daemons:
+
+Daemons (12)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / daemons.
+
+Example: :ref:`zp_class_example_zenvmware`
+
+
+.. _zp_class_complexity_zenhubservices:
+
+ZenHub Services (13)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / zenhubservices.
+
+Example: :ref:`zp_class_example_zenvmware`
+
 
 Example ZenPack Classifications
 ===============================================================================
+
+.. _zp_class_example_apachemonitor:
 
 ZenPacks.zenoss.ApacheMonitor
 -------------------------------------------------------------------------------
@@ -210,13 +404,16 @@ ZenPacks.zenoss.ApacheMonitor
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   :ref:`Monitoring <zp_class_functionality_monitoring>`
-:ref:`zp_class_supportability`  Supported by Zenoss, Inc.
-:ref:`zp_class_author`          Zenoss Engineering
-:ref:`zp_class_availability`    Open Source
-:ref:`zp_class_maturity`        In Multiple Production Environments
-:ref:`zp_class_complexity`      6 (1 + 5)
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      `6` (:ref:`zp_class_complexity_configuration` + :ref:`zp_class_complexity_datasources`)
 =============================== ===============================================
+
+
+.. _zp_class_example_iismonitor:
 
 ZenPacks.zenoss.IISMonitor
 -------------------------------------------------------------------------------
@@ -226,11 +423,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_distributedcollector:
 
 ZenPacks.zenoss.DistributedCollector
 -------------------------------------------------------------------------------
@@ -240,11 +440,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_rancidintegrator:
 
 ZenPacks.zenoss.RANCIDIntegrator
 -------------------------------------------------------------------------------
@@ -254,11 +457,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_databasemonitor:
 
 ZenPacks.zenoss.DatabaseMonitor
 -------------------------------------------------------------------------------
@@ -268,11 +474,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_zenvmware:
 
 ZenPacks.zenoss.ZenVMware
 -------------------------------------------------------------------------------
@@ -282,11 +491,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_solarismonitor:
 
 ZenPacks.zenoss.SolarisMonitor
 -------------------------------------------------------------------------------
@@ -296,11 +508,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_impact:
 
 ZenPacks.zenoss.Impact
 -------------------------------------------------------------------------------
@@ -310,11 +525,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_openstack:
 
 ZenPacks.zenoss.OpenStack
 -------------------------------------------------------------------------------
@@ -324,11 +542,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_servicenowintegrator:
 
 ZenPacks.zenoss.ServiceNowIntegrator
 -------------------------------------------------------------------------------
@@ -338,11 +559,14 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
 =============================== ===============================================
+
+
+.. _zp_class_example_zenodbc:
 
 ZenPacks.community.ZenODBC
 -------------------------------------------------------------------------------
@@ -352,7 +576,7 @@ Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   
 :ref:`zp_class_supportability`  
-:ref:`zp_class_author`          
+:ref:`zp_class_maintainer`          
 :ref:`zp_class_availability`    
 :ref:`zp_class_maturity`        
 :ref:`zp_class_complexity`      
