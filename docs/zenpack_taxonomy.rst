@@ -51,7 +51,7 @@ collection can be through active polling, passive receiving or both. A
 monitoring ZenPack provides functionality to perform this collection for a
 specific target technology.
 
-Example: :ref:`zp_class_example_apachemonitor`
+  :Example: :ref:`zp_class_example_apachemonitor`
 
 
 .. _zp_class_functionality_integration:
@@ -65,7 +65,7 @@ Examples include pushing or pulling non-monitoring data to or from an external
 system, or causing action in a remote system or allowing a remote system to
 cause action within Zenoss.
 
-Example: :ref:`zp_class_example_rancidintegrator`
+  :Example: :ref:`zp_class_example_rancidintegrator`
 
 
 .. _zp_class_functionality_platform:
@@ -78,7 +78,7 @@ interact with outside systems. The provided functionality is instead used
 directly by users or by other parts of the Zenoss platform, or by other
 ZenPacks.
 
-Example: :ref:`zp_class_example_distributedcollector`
+  :Example: :ref:`zp_class_example_distributedcollector`
 
 
 -------------------------------------------------------------------------------
@@ -89,17 +89,19 @@ Example: :ref:`zp_class_example_distributedcollector`
 Supportability
 -----------------------------------------------------------------------------
 
-TODO: Define supportability.
+Supportability defines what organization provides usage, troubleshooting, and
+defect and enhancement resolution for a ZenPack.
 
 
 .. _zp_class_supportability_byzenoss:
 
-Supported by Zenoss, Inc.
+Supported by Zenoss
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define supportability / byzenoss.
+ZenPacks are supported by Zenoss, Inc.
 
-  Example: :ref:`zp_class_example_databasemonitor`
+
+  :Example: :ref:`zp_class_example_databasemonitor`
 
 
 .. _zp_class_supportability_unsupported:
@@ -107,9 +109,10 @@ TODO: Define supportability / byzenoss.
 Not Supported
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define supportability / unsupported.
+ZenPacks are not supported by Zenoss, Inc. Support may be available through
+partners, other organizations or the Zenoss community.
 
-Example: :ref:`zp_class_example_zenodbc`
+  :Example: :ref:`zp_class_example_zenodbc`
 
 
 -------------------------------------------------------------------------------
@@ -129,7 +132,7 @@ Zenoss Engineering
 
 TODO: Define maintainer / engineering.
 
-Example: :ref:`zp_class_example_impact`
+  :Example: :ref:`zp_class_example_impact`
 
 
 .. _zp_class_maintainer_labs:
@@ -139,7 +142,7 @@ Zenoss Labs
 
 TODO: Define maintainer / labs.
 
-Example: :ref:`zp_class_example_openstack`
+  :Example: :ref:`zp_class_example_openstack`
 
 
 .. _zp_class_maintainer_services:
@@ -149,7 +152,7 @@ Zenoss Services
 
 TODO: Define maintainer / services.
 
-Example: :ref:`zp_class_example_servicenowintegrator`
+  :Example: :ref:`zp_class_example_servicenowintegrator`
 
 
 .. _zp_class_maintainer_partner:
@@ -159,7 +162,7 @@ Zenoss Partner
 
 TODO: Define maintainer / partner.
 
-Example: None
+  :Example: None
 
 
 .. _zp_class_maintainer_community:
@@ -169,7 +172,7 @@ Zenoss Community
 
 TODO: Define maintainer / community.
 
-Example: :ref:`zp_class_example_zenodbc`
+  :Example: :ref:`zp_class_example_zenodbc`
 
 
 -------------------------------------------------------------------------------
@@ -189,7 +192,7 @@ Open Source
 
 TODO: Define availability / opensource.
 
-Example: :ref:`zp_class_example_apachemonitor`
+  :Example: :ref:`zp_class_example_apachemonitor`
 
 
 .. _zp_class_availability_bundled:
@@ -199,7 +202,7 @@ Bundled with Zenoss Subscription
 
 TODO: Define availability / bundled.
 
-Example: :ref:`zp_class_example_iismonitor`
+  :Example: :ref:`zp_class_example_iismonitor`
 
 
 .. _zp_class_availability_available:
@@ -209,7 +212,7 @@ Available with Zenoss Subscription
 
 TODO: Define availability / available.
 
-Example: :ref:`zp_class_example_databasemonitor`
+  :Example: :ref:`zp_class_example_databasemonitor`
 
 
 .. _zp_class_availability_additionalcost:
@@ -219,7 +222,7 @@ Additional Cost with Zenoss Subscription
 
 TODO: Define availability / additionalcost.
 
-Example: :ref:`zp_class_example_impact`
+  :Example: :ref:`zp_class_example_impact`
 
 
 -------------------------------------------------------------------------------
@@ -239,7 +242,7 @@ Untested
 
 TODO: Define maturity / untested.
 
-Example: None
+  :Example: None
 
 .. _zp_class_maturity_tested:
 
@@ -248,7 +251,7 @@ Tested
 
 TODO: Define maturity / tested.
 
-Example: :ref:`zp_class_example_solarismonitor`
+  :Example: :ref:`zp_class_example_solarismonitor`
 
 
 .. _zp_class_maturity_production:
@@ -258,7 +261,7 @@ Production
 
 TODO: Define maturity / production.
 
-Example: :ref:`zp_class_example_zenvmware`
+  :Example: :ref:`zp_class_example_zenvmware`
 
 
 -------------------------------------------------------------------------------
