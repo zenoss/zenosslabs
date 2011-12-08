@@ -393,7 +393,7 @@ TODO: Define complexity / ui.
 
 .. _zp_class_complexity_modelers:
 
-Modeler Plugins (SNMP, COMMAND or WMI)
+Modeler Plugins - SNMP, COMMAND, WMI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / modelers.
@@ -405,7 +405,7 @@ TODO: Define complexity / modelers.
 
 .. _zp_class_complexity_pythonmodelers:
 
-Modeler Plugins (Python)
+Modeler Plugins - Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / pythonmodelers.
