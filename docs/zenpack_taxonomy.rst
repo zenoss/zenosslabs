@@ -456,10 +456,20 @@ control over the relationships between these objects is needed.
 User Interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / ui.
+Modifications to the existing user interface, or entirely new sections of user
+interface. The difficulty of these changes varies considerably. See the `Skills`
+field below for the range of skills that could be required to make these kinds
+of changes.
+
+The `ServiceNowIntegrator` example given below adds a new button to the event
+console that pops up a new dialog box with some custom options available. Only
+ZCML and JavaScript were required for this type of change.
+
+TAL is usually only required when editing or creating old-style pages that
+aren't entirely built using ExtJS.
 
   :Complexity: 5
-  :Skills: Zenoss, ZCML, TAL, Python, JavaScript
+  :Skills: Zenoss, ZCML, TAL, JavaScript, ExtJS
   :Example: :ref:`zp_class_example_servicenowintegrator`
 
 
@@ -468,7 +478,22 @@ TODO: Define complexity / ui.
 Modeler Plugins - SNMP, COMMAND, WMI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / modelers.
+Modeler plugins provide the mapping between data collected from the environment
+and the Zenoss model. In the case where the data can be collected using SNMP,
+COMMAND (run a command remotely via SSH) or WMI, there is existing
+infrastructure to make these tasks easier. However, the modeler plugins are
+still written in Python.
+
+If collecting using SNMP the ``SnmpPlugin`` class can be extended to do the hard
+parts of SNMP gets or walks for you. If collecting by running a command on a
+remote system via SSH, the ``CommandPlugin`` class can be extended to do the
+hard parts of SSH and output parsing for you. If collecting from a Windows
+system using WMI, the ``WmiPlugin`` class can be extended to do the hard parts
+of WQL querying for you.
+
+The only significant logic that must be implemented in these cases is turning
+the returned data structures into ``ObjectMap`` and ``RelationshipMap`` objects
+to apply to the Zenoss model.
 
   :Complexity: 6
   :Skills: Zenoss, Python, (SNMP, Scripting or WMI)
@@ -480,7 +505,15 @@ TODO: Define complexity / modelers.
 Modeler Plugins - Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / pythonmodelers.
+See :ref:`zp_class_complexity_modelextensions` above for what modeler plugins
+are. Python modeler plugins only differ in that you extend the ``PythonPlugin``
+class, and must implement the collection logic in addition to the processing
+logic.
+
+The ``collect`` method implementation may return data normally, or it may return
+a Twisted ``deferred`` to take advantage of the asynchronous modeling engine. It
+is recommended to use the deferred approach whenever possible to avoid blocking
+the `zenmodeler` daemon while the ``collect`` method executes.
 
   :Complexity: 7
   :Skills: Zenoss, Python, Twisted
@@ -492,7 +525,19 @@ TODO: Define complexity / pythonmodelers.
 Model Extensions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / modelextensions.
+When the standard model of the Zenoss platform doesn't cover an object or
+property you need in your ZenPack, the model can be extended. Existing model
+classes such as Device, FileSystem or IpInterface can be extended, and entirely
+new types of components can be created.
+
+The typical requirements for extended the model include at least the following
+steps.
+
+1. Create a Python class
+2. Create an API interface and adapter
+3. Wire up the API with ZCML
+4. Write JavaScript to tailor the display of your component
+5. Write a :ref:`modeler plugin <zp_class_complexity_modelers>`
 
   :Complexity: 8
   :Skills: Zenoss, ZCML, Python, JavaScript
@@ -504,7 +549,22 @@ TODO: Define complexity / modelextensions.
 Daemons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / daemons.
+A new daemon must be written only if none of the existing daemons can perform
+the task required by your ZenPack. The ``zencommand`` daemon is the usual last
+resort for custom collection requirements if none of the more specialized
+daemons will work. See :ref:`zp_class_complexity_dsplugins` and
+:ref:`zp_class_complexity_dsparsers` for what can be done by ``zencommand``.
+
+There is a common collector framework that should be used to perform much of the
+typical daemon functionality such as configuration and scheduling in a
+consistent way. To use this you should create a ``CollectorDaemon`` object,
+configure it with a class that implements the ``ICollectorPreferences``
+interface and create a task class that implements the ``IScheduledTask``
+interface.
+
+In almost all cases you will also need to create a ZenHub service to build the
+configuration for your new daemon. This service should subclass ``HubService``
+or one of its existing more specialized subclasses.
 
   :Complexity: 9
   :Skills: Zenoss, Python, Twisted
@@ -516,7 +576,14 @@ TODO: Define complexity / daemons.
 Platform Extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / platform extension.
+Platform extensions are any implementations added to a ZenPack that doesn't fall
+into any of the previously-defined complexity subtypes. Due to the flexibility
+of ZenPacks, these could be almost anything.
+
+The `DistributedCollector` example given below falls into this category because
+it extends the simple flat collector structure in the core Zenoss platform to be
+a tiered hub and collector structure. It also adds extensive hub and collector
+management capabilities.
 
   :Complexity: 10
   :Skills: Zenoss, ZCML, Python, JavaScript, etc.
