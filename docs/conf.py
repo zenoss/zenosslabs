@@ -44,6 +44,13 @@ html_theme_options = {
     'sidebarwidth': '305',
     }
 
+# Theme customizations not supported by options.
+html_static_path = ['_static']
+html_favicon = 'favicon.ico'
+html_style = 'zenosslabs.css'
+html_logo = '_static/new-zenoss-logo.png'
+
+# Make sure the sidebar contains all of the sections we want.
 html_copy_source = True
 html_show_sourcelink = True
 

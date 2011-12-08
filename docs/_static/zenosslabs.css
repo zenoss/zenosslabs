@@ -1,0 +1,47 @@
+@import url("pyramid.css");
+
+body {
+    font-family: Helvetica, Arial;
+    /*background: #191617;*/
+    background: #f3f3f4;
+}
+
+div.header {
+    background: #191617 url(headerbg.png) repeat-x 0 top;
+}
+
+div.logo {
+    text-align: left;
+    padding-top: 15px;
+    padding-bottom: 18px;
+    padding-left: 315px;
+}
+
+div.document {
+    background: #f3f3f4;
+}
+
+div.related {
+    background: #f3f3f4;
+}
+
+div.topic {
+    background: #f3f3f4;
+}
+
+div.footer {
+    color: #9D9D9D;
+}
+
+div.footer a {
+    color: #9D9D9D;
+}
+
+.viewcode-back {
+    font-family: Helvetica, Arial;
+}
+.download {
+    font-family: Helvetica, Arial;
+    font-weight: normal;
+    font-style: normal;
+}
