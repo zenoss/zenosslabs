@@ -9,20 +9,21 @@ This document tracks `New ZenPacks`_, recently `Updated ZenPacks`_, and
 Changes
 ===============================================================================
 
-=========== ====================================================================
-Date        Description of Change
-=========== ====================================================================
-2011-12-08  Transferred ZenPack backlog table
-2011-12-07  Created document 
-=========== ====================================================================
+=========== =========== ======================================================
+Date        Who         Description of Change
+=========== =========== ======================================================
+2011-12-08  cluther     Added `ZenPacks.zenoss.DeviceClassServices` to pending
+2011-12-08  rbooth      Transferred ZenPack backlog table
+2011-12-07  cluther     Created document 
+=========== =========== ======================================================
 
 
 New ZenPacks
 ===============================================================================
 
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 Summary                             ZenPack                                 Version Date
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 CloudStack Monitoring               ZenPacks.zenoss.CloudStack              0.7.0   2011-11-03
 OpenStack Object Storage (Swift)    ZenPacks.zenoss.OpenStackSwift          0.7.0   2011-10-05
 Memcached Monitoring                ZenPacks.zenoss.Memcached               1.0.0   2011-09-28
@@ -31,27 +32,27 @@ vSphere 5 compatibility             ZenPacks.zenoss.ZenVMware               1.9.
 CloudFoundry Monitoring             ZenPacks.zenoss.CloudFoundry            1.0.0   2011-06-09
 OpenStack Monitoring                ZenPacks.zenoss.OpenStack               1.0.0   2011-06-08
 PostgreSQL Monitoring               ZenPacks.zenoss.PostgreSQL              1.0.0   2011-05-27
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 
 
 Updated ZenPacks
 ===============================================================================
 
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 Summary                             ZenPack                                 Version Date
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 Support for Diablo                  ZenPacks.zenoss.OpenStack               1.1.0   2011-11-18
 vCloud Director 1.5 compat.         ZenPacks.zenoss.vCloud                  1.2.0   2011-08-29
 VMware vSphere Monitoring           ZenPacks.zenoss.ZenVMware               1.9.0   2011-08-29
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 
 
 Pending ZenPacks
 ===============================================================================
 
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 Summary                             ZenPack                                 Version Date
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
 Cisco UCS C-Series Monitoring       ZenPacks.zenoss.CiscoUCSSNMP            TBD     TBD
 Solaris LDOM Monitoring             ZenPacks.zenoss.SolarisMonitor          TBD     TBD
 Auto-Provision Zenoss (OpenStack)   Zenoss Barclamp (Crowbar)               TBD     TBD
@@ -61,6 +62,7 @@ MixMax Threshold per-ME basis       ZenPacks.zenoss.ConfigurableThreshold   TBD 
 Bind Monitoring templates logically ZenPacks.zenoss.OrganizerTemplates      TBD     TBD
 XML defined components              ZenPacks.zenoss.GenericComponent        TBD     TBD
 Async Ptyhon collector daemon       ZenPacks.zenoss.PythonCollector         TBD     TBD
+Granular Service Monitoring Config  ZenPacks.zenoss.DeviceClassServices     TBD     TBD
 NetApp monitoring overhaul          ZenPacks.zenoss.NetAppMonitor           TBD     TBD
 EMC CLARiiON Storage Monitoring     ZenPacks.zenoss.EMC.CLARiiON            1.0.0   TBD
 EMC VMAX Storage Monitoring         ZenPacks.zenoss.EMC.VMAX                1.0.0   TBD
@@ -82,4 +84,4 @@ CallManager Monitoring              ZenPacks.zenoss.CallManagerMonitor      TBD 
 BT Diamond IP IPControl             ZenPacks.zenoss.IPControl               1.0.0   TBD
 Fortinet FortiGate Monitoring       ZenPacks.zenoss.Fortinet                1.0.0   TBD
 OpenVZ Host and Cont. Monitoring    ZenPacks.zenoss.OpenVZ                  1.0.0   TBD
-=================================== ======================================= ======= =======
+=================================== ======================================= ======= ==========
