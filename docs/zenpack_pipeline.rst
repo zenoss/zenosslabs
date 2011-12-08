@@ -2,20 +2,9 @@
 ZenPack Pipeline
 ===============================================================================
 
-This document tracks `New ZenPacks`_, recently `Updated ZenPacks`_, and
-`Pending ZenPacks`_.
-
-
-Changes
-===============================================================================
-
-=========== =========== ======================================================
-Date        Who         Description of Change
-=========== =========== ======================================================
-2011-12-08  cluther     Added `ZenPacks.zenoss.DeviceClassServices` to pending
-2011-12-08  rbooth      Transferred ZenPack backlog table
-2011-12-07  cluther     Created document 
-=========== =========== ======================================================
+This document tracks `New ZenPacks`_, recently `Updated ZenPacks`_, and `Pending
+ZenPacks`_. New and updated ZenPacks are sorted in reverse chronological order
+by release date. Pending ZenPacks are unsorted.
 
 
 New ZenPacks
