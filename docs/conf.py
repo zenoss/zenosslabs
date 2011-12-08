@@ -44,6 +44,13 @@ html_theme_options = {
     'sidebarwidth': '305',
     }
 
+html_copy_source = True
+html_show_sourcelink = True
+
+html_sidebars = {
+    '**': ['localtoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'],
+    }
+
 
 # -- Options for LaTeX output --------------------------------------------------
 
