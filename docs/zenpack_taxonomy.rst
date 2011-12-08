@@ -305,7 +305,12 @@ In use with no significant issues in more than one production Zenoss deployment.
 Complexity
 -------------------------------------------------------------------------------
 
-TODO: Define complexity.
+Defined by the technical difficulty of implementing specific types of
+functionality within the ZenPack. The subtypes are not mutually exclusive, and
+most ZenPacks will implement multiple types of functionality as defined below. A
+rough total complexity score could be created for each ZenPack by summing the
+complexity score of all implemented subtypes.
+
 
 .. _zp_class_complexity_configuration:
 
@@ -381,7 +386,14 @@ output that doesn't conform to the Nagios or Cacti output formats.
 DataSource Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / datasources.
+When a new datasource is added in the web interface you must choose the type.
+Creating a DataSource type in a ZenPack is a way to add new types to this list.
+The `ApacheMonitor` ZenPack listed as the example below adds the ability to
+collect performance metrics from an Apache httpd server using `mod_status`.
+
+New DataSource types are written in Python and must subclass ``RRDDataSource``
+or one of its existing subclasses. Additionally an API adapter must also be
+written in Python to define the user interface to the datasource properties.
 
   :Complexity: 4
   :Skills: Zenoss, ZCML, Python
@@ -393,9 +405,22 @@ TODO: Define complexity / datasources.
 Impact Adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / impact.
+There are three types of impact adapters. All are written in Python and added to
+the system configuration through ZCML directives.
 
-  :Complexity: 4
+The first is a state provider. These implement the ``IStateProvider`` interface
+and allow manipulation of how a given node type's state within the impact graph
+is calculated.
+
+The second is a relations provider. These implement the
+``IRelationshipDataProvider`` interface and allow manipulation of what other
+nodes a given node type impacts, and what other nodes impact it.
+
+The third is a triggers provider. These implement the ``INodeTriggers``
+interface and allow manipulation of the default impact policies set on a given
+type of node.
+
+  :Complexity: 5
   :Skills: Zenoss, ZCML, Python
   :Example: :ref:`zp_class_example_zenvmware`
 
