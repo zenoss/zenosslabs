@@ -42,7 +42,6 @@ html_theme = 'pyramid'
 # documentation.
 html_theme_options = {
     'sidebarwidth': '305',
-    'analytics_code': 'UA-27591123-1',
     }
 
 # Theme customizations not supported by options.
@@ -58,6 +57,8 @@ html_show_sourcelink = True
 html_sidebars = {
     '**': ['localtoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'],
     }
+
+analytics_code = 'UA-27591123-1'
 
 
 # -- Options for LaTeX output --------------------------------------------------
