@@ -10,5 +10,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   zenpack_taxonomy
    zenpack_documentation
    zenpack_pipeline
