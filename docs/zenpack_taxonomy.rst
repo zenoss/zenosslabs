@@ -12,10 +12,6 @@ This document will outline the various ways ZenPacks can be classified to make
 it easier to find the ZenPack you need, describe a ZenPack that already exists,
 and to serve as an example for what is possible.
 
-.. note::
-    The sections below are currently under construction. Each section and item
-    within will be explained.
-
 
 ZenPack Classifications
 ===============================================================================
