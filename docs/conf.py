@@ -42,6 +42,7 @@ html_theme = 'pyramid'
 # documentation.
 html_theme_options = {
     'sidebarwidth': '305',
+    'analytics_code': 'UA-27591123-1',
     }
 
 # Theme customizations not supported by options.
