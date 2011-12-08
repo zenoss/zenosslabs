@@ -34,7 +34,9 @@ could be the sum of each item it uses.
 Functionality
 -----------------------------------------------------------------------------
 
-TODO: Define functionality.
+Functionality classifies the high-level type of feature(s) provided.
+Specifically its type of interaction with the environment outside of the Zenoss
+platform.
 
 
 .. _zp_class_functionality_monitoring:
@@ -391,7 +393,7 @@ TODO: Define complexity / modelers.
 Modeler Plugins (Python)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / pythonmodlers.
+TODO: Define complexity / pythonmodelers.
 
   :Complexity: 7
   :Skills: Zenoss, Python, Twisted
