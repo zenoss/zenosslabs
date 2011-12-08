@@ -16,10 +16,11 @@ and to serve as an example for what is possible.
 ZenPack Classifications
 ===============================================================================
 
-Every ZenPack will be classified using one of the items listed under each
-section. See `Example ZenPack Classifications`_ for examples. The case of
-technical complexity is slightly different. A ZenPack's total complexity score
-could be the sum of each item it uses.
+Every ZenPack will be classified using one or more of the elements listed under
+each classifier property. Some classifier properties have mutually exclusive
+elements, and some do not. This distinction will be made in the definition of
+each classifier property. For examples of how some existing representative
+ZenPacks are classified see `Example ZenPack Classifications`_.
 
 
 -------------------------------------------------------------------------------
@@ -32,9 +33,8 @@ Functionality
 
 Functionality classifies the high-level type of feature(s) provided.
 Specifically its type of interaction with the environment outside of the Zenoss
-platform. The large majority of ZenPacks can be categorized with a single
-functionality type, but some will encompass more than one type of high-level
-functionality.
+platform. While the large majority of ZenPacks can be categorized with a single
+functionality element, the elements are not mutually exclusive.
 
 
 .. _zp_class_functionality_monitoring:
@@ -86,7 +86,8 @@ Supportability
 -----------------------------------------------------------------------------
 
 Supportability defines what organization provides usage, troubleshooting, and
-defect and enhancement resolution for a ZenPack.
+defect and enhancement resolution for a ZenPack. These elements are mutually
+exclusive.
 
 
 .. _zp_class_supportability_byzenoss:
@@ -121,7 +122,8 @@ Maintainer
 
 The maintainer of a ZenPack is the organization or individual that controls the
 code repository for a ZenPack and is the gate for all changes including defect
-and enhancement resolution. A ZenPack can have multiple maintainers.
+and enhancement resolution. A ZenPack can have multiple maintainers, so the
+following elements are not mutually exclusive.
 
 .. _zp_class_maintainer_engineering:
 
@@ -181,8 +183,8 @@ Maintained by a member of the Zenoss community.
 Availability
 -------------------------------------------------------------------------------
 
-Who has access, license and permission to use the ZenPack. The subtypes are
-mutually exclusive.
+Who has access, license and permission to use the ZenPack. The following
+elements are mutually exclusive.
 
 
 .. _zp_class_availability_opensource:
@@ -245,7 +247,7 @@ Zenoss subscription. May have dependencies on
 Maturity
 -------------------------------------------------------------------------------
 
-The level of automated, manual and field testing A ZenPack has. The subtypes are
+The level of automated, manual and field testing A ZenPack has. The elements are
 not mutually exclusive. For instance, a ZenPack could theoretically be untested
 and deployed in multiple production environments.
 
@@ -302,10 +304,10 @@ Complexity
 -------------------------------------------------------------------------------
 
 Defined by the technical difficulty of implementing specific types of
-functionality within the ZenPack. The subtypes are not mutually exclusive, and
+functionality within the ZenPack. The elements are not mutually exclusive, and
 most ZenPacks will implement multiple types of functionality as defined below. A
 rough total complexity score could be created for each ZenPack by summing the
-complexity score of all implemented subtypes.
+complexity score of all implemented elements.
 
 
 .. _zp_class_complexity_configuration:
@@ -573,7 +575,7 @@ Platform Extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Platform extensions are any implementations added to a ZenPack that doesn't fall
-into any of the previously-defined complexity subtypes. Due to the flexibility
+into any of the previously-defined complexity elements. Due to the flexibility
 of ZenPacks, these could be almost anything.
 
 The `DistributedCollector` example given below falls into this category because
