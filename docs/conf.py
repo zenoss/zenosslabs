@@ -22,9 +22,9 @@ copyright = u'2011, Zenoss Labs <labs@zenoss.com>'
 # built documents.
 #
 # The short X.Y version.
-version = '1'
+version = ''
 # The full version, including alpha/beta/rc tags.
-release = '1'
+release = ''
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
