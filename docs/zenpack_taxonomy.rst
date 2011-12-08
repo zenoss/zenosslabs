@@ -36,7 +36,9 @@ Functionality
 
 Functionality classifies the high-level type of feature(s) provided.
 Specifically its type of interaction with the environment outside of the Zenoss
-platform.
+platform. The large majority of ZenPacks can be categorized with a single
+functionality type, but some will encompass more than one type of high-level
+functionality.
 
 
 .. _zp_class_functionality_monitoring:
@@ -44,7 +46,10 @@ platform.
 Monitoring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define functionality / monitoring.
+Monitoring is one or more of status, event and performance collection. The
+collection can be through active polling, passive receiving or both. A
+monitoring ZenPack provides functionality to perform this collection for a
+specific target technology.
 
 Example: :ref:`zp_class_example_apachemonitor`
 
@@ -54,7 +59,11 @@ Example: :ref:`zp_class_example_apachemonitor`
 Integration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define functionality / integration.
+Integration is defined as being any interaction with systems outside of Zenoss
+not deemed to be a :ref:`zp_class_functionality_monitoring` interaction.
+Examples include pushing or pulling non-monitoring data to or from an external
+system, or causing action in a remote system or allowing a remote system to
+cause action within Zenoss.
 
 Example: :ref:`zp_class_example_rancidintegrator`
 
@@ -64,7 +73,10 @@ Example: :ref:`zp_class_example_rancidintegrator`
 Platform Extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define functionality / platform.
+A Zenoss platform extension is defined as any functionality that doesn't
+interact with outside systems. The provided functionality is instead used
+directly by users or by other parts of the Zenoss platform, or by other
+ZenPacks.
 
 Example: :ref:`zp_class_example_distributedcollector`
 
