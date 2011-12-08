@@ -259,27 +259,34 @@ TODO: Define complexity.
 
 .. _zp_class_complexity_configuration:
 
-Configuration (1)
+Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Built entirely in the web interface. No programming knowledge required.
 
-Example: :ref:`zp_class_example_iismonitor`
+  :Complexity: 1
+  :Skills: Zenoss
+  :Example: :ref:`zp_class_example_iismonitor`
 
 
-.. _zp_class_complexity_events:
+.. _zp_class_complexity_scripts:
 
-Event Class Transforms and Mappings (2)
+Scripts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Built in the web interface. Basic Python knowledge required.
+Scripts can be written in any language and do anything. Since all Zenoss
+customizations should be packaged as ZenPacks, they're only included in ZenPacks
+as a packaging mechanism. They might not have any direct interaction with the
+Zenoss platform.
 
-Example: :ref:`zp_class_example_openstack`
+  :Complexity: 2
+  :Skills: Scripting (Any Language)
+  :Example: :ref:`zp_class_example_rancidintegrator`
 
 
 .. _zp_class_complexity_dsplugins:
 
-Command DataSource Plugins (3)
+Command DataSource Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Command datasource plugins can be written in any language and executed either on
@@ -287,12 +294,26 @@ the Zenoss server, or remotely using SSH. Without writing a custom parser (see
 next item) they must write to STDOUT using either the Nagios or Cacti output
 formats and exit using the appropriate Nagios or cacti exit code.
 
-Example: :ref:`zp_class_example_apachemonitor`
+  :Complexity: 2
+  :Skills: Scripting (Any Language)
+  :Example: :ref:`zp_class_example_apachemonitor`
+
+
+.. _zp_class_complexity_events:
+
+Event Class Transforms and Mappings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Built in the web interface. Basic Python knowledge required.
+
+  :Complexity: 2
+  :Skills: Zenoss, Basic Python
+  :Example: :ref:`zp_class_example_openstack`
 
 
 .. _zp_class_complexity_dsparsers:
 
-Command DataSource Parsers (4)
+Command DataSource Parsers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Command datasource parsers must be written in Python and conform to the Zenoss
@@ -300,97 +321,117 @@ Command datasource parsers must be written in Python and conform to the Zenoss
 the output of command datasource plugins (see previous item), or to handle
 output that doesn't conform to the Nagios or Cacti output formats.
 
-Example: :ref:`zp_class_example_solarismonitor`
+  :Complexity: 3
+  :Skills: Zenoss, Python
+  :Example: :ref:`zp_class_example_solarismonitor`
 
 
 .. _zp_class_complexity_datasources:
 
-DataSource Types (5)
+DataSource Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / datasources.
 
-Example: :ref:`zp_class_example_apachemonitor`
-
-
-.. _zp_class_complexity_ui:
-
-User Interface (6)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO: Define complexity / ui.
-
-Example: :ref:`zp_class_example_servicenowintegrator`
+  :Complexity: 4
+  :Skills: Zenoss, ZCML, Python
+  :Example: :ref:`zp_class_example_apachemonitor`
 
 
 .. _zp_class_complexity_impact:
 
-Impact Adapters (7)
+Impact Adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / impact.
 
-Example: :ref:`zp_class_example_zenvmware`
+  :Complexity: 4
+  :Skills: Zenoss, ZCML, Python
+  :Example: :ref:`zp_class_example_zenvmware`
 
 
 .. _zp_class_complexity_etl:
 
-ETL Adapters (8)
+ETL Adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / etl.
 
-Example: :ref:`zp_class_example_zenvmware`
+  :Complexity: 4
+  :Skills: Zenoss, ZCML, Python
+  :Example: :ref:`zp_class_example_zenvmware`
+
+
+.. _zp_class_complexity_ui:
+
+User Interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: Define complexity / ui.
+
+  :Complexity: 5
+  :Skills: Zenoss, ZCML, TAL, Python, JavaScript
+  :Example: :ref:`zp_class_example_servicenowintegrator`
 
 
 .. _zp_class_complexity_modelers:
 
-Modeler Plugins (SNMP, COMMAND or WMI) (9)
+Modeler Plugins (SNMP, COMMAND or WMI)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / modelers.
 
-Example: :ref:`zp_class_example_solarismonitor`
+  :Complexity: 6
+  :Skills: Zenoss, Python, (SNMP, Scripting or WMI)
+  :Example: :ref:`zp_class_example_solarismonitor`
 
 
 .. _zp_class_complexity_pythonmodelers:
 
-Modeler Plugins (Python) (10)
+Modeler Plugins (Python)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / pythonmodlers.
 
-Example: :ref:`zp_class_example_openstack`
+  :Complexity: 7
+  :Skills: Zenoss, Python, Twisted
+  :Example: :ref:`zp_class_example_openstack`
 
 
 .. _zp_class_complexity_modelextensions:
 
-Model Extensions (11)
+Model Extensions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / modelextensions.
 
-Example: :ref:`zp_class_example_openstack`
+  :Complexity: 8
+  :Skills: Zenoss, ZCML, Python, JavaScript
+  :Example: :ref:`zp_class_example_openstack`
 
 
 .. _zp_class_complexity_daemons:
 
-Daemons (12)
+Daemons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TODO: Define complexity / daemons.
 
-Example: :ref:`zp_class_example_zenvmware`
+  :Complexity: 9
+  :Skills: Zenoss, Python, Twisted
+  :Example: :ref:`zp_class_example_zenvmware`
 
 
-.. _zp_class_complexity_zenhubservices:
+.. _zp_class_complexity_platform:
 
-ZenHub Services (13)
+Platform Extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: Define complexity / zenhubservices.
+TODO: Define complexity / platform extension.
 
-Example: :ref:`zp_class_example_zenvmware`
+  :Complexity: 10
+  :Skills: Zenoss, ZCML, Python, JavaScript, etc.
+  :Example: :ref:`zp_class_example_distributedcollector`
 
 
 Example ZenPack Classifications
@@ -409,7 +450,9 @@ Classification                  Value
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
 :ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
-:ref:`zp_class_complexity`      `6` (:ref:`zp_class_complexity_configuration` + :ref:`zp_class_complexity_datasources`)
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_dsplugins`
+                                | :ref:`zp_class_complexity_datasources`
 =============================== ===============================================
 
 
@@ -421,12 +464,12 @@ ZenPacks.zenoss.IISMonitor
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
 =============================== ===============================================
 
 
@@ -438,12 +481,14 @@ ZenPacks.zenoss.DistributedCollector
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_platform`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_ui`
+                                | :ref:`zp_class_complexity_platform`
 =============================== ===============================================
 
 
@@ -455,12 +500,14 @@ ZenPacks.zenoss.RANCIDIntegrator
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_integration`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_events`
+                                | :ref:`zp_class_complexity_scripts`
 =============================== ===============================================
 
 
@@ -472,12 +519,14 @@ ZenPacks.zenoss.DatabaseMonitor
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_available`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_dsplugins`
+                                | :ref:`zp_class_complexity_datasources`
 =============================== ===============================================
 
 
@@ -489,12 +538,19 @@ ZenPacks.zenoss.ZenVMware
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_events`
+                                | :ref:`zp_class_complexity_datasources`
+                                | :ref:`zp_class_complexity_ui`
+                                | :ref:`zp_class_complexity_impact`
+                                | :ref:`zp_class_complexity_etl`
+                                | :ref:`zp_class_complexity_modelextensions`
+                                | :ref:`zp_class_complexity_daemons`
 =============================== ===============================================
 
 
@@ -506,12 +562,15 @@ ZenPacks.zenoss.SolarisMonitor
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_dsplugins`
+                                | :ref:`zp_class_complexity_dsparsers`
+                                | :ref:`zp_class_complexity_modelers`
 =============================== ===============================================
 
 
@@ -523,12 +582,16 @@ ZenPacks.zenoss.Impact
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_platform`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_additionalcost`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_ui`
+                                | :ref:`zp_class_complexity_impact`
+                                | :ref:`zp_class_complexity_daemons`
+                                | :ref:`zp_class_complexity_platform`
 =============================== ===============================================
 
 
@@ -540,12 +603,19 @@ ZenPacks.zenoss.OpenStack
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_labs`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_events`
+                                | :ref:`zp_class_complexity_dsplugins`
+                                | :ref:`zp_class_complexity_dsparsers`
+                                | :ref:`zp_class_complexity_ui`
+                                | :ref:`zp_class_complexity_impact`
+                                | :ref:`zp_class_complexity_pythonmodelers`
+                                | :ref:`zp_class_complexity_modelextensions`
 =============================== ===============================================
 
 
@@ -557,12 +627,15 @@ ZenPacks.zenoss.ServiceNowIntegrator
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_integration`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_services`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_available`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
+                                | :ref:`zp_class_complexity_ui`
+                                | :ref:`zp_class_complexity_modelextensions`
+                                | :ref:`zp_class_complexity_daemons`
 =============================== ===============================================
 
 
@@ -574,10 +647,11 @@ ZenPacks.community.ZenODBC
 =============================== ===============================================
 Classification                  Value
 =============================== ===============================================
-:ref:`zp_class_functionality`   
-:ref:`zp_class_supportability`  
-:ref:`zp_class_maintainer`          
-:ref:`zp_class_availability`    
-:ref:`zp_class_maturity`        
-:ref:`zp_class_complexity`      
+:ref:`zp_class_functionality`   :ref:`zp_class_functionality_platform`
+:ref:`zp_class_supportability`  :ref:`zp_class_supportability_unsupported`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_community`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
+:ref:`zp_class_complexity`      | :ref:`zp_class_complexity_datasources`
+                                | :ref:`zp_class_complexity_pythonmodelers`
 =============================== ===============================================
