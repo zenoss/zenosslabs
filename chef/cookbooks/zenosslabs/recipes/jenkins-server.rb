@@ -7,8 +7,7 @@
 # All rights reserved - Do Not Redistribute
 #
 
-# Install git.
-include_recipe "git"
+include_recipe "zenosslabs::default"
 
 # Install Jenkins server.
 include_recipe "jenkins"
