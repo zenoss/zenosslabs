@@ -58,8 +58,6 @@ html_sidebars = {
     '**': ['localtoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'],
     }
 
-analytics_code = 'UA-27591123-1'
-
 
 # -- Options for LaTeX output --------------------------------------------------
 
