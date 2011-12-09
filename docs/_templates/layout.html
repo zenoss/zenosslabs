@@ -1,0 +1,10 @@
+{% extends "!layout.html" %}
+
+{%- block extrahead %}
+{{ super() }}
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-27591123-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+{% endblock %}
