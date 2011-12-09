@@ -1,7 +1,7 @@
 import os
 
 # Check if we're being built by readthedocs.org.
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+on_rtd = os.environ.get('READTHEDOCS', None) == 'Nevermind'
 
 
 # -- General configuration -----------------------------------------------------
