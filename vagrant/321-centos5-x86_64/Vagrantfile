@@ -1,6 +1,6 @@
 Vagrant::Config.run do |config|
     config.vm.box = 'CentOS-5.7-x86_64'
-    config.vm.host_name = 'platform-321-centos5-x86_64.zenosslabs.com'
+    config.vm.host_name = '321-centos5-x86_64.zenosslabs.com'
 
     config.vm.customize do |vm|
         vm.name = config.vm.host_name
@@ -16,7 +16,6 @@ Vagrant::Config.run do |config|
 
         chef.json = {
             :zenoss_version => '3.2.1',
-            :zenoss_flavor => 'platform'
         }
 
         chef.add_recipe("zenosslabs::buildslave")
