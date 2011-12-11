@@ -1,8 +1,6 @@
 @import url("pyramid.css");
 
 body {
-    font-family: Helvetica, Arial;
-    /*background: #191617;*/
     background: #f3f3f4;
 }
 
@@ -35,13 +33,4 @@ div.footer {
 
 div.footer a {
     color: #9D9D9D;
-}
-
-.viewcode-back {
-    font-family: Helvetica, Arial;
-}
-.download {
-    font-family: Helvetica, Arial;
-    font-weight: normal;
-    font-style: normal;
 }

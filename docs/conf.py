@@ -15,7 +15,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Zenoss Labs'
-copyright = u'2011, Zenoss Labs <labs@zenoss.com>'
+copyright = u'2011, Zenoss Labs'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -32,6 +32,10 @@ exclude_patterns = ['_build']
 
 
 # -- Options for HTML output ---------------------------------------------------
+
+# The name for this set of Sphinx documents.  If None, it defaults to
+# "<project> v<release> documentation".
+html_title = "Zenoss Labs Documentation"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
@@ -50,14 +54,14 @@ html_favicon = 'favicon.ico'
 html_style = 'zenosslabs.css'
 html_logo = '_static/new-zenoss-logo.png'
 
-# Make sure the sidebar contains all of the sections we want.
-html_copy_source = True
-html_show_sourcelink = True
-
+# Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-    '**': ['localtoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'],
+    'index': ['localtoc.html', 'sourcelink.html', 'searchbox.html'],
     }
 
+# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
+# using the given strftime format.
+html_last_updated_fmt = '%b %d, %Y'
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -69,8 +73,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'ZenossLabsDocumentation.tex', u'Zenoss Labs Documentation Documentation',
-   u'Zenoss Labs \\textless{}labs@zenoss.com\\textgreater{}', 'manual'),
+  ('index', 'ZenossLabs.tex', u'Zenoss Labs Documentation',
+   u'Zenoss Labs', 'manual'),
 ]
 
 
@@ -79,8 +83,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'zenosslabsdocumentation', u'Zenoss Labs Documentation Documentation',
-     [u'Zenoss Labs <labs@zenoss.com>'], 1)
+    ('index', 'zenosslabs', u'Zenoss Labs Documentation',
+     [u'Zenoss Labs'], 1)
 ]
 
 
@@ -90,8 +94,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ZenossLabsDocumentation', u'Zenoss Labs Documentation Documentation',
-   u'Zenoss Labs <labs@zenoss.com>', 'ZenossLabsDocumentation', 'One line description of project.',
+  ('index', 'ZenossLabs', u'Zenoss Labs Documentation',
+   u'Zenoss Labs', 'ZenossLabs', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -99,8 +103,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'Zenoss Labs Documentation'
-epub_author = u'Zenoss Labs <labs@zenoss.com>'
-epub_publisher = u'Zenoss Labs <labs@zenoss.com>'
-epub_copyright = u'2011, Zenoss Labs <labs@zenoss.com>'
-
+epub_title = u'Zenoss Labs'
+epub_author = u'Zenoss Labs'
+epub_publisher = u'Zenoss Labs'
+epub_copyright = u'2011, Zenoss Labs'
