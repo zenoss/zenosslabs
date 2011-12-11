@@ -12,7 +12,7 @@ Vagrant::Config.run do |config|
     config.ssh.max_tries = 150
 
     config.vm.provision :chef_solo do |chef|
-        chef.cookbooks_path = "../../chef/cookbooks"
+        chef.cookbooks_path = "../../chef-repo/cookbooks"
         chef.add_recipe("zenosslabs::jenkins-server")
     end
 end
