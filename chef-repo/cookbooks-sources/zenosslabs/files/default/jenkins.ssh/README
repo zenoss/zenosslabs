@@ -1,0 +1,6 @@
+The following files should be included in this directory. They are not provided
+by the repository.
+
+id_rsa
+id_rsa.pub
+known_hosts

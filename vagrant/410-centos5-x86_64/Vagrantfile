@@ -1,13 +1,13 @@
 Vagrant::Config.run do |config|
     config.vm.box = 'CentOS-5.7-x86_64'
-    config.vm.host_name = '321-centos5-x86_64.zenosslabs.com'
+    config.vm.host_name = '410-centos5-x86_64.zenosslabs.com'
 
     config.vm.customize do |vm|
         vm.name = config.vm.host_name
         vm.memory_size = 1024
     end
 
-    config.vm.network("192.168.57.101")
+    config.vm.network("192.168.57.102")
 
     config.ssh.max_tries = 150
 
@@ -15,7 +15,7 @@ Vagrant::Config.run do |config|
         chef.cookbooks_path = "../../chef/cookbooks"
 
         chef.json = {
-            :zenoss_rpm => 'zenoss-3.2.1.el5.x86_64.rpm'
+            :zenoss_version => '4.1.0',
         }
 
         chef.add_recipe("zenosslabs::buildslave")
