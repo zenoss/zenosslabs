@@ -1,8 +1,10 @@
 #
 # Cookbook Name:: zenosslabs
-# Recipe:: default
+# Recipe:: jenkins-client
 #
 # Copyright 2011, Zenoss, Inc.
 #
 # All rights reserved - Do Not Redistribute
 #
+
+include_recipe "zenosslabs::jenkins-common"

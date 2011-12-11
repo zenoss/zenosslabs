@@ -1,15 +1,15 @@
 #
 # Cookbook Name:: zenosslabs
-# Recipe:: jenkins-server
+# Recipe:: jenkins-master
 #
 # Copyright 2011, Zenoss, Inc.
 #
 # All rights reserved - Do Not Redistribute
 #
 
-include_recipe "zenosslabs::default"
+include_recipe "zenosslabs::jenkins-common"
 
-# Install Jenkins server.
+# Install Jenkins.
 include_recipe "jenkins"
 
 # Create an example job.
@@ -26,30 +26,8 @@ jenkins_job "ZenPacks.zenoss.SolarisMonitor" do
 end
 
 # Install Jenkins plugins.
+# TODO: Fix this so it's idempotent and doesn't restart Jenkins every time.
 %w(git).each do |plugin|
     jenkins_cli "install-plugin #{plugin}"
     jenkins_cli "safe-restart"
-end
-
-
-# Install SSH keys for GitHub.
-cookbook_file "/var/lib/jenkins/.ssh/id_rsa" do
-    source "jenkins.ssh/id_rsa"
-    mode 0600
-    owner "jenkins"
-    group "jenkins"
-end
-
-cookbook_file "/var/lib/jenkins/.ssh/id_rsa.pub" do
-    source "jenkins.ssh/id_rsa.pub"
-    mode 0644
-    owner "jenkins"
-    group "jenkins"
-end
-
-cookbook_file "/var/lib/jenkins/.ssh/known_hosts" do
-    source "jenkins.ssh/known_hosts"
-    mode 0644
-    owner "jenkins"
-    group "jenkins"
 end

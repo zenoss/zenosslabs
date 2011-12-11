@@ -1,6 +1,7 @@
 SITE
   remote: http://community.opscode.com/api/v1
   specs:
+    apache2 (1.0.4)
     apt (1.2.2)
     git (0.10.0)
       runit (>= 0.0.0)
@@ -9,6 +10,7 @@ SITE
     java (1.1.0)
       apt (>= 0)
     runit (0.14.2)
+    selinux (0.5.0)
     yum (0.5.2)
 
 GIT
@@ -27,10 +29,13 @@ PATH
     zenosslabs (0.0.1)
 
 DEPENDENCIES
+  apache2 (>= 0)
   apt (>= 0)
   git (>= 0)
+  iptables (>= 0)
   java (>= 0)
   jenkins (>= 0)
+  selinux (>= 0)
   yum (>= 0)
   zenosslabs (>= 0)
 

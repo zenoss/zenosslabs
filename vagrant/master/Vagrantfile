@@ -13,6 +13,6 @@ Vagrant::Config.run do |config|
 
     config.vm.provision :chef_solo do |chef|
         chef.cookbooks_path = "../../chef-repo/cookbooks"
-        chef.add_recipe("zenosslabs::jenkins-server")
+        chef.add_recipe("zenosslabs::build-master")
     end
 end
