@@ -13,11 +13,10 @@ Vagrant::Config.run do |config|
 
     config.vm.provision :chef_solo do |chef|
         chef.cookbooks_path = "../../chef-repo/cookbooks"
+        chef.add_recipe("zenosslabs::build-slave")
 
         chef.json = {
             :zenoss_rpm => 'zenoss-3.2.1.el5.x86_64.rpm'
         }
-
-        chef.add_recipe("zenosslabs::buildslave")
     end
 end
