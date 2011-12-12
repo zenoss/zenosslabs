@@ -40,7 +40,6 @@ Prerequisites
 Prerequisite        Restriction
 ==================  ========================================================
 Zenoss Platform     3.1 or greater
-Zenoss Processes    zencommand, zenperfsnmp
 Installed ZenPacks  ZenPacks.zenoss.SolarisMonitor
 Firewall Acccess    Collector server to 22/tcp and 161/udp of Solaris server
 Solaris Releases    OpenSolaris 5.11, Solaris 9 and 10
@@ -246,7 +245,7 @@ Event Mapping        ldomVmemChange       /Change
 Event Mapping        ldomVnetChange       /Change
 Event Mapping        ldomVswChange        /Change
 Event Mapping        ldomCreate           /Change/Add
-Event Mapping        ldomDestroy          /Remove
+Event Mapping        ldomDestroy          /Change/Remove
 MIB                  SUN-LDOM-MIB         /
 ===================  ===================  ===================================
 
