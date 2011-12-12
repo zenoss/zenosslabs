@@ -27,8 +27,9 @@ jenkins_job "ZenPacks.zenoss.SolarisMonitor" do
 end
 
 # Install Jenkins plugins.
-# TODO: Fix this so it's idempotent and doesn't restart Jenkins every time.
 %w(git).each do |plugin|
-    jenkins_cli "install-plugin #{plugin}"
-    jenkins_cli "safe-restart"
+    if not FileTest.exist?("/var/lib/jenkins/plugins/#{plugin}.hpi")
+        jenkins_cli "install-plugin #{plugin}"
+        jenkins_cli "safe-restart"
+    end
 end

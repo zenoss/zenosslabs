@@ -7,6 +7,8 @@
 # All rights reserved - Do Not Redistribute
 #
 
+include_recipe "zenosslabs"
+
 include_recipe "git"
 include_recipe "java"
 include_recipe "zenosslabs::jenkins-master"
@@ -15,10 +17,12 @@ include_recipe "zenosslabs::jenkins-master"
 # Host files needed by build slaves.
 include_recipe "apache2"
 
-directory "/var/www/chef_web" do
+# Files needed by the slaves need to be manually dropped into this directory.
+directory "/srv/www/chef" do
     owner "root"
     group "root"
     mode 0755
+    recursive true
     action :create
 end
 

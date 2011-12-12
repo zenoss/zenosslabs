@@ -7,6 +7,8 @@
 # All rights reserved - Do Not Redistribute
 #
 
+include_recipe "zenosslabs"
+
 include_recipe "git"
 include_recipe "java"
 include_recipe "zenosslabs::jenkins-slave"
