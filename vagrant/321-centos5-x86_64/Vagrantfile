@@ -16,7 +16,9 @@ Vagrant::Config.run do |config|
         chef.add_recipe("zenosslabs::build-slave")
 
         chef.json = {
-            :zenoss_rpm => 'zenoss-3.2.1.el5.x86_64.rpm'
+            :zenoss_rpm => 'zenoss-3.2.1.el5.x86_64.rpm',
+            :zenoss_core_zenpacks_rpm => 'zenoss-core-zenpacks-3.2.1-1326.el5.x86_64.rpm',
+            :zenoss_enterprise_zenpacks_rpm => 'zenoss-enterprise-zenpacks-3.2.1-1326.el5.x86_64.rpm'
         }
     end
 end

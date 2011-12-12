@@ -7,7 +7,7 @@
 # All rights reserved - Do Not Redistribute
 #
 
-include_recipe "zenosslabs"
+#include_recipe "zenosslabs"
 
 include_recipe "git"
 include_recipe "java"

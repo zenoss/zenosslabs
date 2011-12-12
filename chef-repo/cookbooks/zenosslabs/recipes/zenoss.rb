@@ -16,6 +16,18 @@ when "centos"
         end
     end
 
+    zenosslabs_loopback_fs "/opt/zenoss" do
+        vg_name "zenoss"
+        block_size 4096
+        bytes 1073741824  # TODO: Increase to 2GB
+        action :create
+    end
+
+    directory "/opt/zenoss" do
+        owner "zenoss"
+        group "zenoss"
+    end
+
     cookbook_file "/tmp/#{node[:zenoss_rpm]}" do
         source node[:zenoss_rpm]
     end
@@ -38,7 +50,92 @@ when "centos"
         source "daemons.txt.erb"
     end
 
+    # Define "platform" snapshot resource.
+    zenosslabs_snapshot "platform" do
+        vg_name "zenoss"
+        base_lv_name "base"
+        percent_of_origin 20
+        mount "/opt/zenoss"
+        action :nothing
+    end
+
+    service "zenoss" do
+        only_if "test -f /opt/zenoss/.fresh_install"
+        action :start
+
+        # Create the "platform" snapshot after installing.
+        notifies :create, "zenosslabs_snapshot[platform]", :immediately
+
+        # Switch to the "platform" snapshot after stopping Zenoss to use it as
+        # the foundation for further snapshots.
+        notifies :switch, "zenosslabs_snapshot[platform]", :immediately
+    end
+
+
+    # Install Core ZenPacks
     service "zenoss" do
         action :start
+    end
+
+    cookbook_file "/tmp/#{node[:zenoss_core_zenpacks_rpm]}" do
+        source node[:zenoss_core_zenpacks_rpm]
+    end
+
+    # Define "core" snapshot resource.
+    zenosslabs_snapshot "core" do
+        vg_name "zenoss"
+        base_lv_name "platform"
+        percent_of_origin 20
+        mount "/opt/zenoss"
+        action :nothing
+    end
+
+    yum_package "zenoss-core-zenpacks" do
+        source "/tmp/#{node[:zenoss_core_zenpacks_rpm]}"
+        options "--nogpgcheck"
+
+        # Create the "core" snapshot after installing.
+        notifies :create, "zenosslabs_snapshot[core]", :immediately
+
+        # Switch to the "core" snapshot after stopping Zenoss to use it as the
+        # foundation for further snapshots.
+        notifies :switch, "zenosslabs_snapshot[core]", :immediately
+    end
+
+
+    # Install Enterprise ZenPacks
+    cookbook_file "/tmp/#{node[:zenoss_enterprise_zenpacks_rpm]}" do
+        source node[:zenoss_enterprise_zenpacks_rpm]
+    end
+
+    # Define "enterprise" snapshot resource.
+    zenosslabs_snapshot "enterprise" do
+        vg_name "zenoss"
+        base_lv_name "core"
+        percent_of_origin 20
+        mount "/opt/zenoss"
+        action :nothing
+    end
+
+    # Define "working" snapshot resource.
+    zenosslabs_snapshot "working" do
+        vg_name "zenoss"
+        base_lv_name "enterprise"
+        percent_of_origin 20
+        mount "/opt/zenoss"
+        action :nothing
+    end
+
+    yum_package "zenoss-enterprise-zenpacks" do
+        source "/tmp/#{node[:zenoss_enterprise_zenpacks_rpm]}"
+        options "--nogpgcheck"
+
+        # Create the "enterprise" snapshot after installing.
+        notifies :create, "zenosslabs_snapshot[enterprise]", :immediately
+
+        # When done, create and switch to a "working" snapshot so as to not
+        # dirty the enterprise snapshot.
+        notifies :create, "zenosslabs_snapshot[working]", :immediately
+        notifies :switch, "zenosslabs_snapshot[working]", :immediately
     end
 end
