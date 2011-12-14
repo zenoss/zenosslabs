@@ -30,6 +30,7 @@ In cases where the ZenPack developer(s) do not have access to endpoints
 necessary for integration and testing work some standard operating procedures
 must be suspended.
 
+
 File Locations
 ===============================================================================
 
@@ -97,6 +98,7 @@ locations should be used.
     hard to maintain, a ``routers/`` directory should be created containing
     individual files named for the group of routers they contain.
 
+
 License Compliance
 ===============================================================================
 
@@ -105,6 +107,7 @@ developed. If you intend to include a third-party module with a GPL license,
 the ZenPack must also carry a GPL license and not include any other code that
 would violate the GPL license. Always run third-party module inclusion through
 legal to make sure there is no conflict.
+
 
 Coding Standards
 ===============================================================================
@@ -120,6 +123,7 @@ following public style guides.
 * ZCML
 
   * Zope’s ZCML Style Guide
+
 
 Monitoring Template Standards
 ===============================================================================
@@ -165,6 +169,15 @@ Data Points
 
   a. This again will allow unknown to be recorded instead of bad data.
 
+Data Point Aliases
+-------------------------------------------------------------------------------
+
+1. Include the unit in the alias name if it is in any way not obvious. For
+   example, use ``cpu_percent`` instead of ``cpu_usage``.
+
+2. Use an RPN to calculate the base unit if the data point isn't already
+   collected that way. For example, use ``1024,*`` to convert a data point
+   collected in KBytes to bytes.
 
 Thresholds
 -------------------------------------------------------------------------------
@@ -212,6 +225,20 @@ Graph Points
   b. Areas are good for things that can be thought of as a volume or quantity.
 
 4. Does stacking the values to present a visual aggregate makes sense?
+
+
+ETL Standards
+===============================================================================
+
+ETL is an acronym for `Extract, Transform, Load`. When writing ETL adapters
+you're defining how Zenoss model data is extracted and transformed into the
+`Zenoss Analytics` schema. The following guidelines should be used to keep
+reporting consistent.
+
+1. The ``reportProperties`` implementation in ``IReportable`` adapters must
+   include the units in the name if not immediately obvious. For example, use
+   ``cpu_used_percent`` instead of ``cpu_used``.
+
 
 Documentation
 ===============================================================================
@@ -262,6 +289,7 @@ ZenPacks must be tested in their live deployment environment. A development or
 staging instance of Zenoss that matches the production environment as closely
 as possible should be used.
 
+
 Versioning
 ===============================================================================
 
@@ -272,6 +300,7 @@ minor version if the contain new features (i.e. 1.1.0.)
 
 A ZenPack’s version must be incremented each time it is delivered to a customer
 if there has been any change to it whatsoever.
+
 
 Reviews
 ===============================================================================
@@ -290,6 +319,7 @@ Code Review
 All code, including updates, must be peer reviewed before being committed to
 the mainline development branch or any stable release branch.
 
+
 Packaging & Delivery
 ===============================================================================
 
@@ -307,4 +337,5 @@ context the same environment is defined as the following.
 * Same major version of operating system
 * Same architecture (i.e. i386 or x86_64)
 
-All files including documentation must be delivered to customers in a Parature ticket.
+All files including documentation must be delivered to customers in a Parature
+ticket.

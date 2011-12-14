@@ -16,6 +16,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   Standards <zenpack_standards_guide>
-   Template <zenpack_documentation_template>
-   Example <zenpack_documentation_example>
+   Standards Guide <zenpack_standards_guide>
+   Documentation Template <zenpack_documentation_template>
+   Example Documentation <zenpack_documentation_example>
