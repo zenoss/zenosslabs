@@ -25,6 +25,20 @@ This documentation is available in the following formats.
 * `Manpage <http://media.readthedocs.org/man/zenosslabs/latest/zenosslabs.1>`_
 
 
+Contribution
+===============================================================================
+This documentation is generated automatically every time a change is made to
+the `zenosslabs repository`_. The most direct route for contribution would be
+to fork that repository, make the desired change to the documentation and send
+a pull request.
+
+See GitHub's `Fork a Repo`_ documentation if you're unfamiliar with this
+process. Otherwise, email the address below to have someone incorporate your
+changes for you.
+
+.. _zenosslabs repository: https://github.com/zenoss/zenosslabs
+.. _Fork a Repo: http://help.github.com/fork-a-repo/
+
 Contact
 ===============================================================================
 Questions and comments related to this documentation should sent to
