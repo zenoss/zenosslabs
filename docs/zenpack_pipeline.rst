@@ -29,6 +29,7 @@ Updated ZenPacks
 =================================== ======================================= ======= ==========
 Summary                             ZenPack                                 Version Date
 =================================== ======================================= ======= ==========
+LDOM Monitoring                     ZenPacks.zenoss.SolarisMonitor          2.0.0   2011-12-08
 Support for Diablo                  ZenPacks.zenoss.OpenStack               1.1.0   2011-11-18
 vCloud Director 1.5 compat.         ZenPacks.zenoss.vCloud                  1.2.0   2011-08-29
 vSphere 5 compatibility             ZenPacks.zenoss.ZenVMware               1.9.0   2011-08-29
@@ -42,7 +43,6 @@ Pending ZenPacks
 Summary                             ZenPack                                 Version Date
 =================================== ======================================= ======= ==========
 Cisco UCS C-Series Monitoring       ZenPacks.zenoss.CiscoUCSSNMP            TBD     TBD
-Solaris LDOM Monitoring             ZenPacks.zenoss.SolarisMonitor          TBD     TBD
 Auto-Provision Zenoss (OpenStack)   Zenoss Barclamp (Crowbar)               TBD     TBD
 Calculate existing metrics          ZenPacks.zenoss.CalculatedPerformance   TBD     TBD
 Update for Zenoss 4 compt.          ZenPacks.zenoss.ServiceNowIntegrator    TBD     TBD
