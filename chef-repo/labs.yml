@@ -11,7 +11,18 @@ cookbooks:
 - yum:
 - zenosslabs:
 
-nodes:
-- chef:
-    - recipe[chef-server::rubygems-install]
+roles:
+- zenpack-builder:
+- zenpack-builder-3.2.1:
+- zenpack-jenkins:
 
+nodes:
+# - chef.zenosslabs.com:
+#     - recipe[chef-server::rubygems-install]
+#     - -d veewee
+- jenkins.zenosslabs.com:
+    - role[zenpack-jenkins]
+    - -d veewee
+- z321-c5-64.zenosslabs.com:
+    - role[zenpack-builder-321]
+    - -d veewee

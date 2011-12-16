@@ -7,8 +7,15 @@
 # All rights reserved - Do Not Redistribute
 #
 
+
 case node[:platform]
 when "centos"
+    if node[:kernel][:machine] = "i686"
+        rpm_arch = "i386"
+    else
+        rpm_arch = node[:kernel][:machine]
+    end
+
     dependencies = %w{mysql-server net-snmp net-snmp-utils gmp libgomp libgcj liberation-fonts}
     dependencies.each do |pkg|
         yum_package pkg do
@@ -28,12 +35,13 @@ when "centos"
         group "zenoss"
     end
 
-    cookbook_file "/tmp/#{node[:zenoss_rpm]}" do
-        source node[:zenoss_rpm]
+    zenoss_rpm = "#{node[:zenoss][:rpm]}-#{rpm_arch}.rpm"
+    cookbook_file "/tmp/#{zenoss_rpm}" do
+        source zenoss_rpm
     end
 
     yum_package "zenoss" do
-        source "/tmp/#{node[:zenoss_rpm]}"
+        source "/tmp/#{zenoss_rpm}"
         options "--nogpgcheck"
     end
 
@@ -77,10 +85,6 @@ when "centos"
         action :start
     end
 
-    cookbook_file "/tmp/#{node[:zenoss_core_zenpacks_rpm]}" do
-        source node[:zenoss_core_zenpacks_rpm]
-    end
-
     # Define "core" snapshot resource.
     zenosslabs_snapshot "core" do
         vg_name "zenoss"
@@ -90,8 +94,13 @@ when "centos"
         action :nothing
     end
 
+    zenoss_core_zenpacks_rpm = "#{node[:zenoss][:core_zenpacks_rpm]}-#{rpm_arch}.rpm"
+    cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
+        source zenoss_core_zenpacks_rpm
+    end
+
     yum_package "zenoss-core-zenpacks" do
-        source "/tmp/#{node[:zenoss_core_zenpacks_rpm]}"
+        source "/tmp/#{zenoss_core_zenpacks_rpm}"
         options "--nogpgcheck"
 
         # Create the "core" snapshot after installing.
@@ -104,8 +113,8 @@ when "centos"
 
 
     # Install Enterprise ZenPacks
-    cookbook_file "/tmp/#{node[:zenoss_enterprise_zenpacks_rpm]}" do
-        source node[:zenoss_enterprise_zenpacks_rpm]
+    service "zenoss" do
+        action :start
     end
 
     # Define "enterprise" snapshot resource.
@@ -126,8 +135,13 @@ when "centos"
         action :nothing
     end
 
+    zenoss_enterprise_zenpacks_rpm = "#{node[:zenoss][:enterprise_zenpacks_rpm]}-#{rpm_arch}.rpm"
+    cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
+        source zenoss_enterprise_zenpacks_rpm
+    end
+
     yum_package "zenoss-enterprise-zenpacks" do
-        source "/tmp/#{node[:zenoss_enterprise_zenpacks_rpm]}"
+        source "/tmp/#{zenoss_enterprise_zenpacks_rpm}"
         options "--nogpgcheck"
 
         # Create the "enterprise" snapshot after installing.
