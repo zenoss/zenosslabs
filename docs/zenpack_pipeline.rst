@@ -17,7 +17,6 @@ CloudStack Monitoring               ZenPacks.zenoss.CloudStack              0.7.
 OpenStack Object Storage (Swift)    ZenPacks.zenoss.OpenStackSwift          0.7.0   2011-10-05
 Memcached Monitoring                ZenPacks.zenoss.Memcached               1.0.0   2011-09-28
 RabbitMQ Monitoring                 ZenPacks.zenoss.RabbitMQ                1.0.0   2011-09-26
-vSphere 5 compatibility             ZenPacks.zenoss.ZenVMware               1.9.0   2011-08-29
 CloudFoundry Monitoring             ZenPacks.zenoss.CloudFoundry            1.0.0   2011-06-09
 OpenStack Monitoring                ZenPacks.zenoss.OpenStack               1.0.0   2011-06-08
 PostgreSQL Monitoring               ZenPacks.zenoss.PostgreSQL              1.0.0   2011-05-27
@@ -32,7 +31,7 @@ Summary                             ZenPack                                 Vers
 =================================== ======================================= ======= ==========
 Support for Diablo                  ZenPacks.zenoss.OpenStack               1.1.0   2011-11-18
 vCloud Director 1.5 compat.         ZenPacks.zenoss.vCloud                  1.2.0   2011-08-29
-VMware vSphere Monitoring           ZenPacks.zenoss.ZenVMware               1.9.0   2011-08-29
+vSphere 5 compatibility             ZenPacks.zenoss.ZenVMware               1.9.0   2011-08-29
 =================================== ======================================= ======= ==========
 
 
