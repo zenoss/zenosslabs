@@ -1,9 +1,9 @@
 #
-# Author:: Sean OMeara (<someara@opscode.com>)
-# Cookbook Name:: selinux
-# Recipe:: enforcing
+# Author:: Seth Chisamore (<schisamo@opscode.com>)
+# Cookbook Name:: gecode
+# Recipe:: default
 #
-# Copyright 2011, Opscode, Inc.
+# Copyright:: Copyright (c) 2011 Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,18 +16,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-execute "enable selinux enforcement" do
-  not_if "getenforce | grep -qx 'Enforcing'"
-  command "setenforce 1"
-  action :run
-end
-
-template "/etc/selinux/config" do
-  source "sysconfig/selinux.erb"
-  variables(
-    :selinux => "enforcing",
-    :selinuxtype => "targeted"
-  )
-end
+include_recipe "gecode::#{node['gecode']['install_method']}"

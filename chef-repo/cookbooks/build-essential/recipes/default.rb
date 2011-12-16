@@ -1,9 +1,8 @@
 #
-# Author:: Sean OMeara (<someara@opscode.com>)
-# Cookbook Name:: selinux
-# Recipe:: enforcing
+# Cookbook Name:: build-essential
+# Recipe:: default
 #
-# Copyright 2011, Opscode, Inc.
+# Copyright 2008-2009, Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +17,29 @@
 # limitations under the License.
 #
 
-execute "enable selinux enforcement" do
-  not_if "getenforce | grep -qx 'Enforcing'"
-  command "setenforce 1"
-  action :run
+case node['platform']
+when "ubuntu","debian"
+  %w{build-essential binutils-doc}.each do |pkg|
+    package pkg do
+      action :install
+    end
+  end
+when "centos","redhat","fedora"
+  %w{gcc gcc-c++ kernel-devel make}.each do |pkg|
+    package pkg do
+      action :install
+    end
+  end
 end
 
-template "/etc/selinux/config" do
-  source "sysconfig/selinux.erb"
-  variables(
-    :selinux => "enforcing",
-    :selinuxtype => "targeted"
-  )
+package "autoconf" do
+  action :install
+end
+
+package "flex" do
+  action :install
+end
+
+package "bison" do
+  action :install
 end

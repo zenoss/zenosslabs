@@ -1,0 +1,17 @@
+cookbooks:
+- apache2:
+- apt:
+- chef-server:
+- git:
+- iptables:
+- java:
+- jenkins:
+- runit:
+- selinux:
+- yum:
+- zenosslabs:
+
+nodes:
+- chef:
+    - recipe[chef-server::rubygems-install]
+

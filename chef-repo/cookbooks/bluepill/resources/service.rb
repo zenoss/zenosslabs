@@ -1,9 +1,8 @@
 #
-# Author:: Sean OMeara (<someara@opscode.com>)
-# Cookbook Name:: selinux
-# Recipe:: enforcing
+# Cookbook Name:: bluepill
+# Resource:: service
 #
-# Copyright 2011, Opscode, Inc.
+# Copyright 2010, Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +17,10 @@
 # limitations under the License.
 #
 
-execute "enable selinux enforcement" do
-  not_if "getenforce | grep -qx 'Enforcing'"
-  command "setenforce 1"
-  action :run
-end
+actions :start, :stop, :enable, :disable, :load, :restart
 
-template "/etc/selinux/config" do
-  source "sysconfig/selinux.erb"
-  variables(
-    :selinux => "enforcing",
-    :selinuxtype => "targeted"
-  )
-end
+attribute :service_name, :name_attribute => true
+attribute :enabled, :default => false
+attribute :running, :default => false
+attribute :variables, :kind_of => Hash
+attribute :supports, :default => { :restart => true, :status => true }

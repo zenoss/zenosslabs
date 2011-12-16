@@ -1,9 +1,9 @@
 #
-# Author:: Sean OMeara (<someara@opscode.com>)
-# Cookbook Name:: selinux
-# Recipe:: enforcing
+# Author:: Joshua Timberman <joshua@opscode.com>
+# Cookbook Name:: couchdb
+# Attributes:: couchdb
 #
-# Copyright 2011, Opscode, Inc.
+# Copyright 2010, Opscode, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,18 +16,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-execute "enable selinux enforcement" do
-  not_if "getenforce | grep -qx 'Enforcing'"
-  command "setenforce 1"
-  action :run
-end
-
-template "/etc/selinux/config" do
-  source "sysconfig/selinux.erb"
-  variables(
-    :selinux => "enforcing",
-    :selinuxtype => "targeted"
-  )
-end
+set['couch_db']['src_checksum'] = "6ef82a7ba0f132d55af7cc78b30658d5b3a4f7be3f449308c8d7fa2ad473677c"
+set['couch_db']['src_version'] = "1.0.2"
+set['couch_db']['src_mirror']  = "http://archive.apache.org/dist/couchdb/#{node['couch_db']['src_version']}/apache-couchdb-#{node['couch_db']['src_version']}.tar.gz"

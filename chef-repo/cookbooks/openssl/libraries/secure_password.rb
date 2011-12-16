@@ -1,9 +1,9 @@
 #
-# Author:: Sean OMeara (<someara@opscode.com>)
-# Cookbook Name:: selinux
-# Recipe:: enforcing
+# Cookbook Name:: openssl
+# Library:: secure_password
+# Author:: Joshua Timberman <joshua@opscode.com>
 #
-# Copyright 2011, Opscode, Inc.
+# Copyright 2009, Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +18,20 @@
 # limitations under the License.
 #
 
-execute "enable selinux enforcement" do
-  not_if "getenforce | grep -qx 'Enforcing'"
-  command "setenforce 1"
-  action :run
-end
+require 'openssl'
 
-template "/etc/selinux/config" do
-  source "sysconfig/selinux.erb"
-  variables(
-    :selinux => "enforcing",
-    :selinuxtype => "targeted"
-  )
+module Opscode
+  module OpenSSL
+    module Password
+      def secure_password
+        pw = String.new
+        
+        while pw.length < 20
+          pw << ::OpenSSL::Random.random_bytes(1).gsub(/\W/, '')
+        end
+
+        pw
+      end
+    end
+  end
 end

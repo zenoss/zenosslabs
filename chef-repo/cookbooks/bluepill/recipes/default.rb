@@ -1,9 +1,8 @@
 #
-# Author:: Sean OMeara (<someara@opscode.com>)
-# Cookbook Name:: selinux
-# Recipe:: enforcing
+# Cookbook Name:: bluepill
+# Recipe:: default
 #
-# Copyright 2011, Opscode, Inc.
+# Copyright 2010, Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +17,17 @@
 # limitations under the License.
 #
 
-execute "enable selinux enforcement" do
-  not_if "getenforce | grep -qx 'Enforcing'"
-  command "setenforce 1"
-  action :run
-end
+gem_package "i18n"
+gem_package "bluepill"
 
-template "/etc/selinux/config" do
-  source "sysconfig/selinux.erb"
-  variables(
-    :selinux => "enforcing",
-    :selinuxtype => "targeted"
-  )
+[
+  node["bluepill"]["conf_dir"],
+  node["bluepill"]["pid_dir"],
+  node["bluepill"]["state_dir"]
+].each do |dir|
+  directory dir do
+    recursive true
+    owner "root"
+    group node["bluepill"]["group"]
+  end
 end

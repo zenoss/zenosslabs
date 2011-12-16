@@ -1,9 +1,8 @@
 #
-# Author:: Sean OMeara (<someara@opscode.com>)
-# Cookbook Name:: selinux
-# Recipe:: enforcing
+# Cookbook Name:: ucspi-tcp
+# Attribute:: default
 #
-# Copyright 2011, Opscode, Inc.
+# Copyright 2010, Opscode, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +17,21 @@
 # limitations under the License.
 #
 
-execute "enable selinux enforcement" do
-  not_if "getenforce | grep -qx 'Enforcing'"
-  command "setenforce 1"
-  action :run
-end
-
-template "/etc/selinux/config" do
-  source "sysconfig/selinux.erb"
-  variables(
-    :selinux => "enforcing",
-    :selinuxtype => "targeted"
-  )
+case platform
+when "ubuntu"
+  if platform_version.to_f >= 9.04
+    set[:ucspi][:bin_dir] = "/usr/bin"
+  else
+    set[:ucspi][:bin_dir] = "/usr/local/bin"
+  end 
+when "debian"
+  if platform_version.to_f >= 5.0
+    set[:ucspi][:bin_dir] = "/usr/bin"
+  else
+    set[:ucspi][:bin_dir] = "/usr/local/bin"
+  end 
+when "arch"
+  set[:ucspi][:bin_dir] = "/usr/bin"
+else
+    set[:ucspi][:bin_dir] = "/usr/local/bin"
 end
