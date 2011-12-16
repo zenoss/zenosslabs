@@ -16,3 +16,9 @@ run_list(
     "recipe[zenosslabs::jenkins-slave]",
     "recipe[zenosslabs::zenoss]"
 )
+
+default_attributes(
+    "java" => {
+        "install_flavor" => "sun"
+    }
+)

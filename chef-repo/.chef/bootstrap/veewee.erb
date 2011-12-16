@@ -31,6 +31,6 @@ cat <<'EOP'
 EOP
 ) > /etc/chef/first-boot.json
 
-ln -s $(which chef-client) /usr/bin/chef-client
+ln -sf $(which chef-client) /usr/bin/chef-client
 
 <%= start_chef %>'

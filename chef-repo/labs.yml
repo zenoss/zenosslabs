@@ -13,7 +13,7 @@ cookbooks:
 
 roles:
 - zenpack-builder:
-- zenpack-builder-3.2.1:
+- zenpack-builder-321:
 - zenpack-jenkins:
 
 nodes:

@@ -10,7 +10,9 @@
 
 case node[:platform]
 when "centos"
-    if node[:kernel][:machine] = "i686"
+    rpm_release = node[:kernel][:release].split('.')[-1]
+
+    if node[:kernel][:machine] == "i686"
         rpm_arch = "i386"
     else
         rpm_arch = node[:kernel][:machine]
@@ -30,12 +32,7 @@ when "centos"
         action :create
     end
 
-    directory "/opt/zenoss" do
-        owner "zenoss"
-        group "zenoss"
-    end
-
-    zenoss_rpm = "#{node[:zenoss][:rpm]}-#{rpm_arch}.rpm"
+    zenoss_rpm = "#{node[:zenoss][:rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
     cookbook_file "/tmp/#{zenoss_rpm}" do
         source zenoss_rpm
     end
@@ -94,7 +91,7 @@ when "centos"
         action :nothing
     end
 
-    zenoss_core_zenpacks_rpm = "#{node[:zenoss][:core_zenpacks_rpm]}-#{rpm_arch}.rpm"
+    zenoss_core_zenpacks_rpm = "#{node[:zenoss][:core_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
     cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
         source zenoss_core_zenpacks_rpm
     end
@@ -135,7 +132,7 @@ when "centos"
         action :nothing
     end
 
-    zenoss_enterprise_zenpacks_rpm = "#{node[:zenoss][:enterprise_zenpacks_rpm]}-#{rpm_arch}.rpm"
+    zenoss_enterprise_zenpacks_rpm = "#{node[:zenoss][:enterprise_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
     cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
         source zenoss_enterprise_zenpacks_rpm
     end
