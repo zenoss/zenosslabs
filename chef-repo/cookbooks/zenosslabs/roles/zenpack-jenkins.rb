@@ -13,5 +13,6 @@ description "ZenPack Build Master"
 run_list(
     "recipe[git]",
     "recipe[java]",
+    "recipe[jenkins]",
     "recipe[zenosslabs::jenkins-master]"
 )

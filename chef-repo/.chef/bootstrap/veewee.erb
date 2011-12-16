@@ -31,6 +31,13 @@ cat <<'EOP'
 EOP
 ) > /etc/chef/first-boot.json
 
-ln -sf $(which chef-client) /usr/bin/chef-client
+CHEF_CLIENT=$(which chef-client)
+if [ -z "$CHEF_CLIENT" ]; then
+    if [ -x /opt/ruby/bin/chef-client ] ; then
+        CHEF_CLIENT=/opt/ruby/bin/chef-client
+    fi
+
+    ln -sf $CHEF_CLIENT /usr/bin/chef-client
+fi
 
 <%= start_chef %>'

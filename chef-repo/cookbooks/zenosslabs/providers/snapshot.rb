@@ -30,7 +30,7 @@ action :switch do
     end
 
     mount new_resource.mount do
-        device "/dev/mapper/#{new_resource.vg_name}/#{new_resource.name}"
+        device "/dev/mapper/#{new_resource.vg_name}-#{new_resource.name}"
         fstype "ext3"
     end
 
