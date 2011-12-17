@@ -7,7 +7,7 @@
 # All rights reserved - Do Not Redistribute
 #
 
-actions :create, :nothing
+actions :create, :switch
 
 attribute :name, :kind_of => String, :name_attribute => true
 attribute :vg_name, :kind_of => String
