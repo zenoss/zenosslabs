@@ -18,6 +18,7 @@ when "centos"
         rpm_arch = node[:kernel][:machine]
     end
 
+    # Install dependencies.
     dependencies = %w{mysql-server net-snmp net-snmp-utils gmp libgomp libgcj liberation-fonts}
     dependencies.each do |pkg|
         yum_package pkg do
@@ -25,11 +26,22 @@ when "centos"
         end
     end
 
+    # Create an loopback file system using LVM for snapshots.
     zenosslabs_loopback_fs "/opt/zenoss" do
         vg_name "zenoss"
         block_size 4096
-        bytes 1073741824  # TODO: Increase to 2GB
+        bytes 2147483648
         action :create
+    end
+
+
+    # Install Zenoss platform.
+    zenosslabs_snapshot "platform" do
+        vg_name "zenoss"
+        base_lv_name "base"
+        percent_of_origin 20
+        mount "/opt/zenoss"
+        action [ :create, :switch ]
     end
 
     zenoss_rpm = "#{node[:zenoss][:rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
@@ -55,40 +67,24 @@ when "centos"
         source "daemons.txt.erb"
     end
 
-    # Define "platform" snapshot resource.
-    zenosslabs_snapshot "platform" do
-        vg_name "zenoss"
-        base_lv_name "base"
-        percent_of_origin 20
-        mount "/opt/zenoss"
-        action :nothing
-    end
-
     service "zenoss" do
-        only_if "test -f /opt/zenoss/.fresh_install"
-        action :start
-
-        # Create the "platform" snapshot after installing.
-        notifies :create, "zenosslabs_snapshot[platform]", :immediately
-
-        # Switch to the "platform" snapshot after stopping Zenoss to use it as
-        # the foundation for further snapshots.
-        notifies :switch, "zenosslabs_snapshot[platform]", :immediately
+        action [ :enable, :start ]
     end
 
 
-    # Install Core ZenPacks
-    service "zenoss" do
-        action :start
-    end
-
-    # Define "core" snapshot resource.
+    # Install Core ZenPacks.
     zenosslabs_snapshot "core" do
         vg_name "zenoss"
         base_lv_name "platform"
         percent_of_origin 20
         mount "/opt/zenoss"
-        action :nothing
+        action [ :create, :switch ]
+    end
+
+    %w{mysqld zenoss}.each do |service_name|
+        service service_name do
+            action :start
+        end
     end
 
     zenoss_core_zenpacks_rpm = "#{node[:zenoss][:core_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
@@ -99,37 +95,22 @@ when "centos"
     yum_package "zenoss-core-zenpacks" do
         source "/tmp/#{zenoss_core_zenpacks_rpm}"
         options "--nogpgcheck"
-
-        # Create the "core" snapshot after installing.
-        notifies :create, "zenosslabs_snapshot[core]", :immediately
-
-        # Switch to the "core" snapshot after stopping Zenoss to use it as the
-        # foundation for further snapshots.
-        notifies :switch, "zenosslabs_snapshot[core]", :immediately
     end
 
 
     # Install Enterprise ZenPacks
-    service "zenoss" do
-        action :start
-    end
-
-    # Define "enterprise" snapshot resource.
     zenosslabs_snapshot "enterprise" do
         vg_name "zenoss"
         base_lv_name "core"
         percent_of_origin 20
         mount "/opt/zenoss"
-        action :nothing
+        action [ :create, :switch ]
     end
 
-    # Define "working" snapshot resource.
-    zenosslabs_snapshot "working" do
-        vg_name "zenoss"
-        base_lv_name "enterprise"
-        percent_of_origin 20
-        mount "/opt/zenoss"
-        action :nothing
+    %w{mysqld zenoss}.each do |service_name|
+        service service_name do
+            action :start
+        end
     end
 
     zenoss_enterprise_zenpacks_rpm = "#{node[:zenoss][:enterprise_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
@@ -140,13 +121,14 @@ when "centos"
     yum_package "zenoss-enterprise-zenpacks" do
         source "/tmp/#{zenoss_enterprise_zenpacks_rpm}"
         options "--nogpgcheck"
+    end
 
-        # Create the "enterprise" snapshot after installing.
-        notifies :create, "zenosslabs_snapshot[enterprise]", :immediately
-
-        # When done, create and switch to a "working" snapshot so as to not
-        # dirty the enterprise snapshot.
-        notifies :create, "zenosslabs_snapshot[working]", :immediately
-        notifies :switch, "zenosslabs_snapshot[working]", :immediately
+    # Switch to a "working" snapshot to keep snapshots pristine.
+    zenosslabs_snapshot "working" do
+        vg_name "zenoss"
+        base_lv_name "enterprise"
+        percent_of_origin 20
+        mount "/opt/zenoss"
+        action [ :create, :switch ]
     end
 end
