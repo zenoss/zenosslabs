@@ -13,8 +13,6 @@ description "ZenPack Build Server for Zenoss 3.2.1"
 run_list "role[zenpack-builder]"
 default_attributes(
     "zenoss" => {
-        "rpm" => "zenoss-3.2.1",
-        "core_zenpacks_rpm" => "zenoss-core-zenpacks-3.2.1-1326",
-        "enterprise_zenpacks_rpm" => "zenoss-enterprise-zenpacks-3.2.1-1326"
+        "rpm" => "zenoss-3.2.1"
     }
 )

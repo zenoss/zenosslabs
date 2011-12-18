@@ -7,7 +7,6 @@
 # All rights reserved - Do Not Redistribute
 #
 
-
 case node[:platform]
 when "centos"
     rpm_release = node[:kernel][:release].split('.')[-1]
@@ -35,15 +34,7 @@ when "centos"
     end
 
 
-    # Install Zenoss platform.
-    zenosslabs_snapshot "platform" do
-        vg_name "zenoss"
-        base_lv_name "base"
-        percent_of_origin 20
-        mount "/opt/zenoss"
-        action [ :create, :switch ]
-    end
-
+    # Install Zenoss.
     zenoss_rpm = "#{node[:zenoss][:rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
     cookbook_file "/tmp/#{zenoss_rpm}" do
         source zenoss_rpm
@@ -71,64 +62,29 @@ when "centos"
         action [ :enable, :start ]
     end
 
+    # Optionally install Core ZenPacks.
+    if node[:zenoss][:core]
+        zenoss_core_zenpacks_rpm = "#{node[:zenoss][:core_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
+        cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
+            source zenoss_core_zenpacks_rpm
+        end
 
-    # Install Core ZenPacks.
-    zenosslabs_snapshot "core" do
-        vg_name "zenoss"
-        base_lv_name "platform"
-        percent_of_origin 20
-        mount "/opt/zenoss"
-        action [ :create, :switch ]
-    end
-
-    %w{mysqld zenoss}.each do |service_name|
-        service service_name do
-            action :start
+        yum_package "zenoss-core-zenpacks" do
+            source "/tmp/#{zenoss_core_zenpacks_rpm}"
+            options "--nogpgcheck"
         end
     end
-
-    zenoss_core_zenpacks_rpm = "#{node[:zenoss][:core_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
-    cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
-        source zenoss_core_zenpacks_rpm
-    end
-
-    yum_package "zenoss-core-zenpacks" do
-        source "/tmp/#{zenoss_core_zenpacks_rpm}"
-        options "--nogpgcheck"
-    end
-
 
     # Install Enterprise ZenPacks
-    zenosslabs_snapshot "enterprise" do
-        vg_name "zenoss"
-        base_lv_name "core"
-        percent_of_origin 20
-        mount "/opt/zenoss"
-        action [ :create, :switch ]
-    end
-
-    %w{mysqld zenoss}.each do |service_name|
-        service service_name do
-            action :start
+    if node[:zenoss][:enterprise]
+        zenoss_enterprise_zenpacks_rpm = "#{node[:zenoss][:enterprise_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
+        cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
+            source zenoss_enterprise_zenpacks_rpm
         end
-    end
 
-    zenoss_enterprise_zenpacks_rpm = "#{node[:zenoss][:enterprise_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
-    cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
-        source zenoss_enterprise_zenpacks_rpm
-    end
-
-    yum_package "zenoss-enterprise-zenpacks" do
-        source "/tmp/#{zenoss_enterprise_zenpacks_rpm}"
-        options "--nogpgcheck"
-    end
-
-    # Switch to a "working" snapshot to keep snapshots pristine.
-    zenosslabs_snapshot "working" do
-        vg_name "zenoss"
-        base_lv_name "enterprise"
-        percent_of_origin 20
-        mount "/opt/zenoss"
-        action [ :create, :switch ]
+        yum_package "zenoss-enterprise-zenpacks" do
+            source "/tmp/#{zenoss_enterprise_zenpacks_rpm}"
+            options "--nogpgcheck"
+        end
     end
 end

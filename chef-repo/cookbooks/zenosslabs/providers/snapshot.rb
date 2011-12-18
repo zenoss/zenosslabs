@@ -8,25 +8,16 @@
 #
 
 action :create do
-    execute "create snapshot" do
+    execute "create #{new_resource.name} snapshot" do
         not_if "test -b /dev/mapper/#{new_resource.vg_name}-#{new_resource.name}"
         command "lvcreate -l#{new_resource.percent_of_origin}%ORIGIN -s -n #{new_resource.name} /dev/#{new_resource.vg_name}/#{new_resource.base_lv_name}"
     end
 end
 
 action :switch do
-    %w{zenoss mysqld snmpd}.each do |service_name|
-        service service_name do
-            action :stop
-        end
-    end
-
-    mount new_resource.mount do
-        :unmount
-    end
-
     mount new_resource.mount do
         device "/dev/mapper/#{new_resource.vg_name}-#{new_resource.name}"
         fstype "ext3"
+        action [ :umount, :mount ]
     end
 end
