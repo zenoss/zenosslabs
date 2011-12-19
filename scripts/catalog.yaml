@@ -1,0 +1,17 @@
+directories:
+    core-zenpacks:
+        url: http://dev.zenoss.org/svnint/trunk/core/zenpacks/
+
+    enterprise-zenpacks:
+        url: http://dev.zenoss.org/svnint/trunk/enterprise/zenpacks/
+
+    telus-zenpacks:
+        url: git@github.com:zenoss/telus-zenpacks.git
+
+    community-zenpacks:
+        url: git@github.com:zenoss/Community-ZenPacks-SubModules.git
+
+zenpacks:
+    ZenPacks.zenoss.SolarisMonitor:
+        url: git@github.com:zenoss/ZenPacks.zenoss.SolarisMonitor.git
+
