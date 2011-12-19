@@ -25,14 +25,15 @@ when "centos"
         end
     end
 
-    # Create an loopback file system using LVM for snapshots.
-    zenosslabs_loopback_fs "/opt/zenoss" do
+    # Create a logical volume.
+    zenosslabs_lvm_fs "zenoss/#{node[:zenoss][:version]}" do
+        device "/dev/vdb"
         vg_name "zenoss"
-        block_size 4096
-        bytes 2147483648
-        action :create
+        lv_name node[:zenoss][:version]
+        size "2G"
+        mount_point "/opt/zenoss"
+        action [ :create, :format, :mount ]
     end
-
 
     # Install Zenoss.
     zenoss_rpm = "#{node[:zenoss][:rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
@@ -85,6 +86,27 @@ when "centos"
         yum_package "zenoss-enterprise-zenpacks" do
             source "/tmp/#{zenoss_enterprise_zenpacks_rpm}"
             options "--nogpgcheck"
+        end
+    end
+
+    %w{zenoss mysqld snmpd}.each do |service_name|
+        service service_name do
+            action :stop
+        end
+    end
+
+    # Create a snapshot and switch to it to keep base pristine.
+    zenosslabs_snapshot "tmp" do
+        vg_name "zenoss"
+        base_lv_name node[:zenoss][:version]
+        percent_of_origin 49
+        mount_point "/opt/zenoss"
+        action [ :create, :mount ]
+    end
+
+    %w{mysqld zenoss mysqld}.each do |service_name|
+        service service_name do
+            action :start
         end
     end
 end

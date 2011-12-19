@@ -8,16 +8,31 @@
 #
 
 action :create do
-    execute "create #{new_resource.name} snapshot" do
-        not_if "test -b /dev/mapper/#{new_resource.vg_name}-#{new_resource.name}"
-        command "lvcreate -l#{new_resource.percent_of_origin}%ORIGIN -s -n #{new_resource.name} /dev/#{new_resource.vg_name}/#{new_resource.base_lv_name}"
+    name = new_resource.name
+    vg_name = new_resource.vg_name
+    percent_of_origin = new_resource.percent_of_origin
+    base_lv_name = new_resource.base_lv_name
+
+    execute "lvcreate -l#{percent_of_origin}%ORIGIN -s -n #{name} #{vg_name}/#{base_lv_name}" do
+        not_if "test -b /dev/mapper/#{vg_name}-#{name}"
     end
 end
 
-action :switch do
-    mount new_resource.mount do
-        device "/dev/mapper/#{new_resource.vg_name}-#{new_resource.name}"
+action :mount do
+    name = new_resource.name
+    vg_name = new_resource.vg_name
+    mount_point = new_resource.mount_point
+
+    lv_device = "/dev/mapper/#{vg_name}-#{name}"
+
+
+    mount mount_point do
+        action :umount
+    end
+
+    mount mount_point do
+        device lv_device
         fstype "ext3"
-        action [ :umount, :mount ]
+        action :mount
     end
 end
