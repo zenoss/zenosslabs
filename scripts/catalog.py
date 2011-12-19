@@ -94,6 +94,14 @@ if __name__ == '__main__':
                 LOG.warn("Failed to clone or pull %s", directory_id)
                 continue
 
+            r = subprocess.check_call(
+                "cd %s ; git submodule update --init" % directory_id,
+                shell=True)
+
+            if r != 0:
+                LOG.warn("Failed to update submodules for %s", directory_id)
+                continue
+
         for entry in os.listdir(directory_id):
             path = os.path.join(directory_id, entry)
             setup_filename = os.path.join(path, 'setup.py')
