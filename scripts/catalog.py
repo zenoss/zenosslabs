@@ -4,8 +4,24 @@ LOG = logging.getLogger()
 
 import ast
 import os
+import re
+import sqlite3
 import subprocess
 import yaml
+
+
+AUTHOR_MAP = {
+    'Zenoss Inc.': ['Zenoss, Inc.'],
+    'Zenoss': ['Zenoss, Inc.'],
+    'Zenoss Team': ['Zenoss, Inc.'],
+    'Chet Luther <cluther@zenoss.com>': ['Chet Luther'],
+    'Alexander Vorobiyov devnull@rzpost.ru': ['Alexander Vorobiyov'],
+    'Ben Hirsch (bhirsch@zenoss.com)': ['Ben Hirsch'],
+    'Johan Keskitalo & Andreas Falk, R.Esteve': ['Johan Keskitalo', 'Andreas Falk', 'R. Esteve'],
+    'Johan Keskitalo,R.Esteve': ['Johan Keskitalo', 'R.Esteve'],
+    'Peter Mitsich': ['Peter Mistich'],
+    'Zenoss Inc. (Simon)': ['Simon Jakesch'],
+    }
 
 
 def get_zenpack_metadata(setup_filename, attribute_names=None):
@@ -35,16 +51,19 @@ def get_zenpack_metadata(setup_filename, attribute_names=None):
                 v = node.value
 
                 if isinstance(v, ast.Str):
-                    items[name.id] = v.s
+                    items[name.id] = v.s.decode('latin-1')
                 elif isinstance(v, (ast.Tuple, ast.List)):
                     items[name.id] = []
                     for e in v.elts:
                         if isinstance(e, ast.Str):
-                            items[name.id].append(e.s)
+                            items[name.id].append(e.s.decode('latin-1'))
 
     for attribute_name in attribute_names:
         if attribute_name not in items:
-            items[attribute_name] = None
+            if attribute_name == 'INSTALL_REQUIRES':
+                items[attribute_name] = []
+            else:
+                items[attribute_name] = None
 
     return items
 
@@ -112,10 +131,77 @@ if __name__ == '__main__':
                 continue
 
             zp_metadata = get_zenpack_metadata(setup_filename)
-            zp_metadata['url'] = directory['url']
+
+            if vcs == "git":
+                zp_metadata['URL'] = subprocess.check_output(
+                    "cd %s ; git config --get remote.origin.url" % path,
+                    shell=True).rstrip()
+            elif vcs == 'subversion':
+                zp_metadata['URL'] = subprocess.check_output(
+                    "cd %s ; svn info | grep URL | cut -d ' ' -f2" % path,
+                    shell=True).rstrip()
+
             zenpacks[entry] = zp_metadata
 
-    for zenpack_name in zenpacks.keys():
-        from pprint import pprint
-        pprint(zenpacks[zenpack_name])
-        print
+    conn = sqlite3.connect("catalog.db")
+    c = conn.cursor()
+    c.execute(
+        "CREATE TABLE zenpacks ("
+        "  name TEXT,"
+        "  license TEXT,"
+        "  copyright TEXT,"
+        "  version TEXT,"
+        "  compat_zenoss_vers TEXT,"
+        "  url TEXT"
+        ")")
+
+    c.execute(
+        "CREATE TABLE zenpack_authors ("
+        "  zenpack TEXT,"
+        "  author TEXT"
+        ")")
+
+    c.execute(
+        "CREATE TABLE zenpack_dependencies ("
+        "  zenpack TEXT,"
+        "  dependency TEXT,"
+        "  version TEXT"
+        ")")
+
+    for zenpack in zenpacks.values():
+        c.execute("INSERT INTO zenpacks VALUES (?, ?, ?, ?, ?, ?)", (
+            zenpack['NAME'],
+            zenpack['LICENSE'],
+            zenpack['COPYRIGHT'],
+            zenpack['VERSION'],
+            zenpack['COMPAT_ZENOSS_VERS'],
+            zenpack['URL']))
+
+        if zenpack['AUTHOR']:
+            authors = re.split(r'\s+(?:/|and|&)\s+', zenpack['AUTHOR'])
+            for author in authors:
+                if author in AUTHOR_MAP:
+                    authors.remove(author)
+                    authors.extend(AUTHOR_MAP[author])
+
+        for author in set(authors):
+            c.execute("INSERT INTO zenpack_authors VALUES (?, ?)", (
+                zenpack['NAME'],
+                author))
+
+        for dependency in zenpack['INSTALL_REQUIRES']:
+            parts = re.split(r'([><=]+)', dependency, maxsplit=1)
+
+            version = None
+            if len(parts) == 1:
+                version = ""
+            else:
+                version = ''.join(parts[1:])
+
+            c.execute("INSERT INTO zenpack_dependencies VALUES (?, ?, ?)", (
+                zenpack['NAME'],
+                parts[0],
+                version))
+
+    conn.commit()
+    c.close()
