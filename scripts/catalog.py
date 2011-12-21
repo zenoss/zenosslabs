@@ -5,27 +5,56 @@ LOG = logging.getLogger()
 import ast
 import os
 import re
-import sqlite3
 import subprocess
-import yaml
 
 
+# Define explicit maps from AUTHOR fields found in ZenPack setup.py files to
+# a list of normalized author names.
 AUTHOR_MAP = {
-    'Zenoss Inc.': ['Zenoss, Inc.'],
-    'Zenoss': ['Zenoss, Inc.'],
-    'Zenoss Team': ['Zenoss, Inc.'],
-    'Chet Luther <cluther@zenoss.com>': ['Chet Luther'],
+    '2NMS - Maarten Wallraf': ['Maarten Wallraf'],
     'Alexander Vorobiyov devnull@rzpost.ru': ['Alexander Vorobiyov'],
+    'Andreas Falk, R.Esteve': ['Andreas Falk', 'R. Esteve'],
     'Ben Hirsch (bhirsch@zenoss.com)': ['Ben Hirsch'],
+    'Chet Luther <cluther@zenoss.com>': ['Chet Luther'],
+    'Chris Morrison - chris.morrison@sita.aero, R.Esteve': ['Chris Morrison', 'R. Esteve'],
+    'David Buler (phonegi)': ['David Buler'],
+    'J.B. Giraudeau <jbgiraudeau@gmail.com>': ['J.B. Giraudeau'],
+    'Jason Carpenter - Peak6': ['Jason Carpenter'],
     'Johan Keskitalo & Andreas Falk, R.Esteve': ['Johan Keskitalo', 'Andreas Falk', 'R. Esteve'],
-    'Johan Keskitalo,R.Esteve': ['Johan Keskitalo', 'R.Esteve'],
+    'Johan Keskitalo,R.Esteve': ['Johan Keskitalo', 'R. Esteve'],
+    'Joseph Hanson (Zenoss)': ['Joseph Hanson'],
+    'Nick Anderson <nick@cmdln.org>': ['Nick Anderson'],
+    'Peter Hunt <support@opengear.com>': ['Peter Hunt'],
     'Peter Mitsich': ['Peter Mistich'],
+    'R.Esteve': ['R. Esteve'],
+    'Robert Naylor <zenpack@pobice.co.uk>': ['Robert Naylor'],
+    'Zenoss Inc.': ['Zenoss'],
     'Zenoss Inc. (Simon)': ['Simon Jakesch'],
+    'Zenoss Team': ['Zenoss'],
+    'Zenoss, Inc.': ['Zenoss'],
+    'dcarmean@zenoss.com': ['David Carmean'],
+    'zenoss': ['Zenoss'],
     }
 
 
 def get_zenpack_metadata(setup_filename, attribute_names=None):
-    """Extracts metadata from a ZenPack's setup.py."""
+    """Extracts metadata from a ZenPack's setup.py.
+
+    Uses AST to extract metadata from a ZenPack's setup.py without evaluating
+    it. If `attribute_names` is not specified, all standard attributes will be
+    extracted. If `attribute_names` is specified, only attributes by those
+    names will be extracted.
+
+    In the case that an attribute is missing, it will be set to `None` in the
+    returned dictionary.
+
+    :param setup_filename: path to ZenPack setup.py
+    :type setup_filename: :class:`types.StringTypes`
+    :param attribute_names: attribute names to return
+    :type attribute_names: :class:`types.ListType` or :class:`types.NoneType`
+    :rtype: :class:`types.DictType`
+
+    """
 
     if attribute_names is None:
         attribute_names = (
@@ -68,58 +97,151 @@ def get_zenpack_metadata(setup_filename, attribute_names=None):
     return items
 
 
+def expand_author(author):
+    """Expand a single author string into a list of authors.
+
+    Uses a combination of splitting on r'\s+(?:/|and|&)\s+' and looking up in
+    an exceptions dictionary.
+
+    :param author: AUTHOR string taken from a ZenPack's setup.py
+    :type author: :class:`types.StringTypes`
+    :rtype: :class:`types.GeneratorType`
+
+    """
+
+    if not author:
+        return
+
+    authors = re.split(r'\s+(?:/|and|&)\s+', author)
+    for part in authors:
+        if part in AUTHOR_MAP:
+            for expanded_author in AUTHOR_MAP[part]:
+                yield expanded_author
+        else:
+            yield part
+
+
+def vcs_from_url(url):
+    """Determine the VCS (Version Control System) from a URL.
+
+    The return value will either be `git` or `subversion`.
+
+    :param url: URL to checkout or clone the repository
+    :type url: :class:`types.StringTypes`
+    :rtype: :class:`types.StringType`
+
+    """
+    if url.endswith('.git'):
+        return "git"
+    else:
+        return "subversion"
+
+
+def vcs_from_path(path):
+    """Determine the VCS (Version Control System) from a path.
+
+    The return value will either be `git` or `subversion`.
+
+    :param path: base path to a checked out or cloned VCS repository
+    :type path: :class:`types.StringTypes`
+    :rtype: :class:`types.StringType`
+
+    """
+
+    if os.path.isdir(os.path.join(path, '.git')):
+        return 'git'
+    elif os.path.isdir(os.path.join(path, '.svn')):
+        return 'subversion'
+
+
+def url_from_path(path):
+    """Determine the VCS URL for a path.
+
+    :param path: base path to a checked out or cloned VCS repository
+    :type path: :class:`types.StringTypes`
+    :rtype: :class:`types.StringType`
+
+    """
+    vcs = vcs_from_path(path)
+
+    if vcs == "git":
+        return subprocess.check_output(
+            "cd %s ; git config --get remote.origin.url" % path,
+            shell=True).rstrip()
+    elif vcs == 'subversion':
+        return subprocess.check_output(
+            "cd %s ; svn info | grep URL | cut -d ' ' -f2" % path,
+            shell=True).rstrip()
+
+
+def get_repository(label, url):
+    """Clone or checkout a repository.
+
+    :param label: label for the repository
+    :type label: :class:`types.StringType`
+    :param url: URL to checkout or clone the repository
+    :type url: :class:`types.StringTypes`
+    :rtype: :class:`types.NoneType`
+
+    """
+    vcs = vcs_from_url(url)
+    if vcs == "subversion":
+        LOG.info("%s: subversion checkout", label)
+        r = subprocess.check_call(
+            "svn checkout %s %s" % (url, label),
+            shell=True)
+
+        if r != 0:
+            LOG.warn("Failed to checkout %s", label)
+
+    elif vcs == 'git':
+        r = None
+        if os.path.isdir(os.path.join(label, '.git')):
+            LOG.info("%s: git pull", label)
+            r = subprocess.check_call(
+                "cd %s ; git pull" % label,
+                shell=True,
+                )
+        else:
+            LOG.info("%s: git clone", label)
+            r = subprocess.check_call(
+                "git clone %s %s" % (url, label),
+                shell=True)
+
+        if r != 0:
+            LOG.warn("Failed to clone or pull %s", label)
+            return
+
+        LOG.info("%s: git submodule update --init", label)
+        r = subprocess.check_call(
+            "cd %s ; git submodule update --init" % label,
+            shell=True)
+
+        if r != 0:
+            LOG.warn("Failed to update submodules for %s", label)
+            return
+
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    import sqlite3
+    import yaml
+
+    logging.basicConfig(
+        format="%(levelname)s| %(message)s",
+        level=logging.INFO)
 
     config_file = open("catalog.yaml", "r")
     config = yaml.load(config_file)
     config_file.close()
 
-    zenpacks = {}
+    discovered_zenpacks = {}
 
     for directory_id, directory in config.get('directories', {}).items():
         if 'url' not in directory:
             LOG.warn("No url specified for %s", directory_id)
             continue
 
-        vcs = None
-        if directory['url'].endswith('.git'):
-            vcs = 'git'
-        else:
-            vcs = 'subversion'
-
-        if vcs == 'subversion':
-            r = subprocess.check_call(
-                "svn checkout %s %s" % (directory['url'], directory_id),
-                shell=True)
-
-            if r != 0:
-                LOG.warn("Failed to checkout %s", directory_id)
-                continue
-
-        elif vcs == 'git':
-            r = None
-            if os.path.isdir(os.path.join(directory_id, '.git')):
-                r = subprocess.check_call(
-                    "cd %s ; git pull" % directory_id,
-                    shell=True,
-                    )
-            else:
-                r = subprocess.check_call(
-                    "git clone %s %s" % (directory['url'], directory_id),
-                    shell=True)
-
-            if r != 0:
-                LOG.warn("Failed to clone or pull %s", directory_id)
-                continue
-
-            r = subprocess.check_call(
-                "cd %s ; git submodule update --init" % directory_id,
-                shell=True)
-
-            if r != 0:
-                LOG.warn("Failed to update submodules for %s", directory_id)
-                continue
+        # get_repository(directory_id, directory['url'])
 
         for entry in os.listdir(directory_id):
             path = os.path.join(directory_id, entry)
@@ -131,17 +253,25 @@ if __name__ == '__main__':
                 continue
 
             zp_metadata = get_zenpack_metadata(setup_filename)
+            zp_metadata['URL'] = url_from_path(path)
 
-            if vcs == "git":
-                zp_metadata['URL'] = subprocess.check_output(
-                    "cd %s ; git config --get remote.origin.url" % path,
-                    shell=True).rstrip()
-            elif vcs == 'subversion':
-                zp_metadata['URL'] = subprocess.check_output(
-                    "cd %s ; svn info | grep URL | cut -d ' ' -f2" % path,
-                    shell=True).rstrip()
+            discovered_zenpacks[entry] = zp_metadata
 
-            zenpacks[entry] = zp_metadata
+    for zenpack_id, zenpack in config.get('zenpacks', {}).items():
+        if 'url' not in zenpack:
+            LOG.warn("No url specified for %s", zenpack_id)
+            continue
+
+        # get_repository(zenpack_id, zenpack['url'])
+
+        setup_filename = os.path.join(zenpack_id, 'setup.py')
+        if not os.path.isfile(setup_filename):
+            continue
+
+        zp_metadata = get_zenpack_metadata(setup_filename)
+        zp_metadata['URL'] = url_from_path(zenpack_id)
+
+        discovered_zenpacks[zenpack_id] = zp_metadata
 
     conn = sqlite3.connect("catalog.db")
     c = conn.cursor()
@@ -168,26 +298,21 @@ if __name__ == '__main__':
         "  version TEXT"
         ")")
 
-    for zenpack in zenpacks.values():
+    for zenpack in discovered_zenpacks.values():
         c.execute("INSERT INTO zenpacks VALUES (?, ?, ?, ?, ?, ?)", (
             zenpack['NAME'],
             zenpack['LICENSE'],
             zenpack['COPYRIGHT'],
             zenpack['VERSION'],
             zenpack['COMPAT_ZENOSS_VERS'],
-            zenpack['URL']))
+            zenpack['URL'],
+            ))
 
-        if zenpack['AUTHOR']:
-            authors = re.split(r'\s+(?:/|and|&)\s+', zenpack['AUTHOR'])
-            for author in authors:
-                if author in AUTHOR_MAP:
-                    authors.remove(author)
-                    authors.extend(AUTHOR_MAP[author])
-
-        for author in set(authors):
+        for author in set(expand_author(zenpack['AUTHOR'])):
             c.execute("INSERT INTO zenpack_authors VALUES (?, ?)", (
                 zenpack['NAME'],
-                author))
+                author,
+                ))
 
         for dependency in zenpack['INSTALL_REQUIRES']:
             parts = re.split(r'([><=]+)', dependency, maxsplit=1)
@@ -201,7 +326,8 @@ if __name__ == '__main__':
             c.execute("INSERT INTO zenpack_dependencies VALUES (?, ?, ?)", (
                 zenpack['NAME'],
                 parts[0],
-                version))
+                version,
+                ))
 
     conn.commit()
     c.close()
