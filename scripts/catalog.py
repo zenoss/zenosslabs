@@ -222,6 +222,17 @@ def get_repository(label, url):
             return
 
 
+def count_code_lines(path, extension):
+    r = subprocess.check_output(
+        "cd %s ; find ZenPacks/ -name \\*.%s -print0 | xargs -0 wc -l | tail -1 | awk '{ print $1 }'" % (path, extension),
+        shell=True).rstrip()
+
+    if r:
+        return int(r)
+    else:
+        return 0
+
+
 if __name__ == '__main__':
     import sqlite3
     import yaml
@@ -254,6 +265,12 @@ if __name__ == '__main__':
 
             zp_metadata = get_zenpack_metadata(setup_filename)
             zp_metadata['URL'] = url_from_path(path)
+            zp_metadata['LINES_PY'] = count_code_lines(path, 'py')
+            zp_metadata['LINES_XML'] = count_code_lines(path, 'xml')
+            zp_metadata['LINES_ZCML'] = count_code_lines(path, 'zcml')
+            zp_metadata['LINES_RPT'] = count_code_lines(path, 'rpt')
+            zp_metadata['LINES_PT'] = count_code_lines(path, 'pt')
+            zp_metadata['LINES_JS'] = count_code_lines(path, 'js')
 
             discovered_zenpacks[entry] = zp_metadata
 
@@ -270,6 +287,12 @@ if __name__ == '__main__':
 
         zp_metadata = get_zenpack_metadata(setup_filename)
         zp_metadata['URL'] = url_from_path(zenpack_id)
+        zp_metadata['LINES_PY'] = count_code_lines(zenpack_id, 'py')
+        zp_metadata['LINES_XML'] = count_code_lines(zenpack_id, 'xml')
+        zp_metadata['LINES_ZCML'] = count_code_lines(zenpack_id, 'zcml')
+        zp_metadata['LINES_RPT'] = count_code_lines(zenpack_id, 'rpt')
+        zp_metadata['LINES_PT'] = count_code_lines(zenpack_id, 'pt')
+        zp_metadata['LINES_JS'] = count_code_lines(zenpack_id, 'js')
 
         discovered_zenpacks[zenpack_id] = zp_metadata
 
@@ -296,6 +319,17 @@ if __name__ == '__main__':
         "  zenpack TEXT,"
         "  dependency TEXT,"
         "  version TEXT"
+        ")")
+
+    c.execute(
+        "CREATE TABLE zenpack_codelines ("
+        "  zenpack TEXT,"
+        "  py INTEGER,"
+        "  xml INTEGER,"
+        "  zcml INTEGER,"
+        "  rpt INTEGER,"
+        "  pt INTEGER,"
+        "  js INTEGER"
         ")")
 
     for zenpack in discovered_zenpacks.values():
@@ -328,6 +362,16 @@ if __name__ == '__main__':
                 parts[0],
                 version,
                 ))
+
+        c.execute("INSERT INTO zenpack_codelines VALUES (?, ?, ?, ?, ?, ?, ?)", (
+            zenpack['NAME'],
+            zenpack['LINES_PY'],
+            zenpack['LINES_XML'],
+            zenpack['LINES_ZCML'],
+            zenpack['LINES_RPT'],
+            zenpack['LINES_PT'],
+            zenpack['LINES_JS'],
+            ))
 
     conn.commit()
     c.close()
