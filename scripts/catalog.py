@@ -8,6 +8,47 @@ import re
 import subprocess
 
 
+HTML_TEMPLATE = """<html>
+    <head>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+            google.load("visualization", "1", {packages:["corechart"]});
+            google.setOnLoadCallback(drawChart);
+            function drawChart() {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Task');
+                data.addColumn('number', 'Hours per Day');
+                data.addRows([
+                    ['Work',    11],
+                    ['Eat',      2],
+                    ['Commute',  2],
+                    ['Watch TV', 2],
+                    ['Sleep',    7]
+                ]);
+
+                var options = {
+                    width: 450, height: 300,
+                    title: 'My Daily Activities'
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+                chart.draw(data, options);
+            }
+        </script>
+    </head>
+    <body>
+        <div id="chart_div"></div>
+    </body>
+</html>
+"""
+
+TEXT_TEMPLATE = """ZenPacks Dashboard
+------------------
+
+Total ZenPacks: {{ total_zenpacks }}
+
+"""
+
 # Define explicit maps from AUTHOR fields found in ZenPack setup.py files to
 # a list of normalized author names.
 AUTHOR_MAP = {
@@ -233,26 +274,29 @@ def count_code_lines(path, extension):
         return 0
 
 
-if __name__ == '__main__':
-    import sqlite3
-    import yaml
+def update_repositories(config):
+    for directory_id, directory in config.get('directories', {}).items():
+        if 'url' not in directory:
+            LOG.warn("No url specified for %s", directory_id)
+            continue
 
-    logging.basicConfig(
-        format="%(levelname)s| %(message)s",
-        level=logging.INFO)
+        get_repository(directory_id, directory['url'])
 
-    config_file = open("catalog.yaml", "r")
-    config = yaml.load(config_file)
-    config_file.close()
+    for zenpack_id, zenpack in config.get('zenpacks', {}).items():
+        if 'url' not in zenpack:
+            LOG.warn("No url specified for %s", zenpack_id)
+            continue
 
+        get_repository(zenpack_id, zenpack['url'])
+
+
+def create_database(config):
     discovered_zenpacks = {}
 
     for directory_id, directory in config.get('directories', {}).items():
         if 'url' not in directory:
             LOG.warn("No url specified for %s", directory_id)
             continue
-
-        # get_repository(directory_id, directory['url'])
 
         for entry in os.listdir(directory_id):
             path = os.path.join(directory_id, entry)
@@ -278,8 +322,6 @@ if __name__ == '__main__':
         if 'url' not in zenpack:
             LOG.warn("No url specified for %s", zenpack_id)
             continue
-
-        # get_repository(zenpack_id, zenpack['url'])
 
         setup_filename = os.path.join(zenpack_id, 'setup.py')
         if not os.path.isfile(setup_filename):
@@ -375,3 +417,75 @@ if __name__ == '__main__':
 
     conn.commit()
     c.close()
+
+
+def get_render_context():
+    context = {}
+
+    conn = sqlite3.connect("catalog.db")
+    c = conn.cursor()
+
+    c.execute("SELECT COUNT(*) FROM zenpacks")
+    context['total_zenpacks'] = c.fetchone()[0]
+
+    c.close()
+
+    return context
+
+
+def render(template_name):
+    import jinja2
+
+    template = jinja2.Template(template_name)
+    context = get_render_context()
+    print template.render(context)
+
+
+if __name__ == '__main__':
+    import sqlite3
+    import sys
+    import yaml
+
+    logging.basicConfig(
+        format="%(levelname)s| %(message)s",
+        level=logging.INFO)
+
+    valid_commands = (
+        'update_repos',
+        'create_database',
+        'render_text',
+        'render_html',
+        )
+
+    commands = []
+    if len(sys.argv) < 2:
+        print >> sys.stderr, "Usage: %s <command>\n" % sys.argv[0]
+        print >> sys.stderr, "Valid commands: %s" % ', '.join(valid_commands)
+        sys.exit(1)
+
+    command = None
+    if len(sys.argv) == 1:
+        commands.append('render_text')
+    else:
+        commands = sys.argv[1:]
+
+    for command in commands:
+        if command not in valid_commands:
+            print >> sys.stderr, "%s is not a valid command.\n"
+            print >> sys.stderr, "Valid commands: %s" % (
+                ', '.join(valid_commands),)
+            sys.exit(1)
+
+    config_file = open("catalog.yaml", "r")
+    config = yaml.load(config_file)
+    config_file.close()
+
+    for command in commands:
+        if command == 'update_repos':
+            update_repositories(config)
+        elif command == 'create_database':
+            create_database(config)
+        elif command == 'render_text':
+            render(TEXT_TEMPLATE)
+        elif command == 'render_html':
+            render(HTML_TEMPLATE)
