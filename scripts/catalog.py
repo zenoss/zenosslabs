@@ -3,8 +3,10 @@ import logging
 LOG = logging.getLogger()
 
 import ast
+import operator
 import os
 import re
+import unicodedata
 import subprocess
 
 
@@ -13,41 +15,128 @@ HTML_TEMPLATE = """<html>
         <script type="text/javascript" src="https://www.google.com/jsapi"></script>
         <script type="text/javascript">
             google.load("visualization", "1", {packages:["corechart"]});
-            google.setOnLoadCallback(drawChart);
-            function drawChart() {
+
+            // Authorship Concentration
+            google.setOnLoadCallback(drawAuthorshipConcentration);
+            function drawAuthorshipConcentration() {
                 var data = new google.visualization.DataTable();
-                data.addColumn('string', 'Task');
-                data.addColumn('number', 'Hours per Day');
+                data.addColumn('string', 'ZenPacks per Author');
+                data.addColumn('number', 'Number of Authors');
                 data.addRows([
-                    ['Work',    11],
-                    ['Eat',      2],
-                    ['Commute',  2],
-                    ['Watch TV', 2],
-                    ['Sleep',    7]
+                {%- for number, count in authorship_concentration %}
+                    ['{{ number }} ZenPack{{ 's' if number != 1 }}', {{ count }}]{{ ',' if not loop.last }}
+                {%- endfor %}
                 ]);
 
                 var options = {
-                    width: 450, height: 300,
-                    title: 'My Daily Activities'
+                    title: 'Authorship Concentration',
+                    titleTextStyle: {fontSize: 24},
+                    width: 600,
+                    height: 400
                 };
 
-                var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+                var chart = new google.visualization.PieChart(document.getElementById('authorship_concentration_div'));
+                chart.draw(data, options);
+            }
+
+            // Top 10 Authors
+            google.setOnLoadCallback(drawTopTenAuthors);
+            function drawTopTenAuthors() {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Author');
+                data.addColumn('number', 'Number of ZenPacks');
+                data.addRows([
+                {%- for author, count in top_authors[:10] %}
+                    ["{{ author }}", {{ count }}]{{ ',' if not loop.last }}
+                {%- endfor %}
+                ]);
+
+                var options = {
+                    title: 'Top 10 Authors',
+                    titleTextStyle: {fontSize: 24},
+                    width: 600,
+                    height: 400
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('top_ten_authors_div'));
+                chart.draw(data, options);
+            }
+
+            // License Distribution
+            google.setOnLoadCallback(drawLicenseDistribution);
+            function drawLicenseDistribution() {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'License');
+                data.addColumn('number', 'Number of ZenPacks');
+                data.addRows([
+                {%- for license, count in license_distribution %}
+                    ["{{ license }}", {{ count }}]{{ ',' if not loop.last }}
+                {%- endfor %}
+                ]);
+
+                var options = {
+                    title: 'License Distribution',
+                    titleTextStyle: {fontSize: 24},
+                    width: 600,
+                    height: 400
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('license_distribution_div'));
+                chart.draw(data, options);
+            }
+
+            // Lines of Code
+            google.setOnLoadCallback(drawLinesOfCode);
+            function drawLinesOfCode() {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Language');
+                data.addColumn('number', 'Lines of Code');
+                data.addRows([
+                    ['Python', {{ lines_of_code[0] }}],
+                    ['XML', {{ lines_of_code[1] }}],
+                    ['ZCML', {{ lines_of_code[2] }}],
+                    ['RPT', {{ lines_of_code[3] }}],
+                    ['PT', {{ lines_of_code[4] }}],
+                    ['JS', {{ lines_of_code[5] }}]
+                ]);
+
+                var options = {
+                    title: 'Lines of Code',
+                    titleTextStyle: {fontSize: 24},
+                    width: 600,
+                    height: 400
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('lines_of_code_div'));
                 chart.draw(data, options);
             }
         </script>
     </head>
     <body>
-        <div id="chart_div"></div>
+        <table>
+            <tr>
+                <td id="authorship_concentration_div"></td>
+                <td id="top_ten_authors_div"></td>
+            </tr><tr>
+                <td id="license_distribution_div"></td>
+                <td id="lines_of_code_div"></td>
+            </tr>
     </body>
 </html>
 """
+
 
 TEXT_TEMPLATE = """ZenPacks Dashboard
 ------------------
 
 Total ZenPacks: {{ total_zenpacks }}
 
+Authorship Concentration:
+{%- for number, count in authorship_concentration %}
+    - {{ number }}: {{ count }}
+{%- endfor %}
 """
+
 
 # Define explicit maps from AUTHOR fields found in ZenPack setup.py files to
 # a list of normalized author names.
@@ -121,12 +210,12 @@ def get_zenpack_metadata(setup_filename, attribute_names=None):
                 v = node.value
 
                 if isinstance(v, ast.Str):
-                    items[name.id] = v.s.decode('latin-1')
+                    items[name.id] = asciify(v.s)
                 elif isinstance(v, (ast.Tuple, ast.List)):
                     items[name.id] = []
                     for e in v.elts:
                         if isinstance(e, ast.Str):
-                            items[name.id].append(e.s.decode('latin-1'))
+                            items[name.id].append(asciify(e.s))
 
     for attribute_name in attribute_names:
         if attribute_name not in items:
@@ -338,6 +427,9 @@ def create_database(config):
 
         discovered_zenpacks[zenpack_id] = zp_metadata
 
+    if os.path.isfile("catalog.db"):
+        os.unlink("catalog.db")
+
     conn = sqlite3.connect("catalog.db")
     c = conn.cursor()
     c.execute(
@@ -377,7 +469,7 @@ def create_database(config):
     for zenpack in discovered_zenpacks.values():
         c.execute("INSERT INTO zenpacks VALUES (?, ?, ?, ?, ?, ?)", (
             zenpack['NAME'],
-            zenpack['LICENSE'],
+            zenpack['LICENSE'] and zenpack['LICENSE'] or None,
             zenpack['COPYRIGHT'],
             zenpack['VERSION'],
             zenpack['COMPAT_ZENOSS_VERS'],
@@ -419,6 +511,19 @@ def create_database(config):
     c.close()
 
 
+def asciify(string):
+    return unicodedata.normalize(
+        'NFKD', string.decode('latin-1')).encode('ASCII', 'ignore')
+
+
+def render(template_name):
+    import jinja2
+
+    template = jinja2.Template(template_name)
+    context = get_render_context()
+    print template.render(context)
+
+
 def get_render_context():
     context = {}
 
@@ -428,17 +533,45 @@ def get_render_context():
     c.execute("SELECT COUNT(*) FROM zenpacks")
     context['total_zenpacks'] = c.fetchone()[0]
 
+    c.execute(
+        "SELECT author, COUNT(*) "
+        "  FROM zenpack_authors "
+        " GROUP BY author "
+        " ORDER BY COUNT(*) DESC "
+        )
+
+    authorship_concentration = {}
+    context['top_authors'] = []
+
+    for row in c:
+        authorship_concentration.setdefault(row[1], 0)
+        authorship_concentration[row[1]] += 1
+        context['top_authors'].append((row[0], row[1]))
+
+    context['authorship_concentration'] = sorted(
+        authorship_concentration.items(),
+        key=operator.itemgetter(1),
+        reverse=True)
+
+    c.execute(
+        "SELECT IFNULL(license, 'Undefined'), COUNT(*) "
+        "  FROM zenpacks "
+        " GROUP BY license "
+        " ORDER BY COUNT(*) DESC "
+        )
+
+    context['license_distribution'] = c.fetchall()
+
+    c.execute(
+        "SELECT SUM(py), SUM(xml), SUM(zcml), SUM(rpt), SUM(pt), SUM(js) "
+        "  FROM zenpack_codelines "
+        )
+
+    context['lines_of_code'] = c.fetchone()
+
     c.close()
 
     return context
-
-
-def render(template_name):
-    import jinja2
-
-    template = jinja2.Template(template_name)
-    context = get_render_context()
-    print template.render(context)
 
 
 if __name__ == '__main__':
@@ -471,7 +604,7 @@ if __name__ == '__main__':
 
     for command in commands:
         if command not in valid_commands:
-            print >> sys.stderr, "%s is not a valid command.\n"
+            print >> sys.stderr, "%s is not a valid command.\n" % command
             print >> sys.stderr, "Valid commands: %s" % (
                 ', '.join(valid_commands),)
             sys.exit(1)
