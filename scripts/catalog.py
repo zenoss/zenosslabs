@@ -363,6 +363,34 @@ def count_code_lines(path, extension):
         return 0
 
 
+def commits_from_path(path):
+    vcs = vcs_from_path(path)
+
+    command = None
+    matcher = None
+
+    if vcs == 'subversion':
+        command = "cd %s ; svn log -q | grep -v '^---'"
+        matcher = re.compile(r'^\S+ \| \S+ \| (\S+ \S+)').search
+    elif vcs == 'git':
+        command = "cd %s ; git log --date=iso | grep '^Date'"
+        matcher = re.compile(r'^Date:\s+(\S+ \S+)').search
+    else:
+        return []
+
+    commits = []
+    r = subprocess.check_output(command % path, shell=True)
+    for line in r.split('\n'):
+        match = matcher(line)
+        if match:
+            commits.append(match.group(1))
+
+    # We want chronological order.
+    commits.reverse()
+
+    return commits
+
+
 def update_repositories(config):
     for directory_id, directory in config.get('directories', {}).items():
         if 'url' not in directory:
@@ -379,9 +407,7 @@ def update_repositories(config):
         get_repository(zenpack_id, zenpack['url'])
 
 
-def create_database(config):
-    discovered_zenpacks = {}
-
+def discover_zenpacks(config):
     for directory_id, directory in config.get('directories', {}).items():
         if 'url' not in directory:
             LOG.warn("No url specified for %s", directory_id)
@@ -396,16 +422,9 @@ def create_database(config):
                 not os.path.isfile(setup_filename):
                 continue
 
-            zp_metadata = get_zenpack_metadata(setup_filename)
-            zp_metadata['URL'] = url_from_path(path)
-            zp_metadata['LINES_PY'] = count_code_lines(path, 'py')
-            zp_metadata['LINES_XML'] = count_code_lines(path, 'xml')
-            zp_metadata['LINES_ZCML'] = count_code_lines(path, 'zcml')
-            zp_metadata['LINES_RPT'] = count_code_lines(path, 'rpt')
-            zp_metadata['LINES_PT'] = count_code_lines(path, 'pt')
-            zp_metadata['LINES_JS'] = count_code_lines(path, 'js')
-
-            discovered_zenpacks[entry] = zp_metadata
+            zenpack = get_zenpack_metadata(setup_filename)
+            zenpack['PATH'] = path
+            yield zenpack
 
     for zenpack_id, zenpack in config.get('zenpacks', {}).items():
         if 'url' not in zenpack:
@@ -416,17 +435,12 @@ def create_database(config):
         if not os.path.isfile(setup_filename):
             continue
 
-        zp_metadata = get_zenpack_metadata(setup_filename)
-        zp_metadata['URL'] = url_from_path(zenpack_id)
-        zp_metadata['LINES_PY'] = count_code_lines(zenpack_id, 'py')
-        zp_metadata['LINES_XML'] = count_code_lines(zenpack_id, 'xml')
-        zp_metadata['LINES_ZCML'] = count_code_lines(zenpack_id, 'zcml')
-        zp_metadata['LINES_RPT'] = count_code_lines(zenpack_id, 'rpt')
-        zp_metadata['LINES_PT'] = count_code_lines(zenpack_id, 'pt')
-        zp_metadata['LINES_JS'] = count_code_lines(zenpack_id, 'js')
+        zenpack = get_zenpack_metadata(setup_filename)
+        zenpack['PATH'] = zenpack_id
+        yield zenpack
 
-        discovered_zenpacks[zenpack_id] = zp_metadata
 
+def create_database(config):
     if os.path.isfile("catalog.db"):
         os.unlink("catalog.db")
 
@@ -466,14 +480,21 @@ def create_database(config):
         "  js INTEGER"
         ")")
 
-    for zenpack in discovered_zenpacks.values():
+    c.execute(
+        "CREATE TABLE zenpack_commits ("
+        "  zenpack TEXT,"
+        "  feature TEXT,"
+        "  date TEXT"
+        ")")
+
+    for zenpack in discover_zenpacks(config):
         c.execute("INSERT INTO zenpacks VALUES (?, ?, ?, ?, ?, ?)", (
             zenpack['NAME'],
             zenpack['LICENSE'] and zenpack['LICENSE'] or None,
             zenpack['COPYRIGHT'],
             zenpack['VERSION'],
             zenpack['COMPAT_ZENOSS_VERS'],
-            zenpack['URL'],
+            url_from_path(zenpack['PATH']),
             ))
 
         for author in set(expand_author(zenpack['AUTHOR'])):
@@ -499,19 +520,113 @@ def create_database(config):
 
         c.execute("INSERT INTO zenpack_codelines VALUES (?, ?, ?, ?, ?, ?, ?)", (
             zenpack['NAME'],
-            zenpack['LINES_PY'],
-            zenpack['LINES_XML'],
-            zenpack['LINES_ZCML'],
-            zenpack['LINES_RPT'],
-            zenpack['LINES_PT'],
-            zenpack['LINES_JS'],
+            count_code_lines(zenpack['PATH'], 'py'),
+            count_code_lines(zenpack['PATH'], 'xml'),
+            count_code_lines(zenpack['PATH'], 'zcml'),
+            count_code_lines(zenpack['PATH'], 'rpt'),
+            count_code_lines(zenpack['PATH'], 'pt'),
+            count_code_lines(zenpack['PATH'], 'js'),
             ))
+
+        commits = commits_from_path(zenpack['PATH'])
+        for i, commit in enumerate(commits):
+            feature = None
+            if i == 0:
+                feature = 'first'
+            elif i == len(commits) - 1:
+                feature = 'last'
+
+            c.execute("INSERT INTO zenpack_commits VALUES (?, ?, ?)", (
+                zenpack['NAME'],
+                feature,
+                commit,
+                ))
 
     conn.commit()
     c.close()
 
 
+def create_csv(config):
+    import csv
+
+    zenpacks_writer = csv.writer(open('zenpacks.csv', 'wb'))
+    zenpacks_writer.writerow([
+        'Name', 'License', 'Copyright', 'Version', 'Compatible Zenoss Version',
+        'URL'])
+
+    zenpack_authors_writer = csv.writer(open('zenpack_authors.csv', 'wb'))
+    zenpack_authors_writer.writerow(['ZenPack', 'Author'])
+
+    zenpack_codelines_writer = csv.writer(open('zenpack_codelines.csv', 'wb'))
+    zenpack_codelines_writer.writerow([
+        'ZenPack', 'XML', 'Python', 'JavaScript', 'PT', 'RPT', 'ZCML'])
+
+    zenpack_commits_writer = csv.writer(open('zenpacks_commits.csv', 'wb'))
+    zenpack_commits_writer.writerow(['ZenPack', 'Feature', 'Date'])
+
+    zenpack_dependencies_writer = csv.writer(
+        open('zenpack_dependencies.csv', 'wb'))
+
+    zenpack_dependencies_writer.writerow(['ZenPack', 'Dependency', 'Version'])
+
+    for zenpack in discover_zenpacks(config):
+        zenpacks_writer.writerow([
+            zenpack['NAME'],
+            zenpack['LICENSE'] is None and '' or zenpack['LICENSE'],
+            zenpack['COPYRIGHT'],
+            zenpack['VERSION'],
+            zenpack['COMPAT_ZENOSS_VERS'],
+            url_from_path(zenpack['PATH']),
+            ])
+
+        for author in set(expand_author(zenpack['AUTHOR'])):
+            zenpack_authors_writer.writerow([
+                zenpack['NAME'],
+                author,
+                ])
+
+        for dependency in zenpack['INSTALL_REQUIRES']:
+            parts = re.split(r'([><=]+)', dependency, maxsplit=1)
+
+            version = None
+            if len(parts) == 1:
+                version = ""
+            else:
+                version = ''.join(parts[1:])
+
+            zenpack_dependencies_writer.writerow([
+                zenpack['NAME'],
+                parts[0],
+                version,
+                ])
+
+        zenpack_codelines_writer.writerow([
+            zenpack['NAME'],
+            count_code_lines(zenpack['PATH'], 'xml'),
+            count_code_lines(zenpack['PATH'], 'py'),
+            count_code_lines(zenpack['PATH'], 'js'),
+            count_code_lines(zenpack['PATH'], 'pt'),
+            count_code_lines(zenpack['PATH'], 'rpt'),
+            count_code_lines(zenpack['PATH'], 'zcml'),
+            ])
+
+        commits = commits_from_path(zenpack['PATH'])
+        for i, commit in enumerate(commits):
+            feature = None
+            if i == 0:
+                feature = 'first'
+            elif i == len(commits) - 1:
+                feature = 'last'
+
+            zenpack_commits_writer.writerow([
+                zenpack['NAME'],
+                feature,
+                commit,
+                ])
+
+
 def asciify(string):
+    """Brute-force conversion of any encoding to ASCII."""
     return unicodedata.normalize(
         'NFKD', string.decode('latin-1')).encode('ASCII', 'ignore')
 
@@ -586,6 +701,7 @@ if __name__ == '__main__':
     valid_commands = (
         'update_repos',
         'create_database',
+        'create_csv',
         'render_text',
         'render_html',
         )
@@ -618,6 +734,8 @@ if __name__ == '__main__':
             update_repositories(config)
         elif command == 'create_database':
             create_database(config)
+        elif command == 'create_csv':
+            create_csv(config)
         elif command == 'render_text':
             render(TEXT_TEMPLATE)
         elif command == 'render_html':
