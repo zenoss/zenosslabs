@@ -54,3 +54,15 @@ action :mount do
         fstype "ext3"
     end
 end
+
+action :umount do
+    mount_point = new_resource.mount_point
+
+    lv_device = "/dev/mapper/#{new_resource.vg_name}-#{new_resource.lv_name}"
+
+    mount mount_point do
+        device lv_device
+        fstype "ext3"
+        action :umount
+    end    
+end

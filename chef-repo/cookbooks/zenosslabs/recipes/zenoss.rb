@@ -111,7 +111,7 @@ when "centos"
         end
     end
 
-    mount "/opt/zenoss" do
+    zenosslabs_lvm_fs "zenoss/#{lv_name}" do
         action :umount
     end
 

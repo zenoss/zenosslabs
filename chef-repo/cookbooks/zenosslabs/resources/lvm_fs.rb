@@ -7,7 +7,7 @@
 # All rights reserved - Do Not Redistribute
 #
 
-actions :create, :format, :mount
+actions :create, :format, :mount, :umount
 
 attribute :name, :kind_of => String, :name_attribute => true
 attribute :device, :kind_of => String
