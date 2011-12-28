@@ -1,0 +1,5 @@
+ZenPacks.*/
+*-zenpacks/
+catalog.db
+catalog.yaml
+oss/
