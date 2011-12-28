@@ -167,6 +167,12 @@ AUTHOR_MAP = {
     }
 
 
+def asciify(string):
+    """Brute-force conversion of any encoding to ASCII."""
+    return unicodedata.normalize(
+        'NFKD', string.decode('latin-1')).encode('ASCII', 'ignore')
+
+
 def get_zenpack_metadata(setup_filename, attribute_names=None):
     """Extracts metadata from a ZenPack's setup.py.
 
@@ -530,15 +536,23 @@ def create_database(config):
 
         commits = commits_from_path(zenpack['PATH'])
         for i, commit in enumerate(commits):
-            feature = None
             if i == 0:
-                feature = 'first'
-            elif i == len(commits) - 1:
-                feature = 'last'
+                c.execute("INSERT INTO zenpack_commits VALUES (?, ?, ?)", (
+                    zenpack['NAME'],
+                    'first',
+                    commit,
+                    ))
+
+            if i == len(commits) - 1:
+                c.execute("INSERT INTO zenpack_commits VALUES (?, ?, ?)", (
+                    zenpack['NAME'],
+                    'last',
+                    commit,
+                    ))
 
             c.execute("INSERT INTO zenpack_commits VALUES (?, ?, ?)", (
                 zenpack['NAME'],
-                feature,
+                'incremental',
                 commit,
                 ))
 
@@ -546,7 +560,7 @@ def create_database(config):
     c.close()
 
 
-def create_csv(config):
+def print_csv_normalized(config):
     import csv
 
     zenpacks_writer = csv.writer(open('zenpacks.csv', 'wb'))
@@ -625,12 +639,6 @@ def create_csv(config):
                 ])
 
 
-def asciify(string):
-    """Brute-force conversion of any encoding to ASCII."""
-    return unicodedata.normalize(
-        'NFKD', string.decode('latin-1')).encode('ASCII', 'ignore')
-
-
 def render(template_name):
     import jinja2
 
@@ -689,6 +697,205 @@ def get_render_context():
     return context
 
 
+def denormalized_generator():
+    conn = sqlite3.connect("catalog.db")
+    c = conn.cursor()
+
+    c.execute(
+        "SELECT name, license, copyright, version, compat_zenoss_vers, url "
+        "  FROM zenpacks"
+        )
+
+    for zenpack, license, copyright, version, compat_zenoss_vers, url in c.fetchall():
+        c.execute(
+            "SELECT py, xml, zcml, rpt, pt, js "
+            "  FROM zenpack_codelines "
+            " WHERE zenpack = ?",
+            (zenpack,)
+            )
+
+        lines_py, lines_xml, lines_zcml, lines_rpt, lines_pt, lines_js = c.fetchone()
+
+        c.execute(
+            "SELECT author "
+            "  FROM zenpack_authors "
+            " WHERE zenpack = ?",
+            (zenpack,)
+            )
+
+        authors = c.fetchall()
+        if len(authors) < 1:
+            authors = [(None,)]
+
+        for author, in authors:
+            c.execute(
+                "SELECT dependency, version "
+                "  FROM zenpack_dependencies "
+                " WHERE zenpack = ?",
+                (zenpack,)
+                )
+
+            dependencies = c.fetchall()
+            if len(dependencies) < 1:
+                dependencies = [(None, None)]
+
+            for dependency, dependency_version in dependencies:
+                c.execute(
+                    "SELECT feature, date "
+                    "  FROM zenpack_commits "
+                    " WHERE zenpack = ?",
+                    (zenpack,)
+                    )
+
+                commits = c.fetchall()
+                if len(commits) < 1:
+                    commits = [(None, None)]
+
+                for feature, date in commits:
+                    yield {
+                        'zenpack': zenpack,
+                        'license': license,
+                        'copyright': copyright,
+                        'version': version,
+                        'compat_zenoss_vers': compat_zenoss_vers,
+                        'url': url,
+                        'lines_xml': lines_xml,
+                        'lines_py': lines_py,
+                        'lines_js': lines_js,
+                        'lines_pt': lines_pt,
+                        'lines_rpt': lines_rpt,
+                        'lines_zcml': lines_zcml,
+                        'author': author,
+                        'dependency': dependency,
+                        'dependency_version': dependency_version,
+                        'commit_type': feature,
+                        'commit_year': date.split('-')[0],
+                        'commit_timestamp': date,
+                        }
+
+
+def print_csv_denormalized():
+    import csv
+
+    writer = csv.writer(open('zenpacks_denormalized.csv', 'wb'))
+    writer.writerow([
+        'zenpack', 'license', 'copyright', 'version', 'compat_zenoss_vers',
+        'url', 'lines_xml', 'lines_py', 'lines_js', 'lines_pt', 'lines_rpt',
+        'lines_zcml', 'author', 'dependency', 'dependency_version',
+        'commit_type', 'commit_year', 'commit_timestamp',
+        ])
+
+    for row in denormalized_generator():
+        writer.writerow([
+            row['zenpack'],
+            row['license'],
+            row['copyright'],
+            row['version'],
+            row['compat_zenoss_vers'],
+            row['url'],
+            row['lines_xml'],
+            row['lines_py'],
+            row['lines_js'],
+            row['lines_pt'],
+            row['lines_rpt'],
+            row['lines_zcml'],
+            row['author'],
+            row['dependency'],
+            row['dependency_version'],
+            row['commit_type'],
+            row['commit_year'],
+            row['commit_timestamp'],
+            ])
+
+
+def print_gviz_json_denormalized():
+    import gviz_api
+
+    data_table = gviz_api.DataTable({
+        'zenpack': ('string', 'ZenPack'),
+        'license': ('string', 'License'),
+        'copyright': ('string', 'Copyright'),
+        'version': ('string', 'Version'),
+        'compat_zenoss_vers': ('string', 'Compatible Zenoss Version'),
+        'url': ('string', 'URL'),
+        'lines_xml': ('number', 'Lines of XML'),
+        'lines_py': ('number', 'Lines of Python'),
+        'lines_js': ('number', 'Lines of JavaScript'),
+        'lines_pt': ('number', 'Lines of Page Template'),
+        'lines_rpt': ('number', 'Lines of Report Template'),
+        'lines_zcml': ('number', 'Lines of ZCML'),
+        'author': ('string', 'Author'),
+        'dependency': ('string', 'Dependency'),
+        'dependency_version': ('string', 'Depedency Version'),
+        'commit_type': ('string', 'Commit Type'),
+        'commit_year': ('string', 'Commit Year'),
+        'commit_timestamp': ('string', 'Commit Timestamp'),
+        })
+
+    for row in denormalized_generator():
+        data_table.AppendData([{
+            'zenpack': row['zenpack'],
+            'license': row['license'],
+            'copyright': row['copyright'],
+            'version': row['version'],
+            'compat_zenoss_vers': row['compat_zenoss_vers'],
+            'url': row['url'],
+            'lines_xml': row['lines_xml'],
+            'lines_py': row['lines_py'],
+            'lines_js': row['lines_js'],
+            'lines_pt': row['lines_pt'],
+            'lines_rpt': row['lines_rpt'],
+            'lines_zcml': row['lines_zcml'],
+            'author': row['author'],
+            'dependency': row['dependency'],
+            'dependency_version': row['dependency_version'],
+            'commit_type': row['commit_type'],
+            'commit_year': row['commit_year'],
+            'commit_timestamp': row['commit_timestamp'],
+            }])
+
+    print data_table.ToJSon()
+
+
+def push_gspreadsheet_denormalized():
+    import gdata.spreadsheet.service
+
+    username = os.environ.get('GDATA_USERNAME')
+    password = os.environ.get('GDATA_PASSWORD')
+
+    # https://docs.google.com/spreadsheet/ccc?key=0AjERpIICRnb0dGMyOWNhREd2R2JPeFJ4QlBxam05WlE&hl=en_US#gid=0
+    spreadsheet_key = '0AjERpIICRnb0dGMyOWNhREd2R2JPeFJ4QlBxam05WlE'
+    worksheet_id = '1'
+
+    gs_client = gdata.spreadsheet.service.SpreadsheetsService()
+    gs_client.email = username
+    gs_client.password = password
+    gs_client.source = 'ZenPack Cataloger'
+    gs_client.ProgrammaticLogin()
+
+    for row in denormalized_generator():
+        gs_client.InsertRow({
+            'zenpack': row['zenpack'],
+            'license': row['license'],
+            'copyright': row['copyright'],
+            'version': row['version'],
+            'compatzenossvers': row['compat_zenoss_vers'],
+            'url': row['url'],
+            'linesxml': str(row['lines_xml']),
+            'linespy': str(row['lines_py']),
+            'linesjs': str(row['lines_js']),
+            'linespt': str(row['lines_pt']),
+            'linesrpt': str(row['lines_rpt']),
+            'lineszcml': str(row['lines_zcml']),
+            'author': row['author'],
+            'dependency': row['dependency'],
+            'dependencyversion': row['dependency_version'],
+            'committype': row['commit_type'],
+            'commityear': row['commit_year'],
+            'committimestamp': row['commit_timestamp'],
+            }, spreadsheet_key, worksheet_id)
+
+
 if __name__ == '__main__':
     import sqlite3
     import sys
@@ -701,9 +908,15 @@ if __name__ == '__main__':
     valid_commands = (
         'update_repos',
         'create_database',
-        'create_csv',
+
         'render_text',
         'render_html',
+
+        'print_csv_normalized',
+
+        'print_csv_denormalized',
+        'print_gviz_json_denormalized',
+        'push_gspreadsheet_denormalized',
         )
 
     commands = []
@@ -734,9 +947,18 @@ if __name__ == '__main__':
             update_repositories(config)
         elif command == 'create_database':
             create_database(config)
-        elif command == 'create_csv':
-            create_csv(config)
+
         elif command == 'render_text':
             render(TEXT_TEMPLATE)
         elif command == 'render_html':
             render(HTML_TEMPLATE)
+
+        elif command == 'print_csv_normalized':
+            print_csv_normalized(config)
+
+        elif command == 'print_csv_denormalized':
+            print_csv_denormalized()
+        elif command == 'print_gviz_json_denormalized':
+            print_gviz_json_denormalized()
+        elif command == 'push_gspreadsheet_denormalized':
+            push_gspreadsheet_denormalized()
