@@ -3,7 +3,11 @@ by the repository.
 
 zends-5.5.15-1.r46498.el5.i386.rpm
 zends-5.5.15-1.r46498.el5.x86_64.rpm
-zenoss-3.2.1.el5.i386.rpm
-zenoss-3.2.1.el5.x86_64.rpm
+zenoss-3.2.1-1326.el5.i386.rpm
+zenoss-3.2.1-1326.el5.x86_64.rpm
+zenoss-core-zenpacks-3.2.1-1326.el5.i386.rpm
+zenoss-core-zenpacks-3.2.1-1326.el5.x86_64.rpm
+zenoss-enterprise-zenpacks-3.2.1-1326.el5.i386.rpm
+zenoss-enterprise-zenpacks-3.2.1-1326.el5.x86_64.rpm
 zenoss-4.1.0-1310.el5.i386.rpm
 zenoss-4.1.0-1310.el5.x86_64.rpm
