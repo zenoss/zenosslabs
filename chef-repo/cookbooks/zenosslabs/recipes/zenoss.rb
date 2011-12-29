@@ -18,10 +18,50 @@ when "centos"
     end
 
     # Install dependencies.
-    dependencies = %w{mysql-server net-snmp net-snmp-utils gmp libgomp libgcj liberation-fonts}
-    dependencies.each do |pkg|
-        yum_package pkg do
-            action :install
+
+    # According to the Zenoss 4.1.1 installation documentation we need to
+    # explicitely install the .x86_64 version of the libgcj package on x86_64
+    # systems.
+    if rpm_arch == "x86_64"
+        yum_package "libgcj.x86_64"
+    elsif rpm_arch == "i386"
+        yum_package "libgcj"
+    end
+
+    # Dependencies common to all Zenoss versions.
+    %w{net-snmp net-snmp-utils gmp libgomp liberation-fonts}.each do |pkg|
+        yum_package pkg
+    end
+
+    # Zenoss 3
+    if node[:zenoss][:version].start_with? '3'
+        %w{mysql-server}.each do |pkg|
+            yum_package pkg
+        end
+
+    # Zenoss 4
+    elsif node[:zenoss][:version].start_with? '4'
+        rpm_package "zenossdeps" do
+            source "http://deps.zenoss.com/yum/zenossdeps.el5.noarch.rpm"
+        end
+
+        %w{tk unixODBC erlang rabbitmq-server memcached perl-DBI libxslt}.each do |pkg|
+            yum_package pkg
+        end
+
+        %w{rabbitmq-server memcached}.each do |svc|
+            service svc do
+                action [ :enable, :start ]
+            end
+        end
+
+        zends_rpm = "#{node[:zenoss][:zends_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
+        cookbook_file "/tmp/#{zends_rpm}" do
+            source zends_rpm
+        end
+
+        rpm_package "zends" do
+            source "/tmp/#{zends_rpm}"
         end
     end
 

@@ -21,5 +21,9 @@ run_list(
 default_attributes(
     "java" => {
         "install_flavor" => "sun"
+    },
+
+    "zenoss" => {
+        "zends_rpm" => "zends-5.5.15-1.r51230"
     }
 )
