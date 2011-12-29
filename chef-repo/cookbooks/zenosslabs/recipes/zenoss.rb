@@ -17,6 +17,8 @@ when "centos"
         rpm_arch = node[:kernel][:machine]
     end
 
+    zenoss_daemons = []
+
     # Install dependencies.
     managed_services = %w{snmpd}
     managed_packages = %w{net-snmp net-snmp-utils gmp libgomp liberation-fonts}
@@ -32,11 +34,14 @@ when "centos"
 
     # Zenoss 3
     if node[:zenoss][:version].start_with? '3'
+        zenoss_daemons += "zeoctl"
         managed_packages += %w{mysql-server}
         managed_services += %w(mysql-server)
 
     # Zenoss 4
     elsif node[:zenoss][:version].start_with? '4'
+        zenoss_daemons += %w{zeneventserver zeneventd}
+
         zends_rpm = "#{node[:zenoss][:zends_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
         cookbook_file "/tmp/#{zends_rpm}" do
             source zends_rpm
@@ -99,17 +104,25 @@ when "centos"
             group "zenoss"
             mode 0644
             source "daemons.txt.erb"
+            variables(
+                :daemons => zenoss_daemons
+            )
         end
 
         # Alias wget to true so Zenoss startup doesn't have to wait for the
         # initial device add to timeout.
-        execute "alias wget=true"
+        link "/usr/local/bin/wget" do
+            to "/bin/true"
+            action :create
+        end
 
         service "zenoss" do
             action [ :disable, :start ]
         end
 
-        execute "unalias wget"
+        link "/usr/local/bin/wget" do
+            action :delete
+        end
     end
 
     # Optionally install Core ZenPacks.

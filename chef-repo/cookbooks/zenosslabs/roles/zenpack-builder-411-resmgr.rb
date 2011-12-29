@@ -14,7 +14,7 @@ run_list "role[zenpack-builder-411-platform]"
 default_attributes(
     "zenoss" => {
         "flavor" => "resmgr",
-        "core_zenpacks_rpm" => "zenos-core-zenpacks-4.1.1-1396",
+        "core_zenpacks_rpm" => "zenoss-core-zenpacks-4.1.1-1396",
         "enterprise_zenpacks_rpm" => "zenoss-enterprise-zenpacks-4.1.1-1396"
     }
 )

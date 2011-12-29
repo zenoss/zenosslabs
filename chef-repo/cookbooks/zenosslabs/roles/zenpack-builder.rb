@@ -14,6 +14,7 @@ run_list(
     "recipe[selinux::disabled]",
     "recipe[git]",
     "recipe[java]",
+    "recipe[zenosslabs::fixhosts]",
     "recipe[zenosslabs::jenkins-slave]",
     "recipe[zenosslabs::zenoss]"
 )
