@@ -13,6 +13,10 @@ user "jenkins" do
     home "/var/lib/jenkins"
 end
 
+# Jenkins directory needs to be group-executable.
+directory "/var/lib/jenkins" do
+    mode "0750"
+end
 
 # Setup keys and trust.
 directory "/var/lib/jenkins/.ssh" do

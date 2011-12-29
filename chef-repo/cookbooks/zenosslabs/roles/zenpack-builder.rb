@@ -16,10 +16,17 @@ run_list(
     "recipe[java]",
     "recipe[zenosslabs::fixhosts]",
     "recipe[zenosslabs::jenkins-slave]",
+    "recipe[sudo]",
+    "recipe[zenosslabs::build-tools]",
     "recipe[zenosslabs::zenoss]"
 )
 
 default_attributes(
+    "authorization" => {
+        "users" => ["jenkins"],
+        "passwordless" => true
+    },
+
     "java" => {
         "install_flavor" => "sun"
     },
