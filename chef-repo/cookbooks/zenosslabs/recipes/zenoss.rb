@@ -42,6 +42,9 @@ when "centos"
     elsif node[:zenoss][:version].start_with? '4'
         zenoss_daemons += %w{zeneventserver zeneventd}
 
+        # perl-DBI is a dependency for zends.
+        yum_package "perl-DBI"
+
         zends_rpm = "#{node[:zenoss][:zends_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
         cookbook_file "/tmp/#{zends_rpm}" do
             source zends_rpm
@@ -52,7 +55,7 @@ when "centos"
         end
 
         # This requires either EPEL or deps.zenoss.com be added to yum.repos.d.
-        managed_packages += %w{tk unixODBC erlang rabbitmq-server memcached perl-DBI libxslt}
+        managed_packages += %w{tk unixODBC erlang rabbitmq-server memcached libxslt}
         managed_services += %w{zends rabbitmq-server memcached}
     end
 
