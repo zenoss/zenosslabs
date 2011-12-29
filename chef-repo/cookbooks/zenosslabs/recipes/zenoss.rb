@@ -18,41 +18,27 @@ when "centos"
     end
 
     # Install dependencies.
+    managed_services = %w{snmpd}
+    managed_packages = %w{net-snmp net-snmp-utils gmp libgomp liberation-fonts}
 
     # According to the Zenoss 4.1.1 installation documentation we need to
     # explicitely install the .x86_64 version of the libgcj package on x86_64
     # systems.
     if rpm_arch == "x86_64"
-        yum_package "libgcj.x86_64"
+        managed_packages += %w{libgcj.x86_64}
     elsif rpm_arch == "i386"
-        yum_package "libgcj"
-    end
-
-    # Dependencies common to all Zenoss versions.
-    %w{net-snmp net-snmp-utils gmp libgomp liberation-fonts}.each do |pkg|
-        yum_package pkg
+        managed_packages += "libgcj"
     end
 
     # Zenoss 3
     if node[:zenoss][:version].start_with? '3'
-        %w{mysql-server}.each do |pkg|
-            yum_package pkg
-        end
+        managed_packages += %w{mysql-server}
+        managed_services += %w(mysql-server)
 
     # Zenoss 4
     elsif node[:zenoss][:version].start_with? '4'
         rpm_package "zenossdeps" do
             source "http://deps.zenoss.com/yum/zenossdeps.el5.noarch.rpm"
-        end
-
-        %w{tk unixODBC erlang rabbitmq-server memcached perl-DBI libxslt}.each do |pkg|
-            yum_package pkg
-        end
-
-        %w{rabbitmq-server memcached}.each do |svc|
-            service svc do
-                action [ :enable, :start ]
-            end
         end
 
         zends_rpm = "#{node[:zenoss][:zends_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
@@ -62,6 +48,19 @@ when "centos"
 
         rpm_package "zends" do
             source "/tmp/#{zends_rpm}"
+        end
+
+        managed_package += %w{tk unixODBC erlang rabbitmq-server memcached perl-DBI libxslt}
+        managed_services += %w{zends rabbitmq-server memcached}
+    end
+
+    managed_packages.each do |pkg|
+        yum_package pkg
+    end
+
+    managed_services.each do |svc|
+        service svc do
+            action [ :disable, :start ]
         end
     end
 
@@ -77,7 +76,7 @@ when "centos"
     end
 
     # Install Zenoss Platform.
-    if %q(platform core enterprise).include? node[:zenoss][:flavor]
+    if %q(platform core enterprise resmgr).include? node[:zenoss][:flavor]
         zenoss_rpm = "#{node[:zenoss][:platform_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
         cookbook_file "/tmp/#{zenoss_rpm}" do
             source zenoss_rpm
@@ -110,14 +109,14 @@ when "centos"
         execute "alias wget=true"
 
         service "zenoss" do
-            action [ :enable, :start ]
+            action [ :disable, :start ]
         end
 
         execute "unalias wget"
     end
 
     # Optionally install Core ZenPacks.
-    if %q(core enterprise).include? node[:zenoss][:flavor]
+    if %q(core enterprise resmgr).include? node[:zenoss][:flavor]
         zenoss_core_zenpacks_rpm = "#{node[:zenoss][:core_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
         cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
             source zenoss_core_zenpacks_rpm
@@ -134,7 +133,7 @@ when "centos"
     end
 
     # Install Enterprise ZenPacks
-    if %q(enterprise).include? node[:zenoss][:flavor]
+    if %q(enterprise resmgr).include? node[:zenoss][:flavor]
         zenoss_enterprise_zenpacks_rpm = "#{node[:zenoss][:enterprise_zenpacks_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
         cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
             source zenoss_enterprise_zenpacks_rpm
@@ -150,8 +149,12 @@ when "centos"
         file "/opt/zenoss/.installed.#{zenoss_enterprise_zenpacks_rpm}"
     end
 
+    service "zenoss" do
+        action :stop
+    end
+
     # Shutdown and cleanup package database.
-    %w{zenoss mysqld snmpd}.each do |service_name|
+    managed_services.each do |service_name|
         service service_name do
             action :stop
         end
