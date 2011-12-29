@@ -1,14 +1,14 @@
 #
 # Cookbook Name:: zenosslabs
-# Role:: zenpack-builder-411-enterprise
+# Role:: zenpack-builder-411-resmgr
 #
 # Copyright 2011, Zenoss, Inc.
 #
 # All rights reserved - Do Not Redistribute
 #
 
-name "zenpack-builder-411-enterprise"
-description "ZenPack Build Server for Zenoss 4.1.1 Enterprise"
+name "zenpack-builder-411-resmgr"
+description "ZenPack Build Server for Zenoss 4.1.1 Resource Manager"
 
 run_list "role[zenpack-builder-411-platform]"
 default_attributes(
