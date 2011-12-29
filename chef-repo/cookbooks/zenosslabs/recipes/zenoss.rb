@@ -65,9 +65,15 @@ when "centos"
             source "daemons.txt.erb"
         end
 
+        # Alias wget to true so Zenoss startup doesn't have to wait for the
+        # initial device add to timeout.
+        execute "alias wget=true"
+
         service "zenoss" do
             action [ :enable, :start ]
         end
+
+        execute "unalias wget"
     end
 
     # Optionally install Core ZenPacks.
