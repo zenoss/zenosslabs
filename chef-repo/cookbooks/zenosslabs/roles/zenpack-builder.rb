@@ -11,6 +11,7 @@ name "zenpack-builder"
 description "ZenPack Build Server"
 
 run_list(
+    "recipe[selinux::disabled]",
     "recipe[git]",
     "recipe[java]",
     "recipe[zenosslabs::jenkins-slave]",
