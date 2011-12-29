@@ -37,14 +37,6 @@ when "centos"
 
     # Zenoss 4
     elsif node[:zenoss][:version].start_with? '4'
-        cookbook_file "/tmp/zenossdeps.el5.noarch.rpm" do
-            source "zenossdeps.el5.noarch.rpm"
-        end
-
-        rpm_package "zenossdeps" do
-            source "/tmp/zenossdeps.el5.noarch.rpm"
-        end
-
         zends_rpm = "#{node[:zenoss][:zends_rpm]}.#{rpm_release}.#{rpm_arch}.rpm"
         cookbook_file "/tmp/#{zends_rpm}" do
             source zends_rpm
@@ -54,6 +46,7 @@ when "centos"
             source "/tmp/#{zends_rpm}"
         end
 
+        # This requires either EPEL or deps.zenoss.com be added to yum.repos.d.
         managed_packages += %w{tk unixODBC erlang rabbitmq-server memcached perl-DBI libxslt}
         managed_services += %w{zends rabbitmq-server memcached}
     end
