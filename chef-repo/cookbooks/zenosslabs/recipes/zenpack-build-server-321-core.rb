@@ -11,9 +11,11 @@
 include_recipe "zenosslabs::zenpack-build-deps-321"
 
 
-# Attributes
-node[:zenoss][:flavor] = "core"
-
-
-# Run List
-include_recipe "zenosslabs::zenoss"
+# Resources
+zenosslabs_zenoss "3.2.1 core" do
+    version "3.2.1"
+    flavor "core"
+    platform_rpm "zenoss-3.2.1-1326"
+    core_zenpacks_rpm "zenoss-core-zenpacks-3.2.1-1326"
+    action :install
+end

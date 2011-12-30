@@ -19,11 +19,6 @@ node[:java] = {
     "install_flavor" => "sun"
 }
 
-node[:zenoss] = {
-    "zends_rpm" => "zends-5.5.15-1.r51230",
-    "version_tags" => %w{321 411}
-}
-
 
 # Run List
 recipes = [

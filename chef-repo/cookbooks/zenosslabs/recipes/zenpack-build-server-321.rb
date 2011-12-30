@@ -7,8 +7,8 @@
 # All rights reserved - Do Not Redistribute
 #
 
-include_recipe "zenosslabs::zenpack-build-deps-321"
+include_recipe "zenosslabs::zenpack-build-deps"
 
-node[:zenoss][:flavor_tags].each do |flavor_tag|
-    include_recipe "zenosslabs::zenpack-build-server-#{node[:zenoss][:version_tag]}-#{flavor_tag}"
+%w{platform core enterprise}.each do |flavor|
+    include_recipe "zenosslabs::zenpack-build-server-321-#{flavor}"
 end

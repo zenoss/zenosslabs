@@ -9,6 +9,8 @@
 
 include_recipe "zenosslabs::zenpack-build-deps"
 
-node[:zenoss][:version_tags].each do |version_tag|
+%w{3.2.1 4.1.1}.each do |version|
+    version_tag = version.gsub('.', '')
+
     include_recipe "zenosslabs::zenpack-build-server-#{version_tag}"
 end
