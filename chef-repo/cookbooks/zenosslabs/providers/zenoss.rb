@@ -37,7 +37,7 @@ action :install do
         if new_resource.version.start_with? '3'
             zenoss_daemons += %w{zeoctl}
             managed_packages += %w{mysql-server}
-            managed_services += %w(mysqld)
+            managed_services += %w{mysqld}
 
         # Zenoss 4
         elsif new_resource.version.start_with? '4'
@@ -82,7 +82,7 @@ action :install do
         end
 
         # Install Zenoss Platform.
-        if %q(platform core enterprise resmgr).include? new_resource.flavor
+        if %w{platform core enterprise resmgr}.include? new_resource.flavor
             zenoss_rpm = "#{new_resource.platform_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
             cookbook_file "/tmp/#{zenoss_rpm}" do
                 source zenoss_rpm
@@ -132,7 +132,7 @@ action :install do
         end
 
         # Optionally install Core ZenPacks.
-        if %q(core enterprise resmgr).include? new_resource.flavor
+        if %w{core enterprise resmgr}.include? new_resource.flavor
             zenoss_core_zenpacks_rpm = "#{new_resource.core_zenpacks_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
             cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
                 source zenoss_core_zenpacks_rpm
@@ -149,7 +149,7 @@ action :install do
         end
 
         # Install Enterprise ZenPacks
-        if %q(enterprise resmgr).include? new_resource.flavor
+        if %w{enterprise resmgr}.include? new_resource.flavor
             zenoss_enterprise_zenpacks_rpm = "#{new_resource.enterprise_zenpacks_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
             cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
                 source zenoss_enterprise_zenpacks_rpm
@@ -167,21 +167,21 @@ action :install do
 
 
         # Cleanup package database.
-        if %q(enterprise resmgr).include? new_resource.flavor
+        if %w{enterprise resmgr}.include? new_resource.flavor
             rpm_package "zenoss-enterprise-zenpacks" do
                 options "--justdb --nodeps --noscripts --notriggers"
                 action :remove
             end
         end
 
-        if %q(core enterprise resmgr).include? new_resource.flavor
+        if %w{core enterprise resmgr}.include? new_resource.flavor
             rpm_package "zenoss-core-zenpacks" do
                 options "--justdb --noscripts --notriggers"
                 action :remove
             end
         end
 
-        if %q(platform core enterprise resmgr).include? new_resource.flavor
+        if %w{platform core enterprise resmgr}.include? new_resource.flavor
             rpm_package "zenoss" do
                 options "--justdb --noscripts --notriggers"
                 action :remove
@@ -205,8 +205,8 @@ action :install do
 
 
         # Shutdown Zenoss and related services.
-        service "zenoss" do
-            action :stop
+        execute "service zenoss stop" do
+            returns [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         end
 
         managed_services.each do |service_name|
