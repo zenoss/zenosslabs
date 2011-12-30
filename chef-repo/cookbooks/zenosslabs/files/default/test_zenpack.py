@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import compiler
+import glob
 import os
 import sys
 
@@ -137,12 +138,13 @@ class ZenPackBuilder(object):
         self.test_unittests()
 
     def build_egg(self):
+        print "*** Building ZenPack Egg ***"
+
         try:
             shell("sudo chmod 775 .")
             shell("sudo chown -R zenoss:jenkins .")
             shell("sudo rm -Rf build dist *.egg-info")
 
-            print "*** Building ZenPack Egg"
             print shell(
                 "sudo -u zenoss -i "
                 "'cd %s ; python setup.py bdist_egg'" % (
@@ -155,8 +157,9 @@ class ZenPackBuilder(object):
             sys.exit(1)
 
     def test_install(self):
+        print "*** Installing ZenPack Egg ***"
+
         try:
-            print "*** Installing ZenPack Egg"
             print shell(
                 "sudo -u zenoss -i zenpack --install "
                 "/opt/zenoss/zenpack_eggs/%s-*.egg 2>&1" % (
@@ -167,8 +170,16 @@ class ZenPackBuilder(object):
             sys.exit(1)
 
     def test_unittests(self):
+        print "*** Running ZenPack Unit Tests ***"
+
+        test_modules_glob = '/opt/zenoss.ZenPacks/%s-*.egg/%s/tests/*.py' % (
+            self.zenpack_name, self.zenpack_name.replace('.', '/'))
+
+        if not glob.glob(test_modules_glob):
+            print "No unit tests found.\n"
+            return
+
         try:
-            print "*** Running ZenPack Unit Tests"
             print shell(
                 "sudo -u zenoss -i nosetests "
                 "-w /opt/zenoss/ZenPacks/%(name)s-*.egg/ZenPacks "
@@ -205,7 +216,7 @@ def main():
         sys.exit(1)
 
     zman = ZenossManager()
-    print "*** Setting up environment for Zenoss %s (%s)" % (
+    print "*** Setting up environment for Zenoss %s (%s) ***" % (
         zenoss_version, zenoss_flavor)
 
     zman.setup(zenoss_version, zenoss_flavor)
@@ -214,7 +225,7 @@ def main():
         tester = ZenPackBuilder()
         tester.run_all()
     finally:
-        print "*** Tearing down environment for Zenoss %s (%s)" % (
+        print "*** Tearing down environment for Zenoss %s (%s) ***" % (
             zenoss_version, zenoss_flavor)
 
         zman.tear_down()
