@@ -1,52 +1,90 @@
 #!/usr/bin/env python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-LOG = logging.getLogger('zenpack.test')
-
+import compiler
 import os
 import sys
 
 from subprocess import Popen, PIPE
 
 
+class ASTVisitor(compiler.visitor.ASTVisitor):
+    """Visitor that turns module attributes into a dict.
+
+    Instances of this class are to be fed into the second parameter of
+    compiler.visitor.walk.
+
+    """
+    items = {}
+
+    def __getitem__(self, key):
+        return self.items[key]
+
+    def visitAssign(self, node):
+        """Called for each Assign node in the tree."""
+        name_node = node.getChildren()[0]
+        value_node = node.getChildren()[1]
+
+        name = name_node.name
+        value = None
+
+        # Scalars.
+        if hasattr(value_node, 'value'):
+            value = value_node.value
+
+        # Lists.
+        elif hasattr(value_node, 'nodes'):
+            value = [x.value for x in value_node.nodes]
+
+        self.items[name] = value
+
+
 class ShellError(Exception):
-    pass
+    def __init__(self, command, returncode, stdout=None, stderr=None):
+        self.command = command
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+    def __str__(self):
+        buf = "'%s' returned non-zero exit status %s" % (
+            self.command, self.returncode)
+
+        if self.stdout:
+            buf = "%s\n\n--- STDOUT ---\n%s" % (buf, self.stdout)
+
+        if self.stderr:
+            buf = "%s\n\n--- STDERR ---\n%s" % (buf, self.stderr)
+
+        return buf
+
+    def __repr__(self):
+        return str(self)
 
 
 def shell(command):
     """Helper method to get the output from a command."""
-    LOG.debug("Running '%s'", command)
     p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     stdout, stderr = p.communicate()
 
-    if stdout:
-        LOG.debug("--- STDOUT ---")
-        for line in stdout.split('\n'):
-            LOG.debug(line)
-
-    if stderr:
-        LOG.debug("--- STDERR ---")
-        for line in stderr.split('\n'):
-            LOG.debug(line)
-
     if p.returncode != 0:
-        raise ShellError("'%s' returned non-zero exit status %s" % (
-            command, p.returncode))
+        raise ShellError(command, p.returncode, stdout, stderr)
 
     return stdout
 
 
 class ZenossManager(object):
-    def setup(self, zenoss_configuration):
+    def setup(self, zenoss_version, zenoss_flavor):
         self.tear_down()
 
         try:
-            shell("sudo /sbin/service mysqld start")
-            shell("sudo /sbin/service zends start")
+            if zenoss_version.startswith('3'):
+                shell("sudo /sbin/service mysqld start")
+            elif zenoss_version.startswith('4'):
+                shell("sudo /sbin/service zends start")
+                shell("sudo /sbin/service rabbitmq-server start")
         except ShellError:
             pass
 
-        lv_name = "zenoss/%s" % zenoss_configuration
+        lv_name = "zenoss/%s_%s" % (zenoss_version, zenoss_flavor)
         lv_device = "/dev/%s" % lv_name
 
         if not os.path.exists(lv_device):
@@ -61,7 +99,8 @@ class ZenossManager(object):
             shell("sudo mount /dev/zenoss/sandbox /opt/zenoss")
             shell("sudo /sbin/service zenoss start")
         except ShellError, ex:
-            LOG.error(ex)
+            print ex
+            sys.exit(1)
 
     def tear_down(self):
         commands = (
@@ -83,7 +122,13 @@ class ZenPackBuilder(object):
 
     def __init__(self):
         self.zenpack_directory = os.getcwd()
-        self.zenpack_name = os.path.basename(self.zenpack_directory)
+
+        tree = compiler.parseFile(os.path.join(
+            self.zenpack_directory, 'setup.py'))
+
+        visitor = compiler.visitor.walk(tree, ASTVisitor())
+
+        self.zenpack_name = visitor['NAME']
 
     def run_all(self):
         self.build_egg()
@@ -93,35 +138,47 @@ class ZenPackBuilder(object):
 
     def build_egg(self):
         try:
+            shell("sudo chmod 775 .")
             shell("sudo chown -R zenoss:jenkins .")
             shell("sudo rm -Rf build dist *.egg-info")
-            shell("sudo -u zenoss -i 'cd %s ; python setup.py bdist_egg'" % (
-                self.zenpack_directory))
+
+            print "*** Building ZenPack Egg"
+            print shell(
+                "sudo -u zenoss -i "
+                "'cd %s ; python setup.py bdist_egg'" % (
+                    self.zenpack_directory))
 
             shell("sudo -u zenoss -i mkdir -p /opt/zenoss/zenpack_eggs")
-            shell("sudo mv dist/*.egg /opt/zenoss/zenpack_eggs/")
+            shell("sudo cp dist/*.egg /opt/zenoss/zenpack_eggs/")
         except ShellError, ex:
-            LOG.error(ex)
+            print ex
+            sys.exit(1)
 
     def test_install(self):
         try:
-            shell(
+            print "*** Installing ZenPack Egg"
+            print shell(
                 "sudo -u zenoss -i zenpack --install "
-                "/opt/zenoss/zenpack_eggs/%s-*.egg" % (
+                "/opt/zenoss/zenpack_eggs/%s-*.egg 2>&1" % (
                     self.zenpack_name))
+
         except ShellError, ex:
-            LOG.error(ex)
+            print ex
+            sys.exit(1)
 
     def test_unittests(self):
         try:
-            # TODO: Move to nose. It's ridiculously faster and feature-rich.
-            # shell(
-            #     "sudo -u zenoss -i nosetests --nologcapture -w %s %s.tests" % (
-            #     self.zenpack_name, self.zenpack_name))
+            print "*** Running ZenPack Unit Tests"
+            print shell(
+                "sudo -u zenoss -i nosetests "
+                "-w /opt/zenoss/ZenPacks/%(name)s-*.egg/ZenPacks "
+                "--with-coverage --cover-package=%(name)s "
+                "%(name)s.tests 2>&1" % (
+                    {'name': self.zenpack_name}),)
 
-            shell("sudo -u zenoss -i runtests %s" % self.zenpack_name)
         except ShellError, ex:
-            LOG.error(ex)
+            print ex
+            sys.exit(1)
 
 
 def main():
@@ -133,9 +190,14 @@ def main():
     build_labels = dict(
         x.split('=') for x in build_tag.split('-')[1].split(','))
 
-    zenoss_configuration = build_labels.get('zenoss_configuration', None)
-    if not zenoss_configuration:
-        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_configuration."
+    zenoss_version = build_labels.get('zenoss_version', None)
+    if not zenoss_version:
+        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_version."
+        sys.exit(1)
+
+    zenoss_flavor = build_labels.get('zenoss_flavor', None)
+    if not zenoss_flavor:
+        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_flavor."
         sys.exit(1)
 
     if not os.path.isfile('setup.py'):
@@ -143,12 +205,18 @@ def main():
         sys.exit(1)
 
     zman = ZenossManager()
-    zman.setup(zenoss_configuration)
+    print "*** Setting up environment for Zenoss %s (%s)" % (
+        zenoss_version, zenoss_flavor)
+
+    zman.setup(zenoss_version, zenoss_flavor)
 
     try:
         tester = ZenPackBuilder()
         tester.run_all()
     finally:
+        print "*** Tearing down environment for Zenoss %s (%s)" % (
+            zenoss_version, zenoss_flavor)
+
         zman.tear_down()
 
 
