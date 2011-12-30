@@ -9,4 +9,5 @@
 
 cookbook_file "/usr/local/bin/test_zenpack.py" do
     source "test_zenpack.py"
+    mode "0755"
 end
