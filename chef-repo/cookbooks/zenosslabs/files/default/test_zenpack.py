@@ -37,7 +37,7 @@ def shell(command):
 
 
 class ZenossManager(object):
-    def setup(self, zenoss_version, zenoss_flavor):
+    def setup(self, zenoss_configuration):
         self.tear_down()
 
         try:
@@ -46,7 +46,7 @@ class ZenossManager(object):
         except ShellError:
             pass
 
-        lv_name = "zenoss/%s_%s" % (zenoss_version, zenoss_flavor)
+        lv_name = "zenoss/%s" % zenoss_configuration
         lv_device = "/dev/%s" % lv_name
 
         if not os.path.exists(lv_device):
@@ -133,14 +133,9 @@ def main():
     build_labels = dict(
         x.split('=') for x in build_tag.split('-')[1].split(','))
 
-    zenoss_version = build_labels.get('zenoss_version', None)
-    if not zenoss_version:
-        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_version."
-        sys.exit(1)
-
-    zenoss_flavor = build_labels.get('zenoss_flavor', None)
-    if not zenoss_flavor:
-        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_flavor."
+    zenoss_configuration = build_labels.get('zenoss_configuration', None)
+    if not zenoss_configuration:
+        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_configuration."
         sys.exit(1)
 
     if not os.path.isfile('setup.py'):
@@ -148,7 +143,7 @@ def main():
         sys.exit(1)
 
     zman = ZenossManager()
-    zman.setup(zenoss_version, zenoss_flavor)
+    zman.setup(zenoss_configuration)
 
     try:
         tester = ZenPackBuilder()
