@@ -7,6 +7,10 @@
 # All rights reserved - Do Not Redistribute
 #
 
+%w{git java jenkins}.each do |recipe|
+    include_recipe recipe
+end
+
 include_recipe "zenosslabs::jenkins-common"
 
 # Install Jenkins.
