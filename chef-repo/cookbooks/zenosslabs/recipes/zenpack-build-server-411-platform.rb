@@ -8,7 +8,7 @@
 #
 
 # Inheritance
-include_recipe "zenosslabs::zenpack-build-deps-411"
+include_recipe "zenosslabs::zenpack-build-deps"
 
 
 # Resources
