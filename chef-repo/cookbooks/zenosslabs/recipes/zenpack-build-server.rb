@@ -14,3 +14,11 @@ include_recipe "zenosslabs::zenpack-build-server-deps"
 
     include_recipe "zenosslabs::zenpack-build-server-#{version_tag}"
 end
+
+group "jenkins" do
+    members ["zenoss"]
+end
+
+group "zenoss" do
+    members ["jenkins"]
+end
