@@ -25,7 +25,7 @@ action :install do
         managed_packages = %w{net-snmp net-snmp-utils gmp libgomp liberation-fonts}
 
         # According to the Zenoss 4.1.1 installation documentation we need to
-        # explicitely install the .x86_64 version of the libgcj package on x86_64
+        # explicitly install the .x86_64 version of the libgcj package on x86_64
         # systems.
         if rpm_arch == "x86_64"
             managed_packages += %w{libgcj.x86_64}
