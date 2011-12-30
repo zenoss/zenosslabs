@@ -117,6 +117,7 @@ action :install do
             # initial device add to timeout.
             link "/usr/local/bin/wget" do
                 to "/bin/true"
+                only_if "test -f /opt/zenoss/.fresh_install || test -f /opt/zenoss/.upgraded"
                 action :create
             end
 
