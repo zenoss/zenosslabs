@@ -165,19 +165,16 @@ action :install do
             file "/opt/zenoss/.installed.#{zenoss_enterprise_zenpacks_rpm}"
         end
 
+
+        # Shutdown and cleanup package database.
         service "zenoss" do
             action :stop
         end
 
-        # Shutdown and cleanup package database.
         managed_services.each do |service_name|
             service service_name do
                 action :stop
             end
-        end
-
-        zenosslabs_lvm_fs "zenoss/#{lv_name}" do
-            action :umount
         end
 
         if %q(enterprise resmgr).include? new_resource.flavor
@@ -199,6 +196,28 @@ action :install do
                 options "--justdb --noscripts --notriggers"
                 action :remove
             end
+        end
+
+
+        # Extra Python tools required for building and testing must be
+        # installed into each Zenoss configuration because Zenoss bundles its
+        # own Python.
+        execute "su - zenoss -c 'easy_install pip'" do
+            creates "/opt/zenoss/bin/pip"
+        end
+
+        execute "su - zenoss -c 'pip install nose'" do
+            creates "/opt/zenoss/bin/nosetests"
+        end
+
+        execute "su - zenoss -c 'pip install coverage'" do
+            creates "/opt/zenoss/bin/coverage"
+        end
+
+
+        # Unmount or logical volume.
+        zenosslabs_lvm_fs "zenoss/#{lv_name}" do
+            action :umount
         end
     end
 end
