@@ -122,6 +122,7 @@ action :install do
             end
 
             service "zenoss" do
+                only_if "test -f /opt/zenoss/.fresh_install || test -f /opt/zenoss/.upgraded"
                 action [ :disable, :start ]
             end
 
