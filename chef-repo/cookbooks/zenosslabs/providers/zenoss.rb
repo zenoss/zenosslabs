@@ -178,21 +178,21 @@ action :install do
             action :umount
         end
 
-        if %q(enterprise).include? new_resource.flavor
+        if %q(enterprise resmgr).include? new_resource.flavor
             rpm_package "zenoss-enterprise-zenpacks" do
                 options "--justdb --nodeps --noscripts --notriggers"
                 action :remove
             end
         end
 
-        if %q(core enterprise).include? new_resource.flavor
+        if %q(core enterprise resmgr).include? new_resource.flavor
             rpm_package "zenoss-core-zenpacks" do
                 options "--justdb --noscripts --notriggers"
                 action :remove
             end
         end
 
-        if %q(platform core enterprise).include? new_resource.flavor
+        if %q(platform core enterprise resmgr).include? new_resource.flavor
             rpm_package "zenoss" do
                 options "--justdb --noscripts --notriggers"
                 action :remove
