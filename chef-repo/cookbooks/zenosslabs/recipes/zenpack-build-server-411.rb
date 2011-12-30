@@ -9,6 +9,6 @@
 
 include_recipe "zenosslabs::zenpack-build-server-deps"
 
-%w{platform resmgr}.each do |flavor|
+%w{resmgr}.each do |flavor|
     include_recipe "zenosslabs::zenpack-build-server-411-#{flavor}"
 end
