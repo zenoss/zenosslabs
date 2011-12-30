@@ -15,7 +15,7 @@ include_recipe "zenosslabs::zenpack-build-deps"
 zenosslabs_zenoss "4.1.1 platform" do
     version "4.1.1"
     flavor "platform"
-    zends_rpm = "zends-5.5.15-1.r51230"
+    zends_rpm "zends-5.5.15-1.r51230"
     platform_rpm "zenoss-4.1.1-1396"
     action :install
 end
