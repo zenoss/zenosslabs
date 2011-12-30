@@ -95,8 +95,6 @@ action :install do
                 action :install
             end
 
-            file "/opt/zenoss/.installed.#{zenoss_rpm}"
-
             file "/opt/zenoss/etc/DAEMONS_TXT_ONLY" do
                 owner "zenoss"
                 group "zenoss"
@@ -129,6 +127,8 @@ action :install do
             link "/usr/local/bin/wget" do
                 action :delete
             end
+
+            file "/opt/zenoss/.installed.#{zenoss_rpm}"
         end
 
         # Optionally install Core ZenPacks.
@@ -166,17 +166,7 @@ action :install do
         end
 
 
-        # Shutdown and cleanup package database.
-        service "zenoss" do
-            action :stop
-        end
-
-        managed_services.each do |service_name|
-            service service_name do
-                action :stop
-            end
-        end
-
+        # Cleanup package database.
         if %q(enterprise resmgr).include? new_resource.flavor
             rpm_package "zenoss-enterprise-zenpacks" do
                 options "--justdb --nodeps --noscripts --notriggers"
@@ -198,7 +188,6 @@ action :install do
             end
         end
 
-
         # Extra Python tools required for building and testing must be
         # installed into each Zenoss configuration because Zenoss bundles its
         # own Python.
@@ -212,6 +201,18 @@ action :install do
 
         execute "su - zenoss -c 'pip install coverage'" do
             creates "/opt/zenoss/bin/coverage"
+        end
+
+
+        # Shutdown Zenoss and related services.
+        service "zenoss" do
+            action :stop
+        end
+
+        managed_services.each do |service_name|
+            service service_name do
+                action :stop
+            end
         end
 
 
