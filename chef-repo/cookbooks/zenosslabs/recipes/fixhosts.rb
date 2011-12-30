@@ -7,6 +7,7 @@
 # All rights reserved - Do Not Redistribute
 #
 
+# RabbitMQ won't work without a resolvable hostname.
 ruby_block "edit etc hosts" do
     block do
         rc = Chef::Util::FileEdit.new("/etc/hosts")

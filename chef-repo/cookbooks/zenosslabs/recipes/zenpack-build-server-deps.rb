@@ -20,17 +20,17 @@ node[:java] = {
 }
 
 
-# Run List
-recipes = [
-    "selinux::disabled",
-    "git",
-    "java",
-    "zenosslabs::fixhosts",
-    "zenosslabs::jenkins-slave",
-    "sudo",
-    "zenosslabs::build-tools"
-]
+# Recipes
+include_recipe "selinux::disabled"
+include_recipe "git"
+include_recipe "java"
+include_recipe "zenosslabs::fixhosts"
+include_recipe "zenosslabs::jenkins-slave"
+include_recipe "sudo"
 
-recipes.each do |recipe|
-    include_recipe recipe
+
+# Resources
+cookbook_file "/usr/local/bin/test_zenpack.py" do
+    source "test_zenpack.py"
+    mode "0755"
 end

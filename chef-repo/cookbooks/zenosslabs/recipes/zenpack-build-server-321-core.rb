@@ -8,7 +8,7 @@
 #
 
 # Inheritance
-include_recipe "zenosslabs::zenpack-build-deps"
+include_recipe "zenosslabs::zenpack-build-server-deps"
 
 
 # Resources
