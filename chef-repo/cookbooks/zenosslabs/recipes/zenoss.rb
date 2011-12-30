@@ -36,7 +36,7 @@ when "centos"
     if node[:zenoss][:version].start_with? '3'
         zenoss_daemons += %w{zeoctl}
         managed_packages += %w{mysql-server}
-        managed_services += %w(mysql-server)
+        managed_services += %w(mysqld)
 
     # Zenoss 4
     elsif node[:zenoss][:version].start_with? '4'
