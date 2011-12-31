@@ -201,11 +201,13 @@ action :install do
 
 
         # Shutdown Zenoss and related services and unmout logical volume.
-        execute "service zenoss stop" do
-            returns [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-        end
+        (%w{zenoss} + managed_services).each do |service_name|
 
-        managed_services.each do |service_name|
+            # When zends is running it can cause mysqld's stop to error out.
+            service "zends" do
+                action :stop
+            end
+
             service service_name do
                 action :stop
             end
