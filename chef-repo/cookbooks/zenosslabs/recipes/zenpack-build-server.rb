@@ -37,9 +37,9 @@ end
 
 node[:zenoss][:versions].each do |version|
     version[:flavors].each do |flavor|
-        zenosslabs_zenoss "#{version} #{flavor}" do
-            version version
-            flavor flavor
+        zenosslabs_zenoss "#{version[:name]} #{flavor[:name]}" do
+            version version[:name]
+            flavor flavor[:name]
             packages flavor[:packages]
             action :install
         end

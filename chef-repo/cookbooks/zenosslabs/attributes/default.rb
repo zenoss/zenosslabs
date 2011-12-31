@@ -8,24 +8,28 @@
 #
 
 default[:zenoss] = {
-    "versions" => [
-        "3.2.1" => {
-            "flavors" => [
-                "platform" => {
-                    "packages" => [
+    :versions => [
+        {
+            :name => "3.2.1",
+            :flavors => [
+                {
+                    :name => "platform",
+                    :packages => [
                         "zenoss-3.2.1-1326"
                     ]
                 },
 
-                "core" => {
-                    "packages" => [
+                {
+                    :name => "core",
+                    :packages => [
                         "zenoss-3.2.1-1326",
                         "zenoss-core-zenpacks-3.2.1-1326"
                     ]
                 },
 
-                "enterprise" => {
-                    "packages" => [
+                {
+                    :name => "enterprise",
+                    :packages => [
                         "zenoss-3.2.1-1326",
                         "zenoss-core-zenpacks-3.2.1-1326",
                         "zenoss-enterprise-zenpacks-3.2.1-1326"
@@ -34,21 +38,23 @@ default[:zenoss] = {
             ]
         },
 
-        "4.1.1" => {
-            "flavors" => [
-                "resmgr" => {
-                    "packages" => [
+        {
+            :name => "4.1.1",
+            :flavors => [
+                {
+                    :name => "resmgr",
+                    :packages => [
                         "zends-5.5.15-1.r51230",
                         "zenoss-4.1.1-1396",
-                        "zenoss-core-zenpacks-1396",
-                        "zenoss-enterprise-zenpacks-1396"
+                        "zenoss-core-zenpacks-4.1.1-1396",
+                        "zenoss-enterprise-zenpacks-4.1.1-1396"
                     ]
                 }
             ]
         }
     ],
 
-    "packages" => {
+    :packages => {
         "zenoss-3.2.1-1326" => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/",
         "zenoss-core-zenpacks-3.2.1-1326" => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/",
         "zenoss-enterprise-zenpacks-3.2.1-1326" => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/",

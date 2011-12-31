@@ -84,10 +84,10 @@ action :install do
             # Remove the package from the database because we're going to be
             # installing many versions on the same system.
             if zenoss_pkg.start_with? 'zenoss-'
-                file "/opt/zenoss/.installed.#{zenoss_rpm}"
+                file "/opt/zenoss/.installed.#{rpm_filename}"
 
-                execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
-                    only_if "rpm -q #{pkg_name}"
+                execute "rpm -e #{zenoss_pkg} --justdb --nodeps --noscripts --notriggers" do
+                    only_if "rpm -q #{zenoss_pkg}"
                 end
             end
 
