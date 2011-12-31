@@ -83,12 +83,14 @@ action :install do
 
         # Install Zenoss Platform.
         if %w{platform core enterprise resmgr}.include? new_resource.flavor
+            pkg_name = "zenoss"
             zenoss_rpm = "#{new_resource.platform_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
+
             cookbook_file "/tmp/#{zenoss_rpm}" do
                 source zenoss_rpm
             end
 
-            rpm_package "zenoss" do
+            rpm_package pkg_name do
                 source "/tmp/#{zenoss_rpm}"
                 options "--nodeps --replacepkgs --replacefiles"
                 not_if "test -f /opt/zenoss/.installed.#{zenoss_rpm}"
@@ -129,16 +131,22 @@ action :install do
             end
 
             file "/opt/zenoss/.installed.#{zenoss_rpm}"
+
+            execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
+                only_if "rpm -q #{pkg_name}"
+            end
         end
 
         # Optionally install Core ZenPacks.
         if %w{core enterprise resmgr}.include? new_resource.flavor
+            pkg_name = "zenoss-core-zenpacks"
             zenoss_core_zenpacks_rpm = "#{new_resource.core_zenpacks_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
+
             cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
                 source zenoss_core_zenpacks_rpm
             end
 
-            rpm_package "zenoss-core-zenpacks" do
+            rpm_package pkg_name do
                 source "/tmp/#{zenoss_core_zenpacks_rpm}"
                 options "--nodeps --replacepkgs --replacefiles"
                 not_if "test -f /opt/zenoss/.installed.#{zenoss_core_zenpacks_rpm}"
@@ -146,16 +154,22 @@ action :install do
             end
 
             file "/opt/zenoss/.installed.#{zenoss_core_zenpacks_rpm}"
+
+            execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
+                only_if "rpm -q #{pkg_name}"
+            end
         end
 
         # Install Enterprise ZenPacks
         if %w{enterprise resmgr}.include? new_resource.flavor
+            pkg_name = "zenoss-enterprise-zenpacks"
             zenoss_enterprise_zenpacks_rpm = "#{new_resource.enterprise_zenpacks_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
+
             cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
                 source zenoss_enterprise_zenpacks_rpm
             end
 
-            rpm_package "zenoss-enterprise-zenpacks" do
+            rpm_package pkg_name do
                 source "/tmp/#{zenoss_enterprise_zenpacks_rpm}"
                 options "--nodeps --replacepkgs --replacefiles"
                 not_if "test -f /opt/zenoss/.installed.#{zenoss_enterprise_zenpacks_rpm}"
@@ -163,30 +177,12 @@ action :install do
             end
 
             file "/opt/zenoss/.installed.#{zenoss_enterprise_zenpacks_rpm}"
-        end
 
-
-        # Cleanup package database.
-        if %w{enterprise resmgr}.include? new_resource.flavor
-            rpm_package "zenoss-enterprise-zenpacks" do
-                options "--justdb --nodeps --noscripts --notriggers"
-                action :remove
+            execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
+                only_if "rpm -q #{pkg_name}"
             end
         end
 
-        if %w{core enterprise resmgr}.include? new_resource.flavor
-            rpm_package "zenoss-core-zenpacks" do
-                options "--justdb --noscripts --notriggers"
-                action :remove
-            end
-        end
-
-        if %w{platform core enterprise resmgr}.include? new_resource.flavor
-            rpm_package "zenoss" do
-                options "--justdb --noscripts --notriggers"
-                action :remove
-            end
-        end
 
         # Extra Python tools required for building and testing must be
         # installed into each Zenoss configuration because Zenoss bundles its
@@ -204,7 +200,7 @@ action :install do
         end
 
 
-        # Shutdown Zenoss and related services.
+        # Shutdown Zenoss and related services and unmout logical volume.
         execute "service zenoss stop" do
             returns [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         end
@@ -215,8 +211,6 @@ action :install do
             end
         end
 
-
-        # Unmount or logical volume.
         zenosslabs_lvm_fs "zenoss/#{lv_name}" do
             action :umount
         end
