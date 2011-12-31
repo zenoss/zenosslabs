@@ -7,12 +7,43 @@
 # All rights reserved - Do Not Redistribute
 #
 
-include_recipe "zenosslabs::zenpack-build-server-deps"
+# Attributes
+node[:authorization] = {
+    "sudo" => {
+        "users" => ["jenkins"],
+        "passwordless" => true
+    }
+}
 
-%w{3.2.1 4.1.1}.each do |version|
-    version_tag = version.gsub('.', '')
+node[:java] = {
+    "install_flavor" => "sun"
+}
 
-    include_recipe "zenosslabs::zenpack-build-server-#{version_tag}"
+
+# Recipes
+include_recipe "selinux::disabled"
+include_recipe "git"
+include_recipe "java"
+include_recipe "zenosslabs::fixhosts"
+include_recipe "zenosslabs::jenkins-slave"
+include_recipe "sudo"
+
+
+# Resources
+cookbook_file "/usr/local/bin/test_zenpack.py" do
+    source "test_zenpack.py"
+    mode "0755"
+end
+
+node[:zenoss][:versions].each do |version|
+    version[:flavors].each do |flavor|
+        zenosslabs_zenoss "#{version} #{flavor}" do
+            version version
+            flavor flavor
+            packages flavor[:packages]
+            action :install
+        end
+    end
 end
 
 group "jenkins" do

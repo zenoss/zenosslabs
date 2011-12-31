@@ -18,9 +18,9 @@ action :install do
             rpm_arch = node[:kernel][:machine]
         end
 
-        zenoss_daemons = []
 
-        # Install dependencies.
+        # Prepare dependencies.
+        zenoss_daemons = []
         managed_services = %w{snmpd}
         managed_packages = %w{net-snmp net-snmp-utils gmp libgomp liberation-fonts}
 
@@ -33,30 +33,13 @@ action :install do
             managed_packages += "libgcj"
         end
 
-        # Zenoss 3
         if new_resource.version.start_with? '3'
             zenoss_daemons += %w{zeoctl}
             managed_packages += %w{mysql-server}
             managed_services += %w{mysqld}
-
-        # Zenoss 4
         elsif new_resource.version.start_with? '4'
             zenoss_daemons += %w{zeneventserver zeneventd}
-
-            # perl-DBI is a dependency for zends.
-            yum_package "perl-DBI"
-
-            zends_rpm = "#{new_resource.zends_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
-            cookbook_file "/tmp/#{zends_rpm}" do
-                source zends_rpm
-            end
-
-            rpm_package "zends" do
-                source "/tmp/#{zends_rpm}"
-            end
-
-            # This requires either EPEL or deps.zenoss.com be added to yum.repos.d.
-            managed_packages += %w{tk unixODBC erlang rabbitmq-server memcached libxslt}
+            managed_packages += %w{tk unixODBC erlang rabbitmq-server memcached libxslt perl-DBI}
             managed_services += %w{zends rabbitmq-server memcached}
         end
 
@@ -70,7 +53,8 @@ action :install do
             end
         end
 
-        # Create a logical volume.
+
+        # Create and mount a logical volume to hold this Zenoss configuration.
         lv_name = "#{new_resource.version}_#{new_resource.flavor}"
         zenosslabs_lvm_fs "zenoss/#{lv_name}" do
             device "/dev/vdb"
@@ -81,105 +65,66 @@ action :install do
             action [ :create, :format, :mount ]
         end
 
-        # Install Zenoss Platform.
-        if %w{platform core enterprise resmgr}.include? new_resource.flavor
-            pkg_name = "zenoss"
-            zenoss_rpm = "#{new_resource.platform_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
 
-            cookbook_file "/tmp/#{zenoss_rpm}" do
-                source zenoss_rpm
+        # Install Zenoss.
+        new_resource.packages.each do |zenoss_pkg|
+            rpm_filename = "#{zenoss_pkg}.#{rpm_release}.#{rpm_arch}.rpm"
+
+            remote_file "/tmp/#{rpm_filename}" do
+                source "#{node[:zenoss][:packages][zenoss_pkg]}#{rpm_filename}"
+                action :create_if_missing
             end
 
-            rpm_package pkg_name do
-                source "/tmp/#{zenoss_rpm}"
+            rpm_package zenoss_pkg do
+                source "/tmp/#{rpm_filename}"
                 options "--nodeps --replacepkgs --replacefiles"
-                not_if "test -f /opt/zenoss/.installed.#{zenoss_rpm}"
-                action :install
+                not_if "test -f /opt/zenoss/.installed.#{rpm_filename}"
             end
 
-            file "/opt/zenoss/etc/DAEMONS_TXT_ONLY" do
-                owner "zenoss"
-                group "zenoss"
-                mode 0644
+            # Remove the package from the database because we're going to be
+            # installing many versions on the same system.
+            if zenoss_pkg.start_with? 'zenoss-'
+                file "/opt/zenoss/.installed.#{zenoss_rpm}"
+
+                execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
+                    only_if "rpm -q #{pkg_name}"
+                end
             end
 
-            template "/opt/zenoss/etc/daemons.txt" do
-                owner "zenoss"
-                group "zenoss"
-                mode 0644
-                source "daemons.txt.erb"
-                variables(
-                    :daemons => zenoss_daemons
-                )
-            end
+            # Installation steps specific to the main zenoss package.
+            if zenoss_pkg =~ /zenoss-\d/
+                file "/opt/zenoss/etc/DAEMONS_TXT_ONLY" do
+                    owner "zenoss"
+                    group "zenoss"
+                    mode 0644
+                end
 
-            # Alias wget to true so Zenoss startup doesn't have to wait for the
-            # initial device add to timeout.
-            link "/usr/local/bin/wget" do
-                to "/bin/true"
-                only_if "test -f /opt/zenoss/.fresh_install || test -f /opt/zenoss/.upgraded"
-                action :create
-            end
+                template "/opt/zenoss/etc/daemons.txt" do
+                    owner "zenoss"
+                    group "zenoss"
+                    mode 0644
+                    source "daemons.txt.erb"
+                    variables(
+                        :daemons => zenoss_daemons
+                    )
+                end
 
-            service "zenoss" do
-                only_if "test -f /opt/zenoss/.fresh_install || test -f /opt/zenoss/.upgraded"
-                action [ :disable, :start ]
-            end
+                # Alias wget to true so Zenoss startup doesn't have to wait for
+                # the initial device add to timeout.
+                link "/usr/local/bin/wget" do
+                    to "/bin/true"
+                    only_if "test -f /opt/zenoss/.fresh_install || test -f /opt/zenoss/.upgraded"
+                    action :create
+                end
 
-            link "/usr/local/bin/wget" do
-                action :delete
-            end
+                service "zenoss" do
+                    only_if "test -f /opt/zenoss/.fresh_install || test -f /opt/zenoss/.upgraded"
+                    action [ :disable, :start ]
+                end
 
-            file "/opt/zenoss/.installed.#{zenoss_rpm}"
-
-            execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
-                only_if "rpm -q #{pkg_name}"
-            end
-        end
-
-        # Optionally install Core ZenPacks.
-        if %w{core enterprise resmgr}.include? new_resource.flavor
-            pkg_name = "zenoss-core-zenpacks"
-            zenoss_core_zenpacks_rpm = "#{new_resource.core_zenpacks_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
-
-            cookbook_file "/tmp/#{zenoss_core_zenpacks_rpm}" do
-                source zenoss_core_zenpacks_rpm
-            end
-
-            rpm_package pkg_name do
-                source "/tmp/#{zenoss_core_zenpacks_rpm}"
-                options "--nodeps --replacepkgs --replacefiles"
-                not_if "test -f /opt/zenoss/.installed.#{zenoss_core_zenpacks_rpm}"
-                action :install
-            end
-
-            file "/opt/zenoss/.installed.#{zenoss_core_zenpacks_rpm}"
-
-            execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
-                only_if "rpm -q #{pkg_name}"
-            end
-        end
-
-        # Install Enterprise ZenPacks
-        if %w{enterprise resmgr}.include? new_resource.flavor
-            pkg_name = "zenoss-enterprise-zenpacks"
-            zenoss_enterprise_zenpacks_rpm = "#{new_resource.enterprise_zenpacks_rpm}.#{rpm_release}.#{rpm_arch}.rpm"
-
-            cookbook_file "/tmp/#{zenoss_enterprise_zenpacks_rpm}" do
-                source zenoss_enterprise_zenpacks_rpm
-            end
-
-            rpm_package pkg_name do
-                source "/tmp/#{zenoss_enterprise_zenpacks_rpm}"
-                options "--nodeps --replacepkgs --replacefiles"
-                not_if "test -f /opt/zenoss/.installed.#{zenoss_enterprise_zenpacks_rpm}"
-                action :install
-            end
-
-            file "/opt/zenoss/.installed.#{zenoss_enterprise_zenpacks_rpm}"
-
-            execute "rpm -e #{pkg_name} --justdb --nodeps --noscripts --notriggers" do
-                only_if "rpm -q #{pkg_name}"
+                link "/usr/local/bin/wget" do
+                    action :delete
+                end
             end
         end
 
