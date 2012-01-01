@@ -31,7 +31,7 @@ include_recipe "sudo"
 
 # Resources
 cookbook_file "/usr/local/bin/zenpack_harness" do
-    source "test_zenpack.py"
+    source "zenpack_harness"
     mode "0755"
 end
 

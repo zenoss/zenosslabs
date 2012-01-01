@@ -285,14 +285,17 @@ def main():
 
     zman.setup(zenoss_version, zenoss_flavor)
 
-    harness = ZenPackHarness()
-    for arg in args:
-        harness_method = getattr(harness, 'run_%s' % arg, None)
-        if not harness_method:
-            print >> sys.stderr, "%s is not a supported command." % arg
-            sys.exit(1)
+    try:
+        harness = ZenPackHarness()
+        for arg in args:
+            harness_method = getattr(harness, 'run_%s' % arg, None)
+            if not harness_method:
+                print >> sys.stderr, "%s is not a supported command." % arg
+                sys.exit(1)
 
-        harness_method()
+            harness_method()
+    finally:
+        zman.tear_down()
 
 
 if __name__ == '__main__':
