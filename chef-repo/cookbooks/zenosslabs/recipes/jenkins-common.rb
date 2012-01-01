@@ -26,6 +26,14 @@ directory "/var/lib/jenkins/.ssh" do
     action :create
 end
 
+# Templatize the .bashrc.
+template "/var/lib/jenkins/.bashrc" do
+    owner "jenkins"
+    group "jenkins"
+    mode 0644
+    source "jenkins_bashrc.erb"
+end
+
 %w{id_rsa id_rsa.pub known_hosts authorized_keys}.each do |file|
     case file
     when "id_rsa", "authorized_leys"

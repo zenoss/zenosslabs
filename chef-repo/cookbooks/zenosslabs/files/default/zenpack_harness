@@ -195,7 +195,8 @@ class ZenPackHarness(object):
         test_modules_glob = '/opt/zenoss/ZenPacks/%s-*.egg/%s/tests/*.py' % (
             self.zenpack_name, self.zenpack_name.replace('.', '/'))
 
-        if not glob.glob(test_modules_glob):
+        # We need __init__.py and at least one other file.
+        if len(glob.glob(test_modules_glob)) < 2:
             print "No unit tests found.\n"
             return
 
