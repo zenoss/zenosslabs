@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+"""zenpack_harness
+
+Provides a comprehensive harness for building and testing ZenPacks. Also
+manages multiple Zenoss configurations installed on the same server to allow a
+ZenPack to be tested against multiple Zenoss configurations.
+
+"""
+
 import compiler
 import glob
 import os
@@ -73,7 +81,11 @@ def shell(command):
 
 
 class ZenossManager(object):
+    """Manages multiple Zenoss configurations on the same server."""
+
     def setup(self, zenoss_version, zenoss_flavor):
+        """Setup a Zenoss environment for testing ZenPacks."""
+
         self.tear_down()
 
         try:
@@ -104,6 +116,13 @@ class ZenossManager(object):
             sys.exit(1)
 
     def tear_down(self):
+        """Tear down the Zenoss test environment.
+
+        tear_down shouldn't need to be called explicitly as setup will call it
+        before doing a setup.
+
+        """
+
         commands = (
             "sudo /sbin/service zenoss stop",
             "sudo umount /opt/zenoss",
@@ -117,7 +136,9 @@ class ZenossManager(object):
                 pass
 
 
-class ZenPackBuilder(object):
+class ZenPackHarness(object):
+    """Comprehensive harness to build and test Zenpacks."""
+
     zenpack_name = None
     zenpack_directory = None
 
@@ -131,14 +152,8 @@ class ZenPackBuilder(object):
 
         self.zenpack_name = visitor['NAME']
 
-    def run_all(self):
-        self.build_egg()
-
-        self.test_install()
-        self.test_unittests()
-
-    def build_egg(self):
-        print "*** Building ZenPack Egg ***"
+    def run_build(self):
+        print "*** Building Egg ***"
 
         try:
             shell("sudo chmod 775 .")
@@ -156,8 +171,8 @@ class ZenPackBuilder(object):
             print ex
             sys.exit(1)
 
-    def test_install(self):
-        print "*** Installing ZenPack Egg ***"
+    def run_install(self):
+        print "*** Installing ***"
 
         try:
             print shell(
@@ -169,8 +184,13 @@ class ZenPackBuilder(object):
             print ex
             sys.exit(1)
 
-    def test_unittests(self):
-        print "*** Running ZenPack Unit Tests ***"
+    def run_generictests(self):
+        print "*** Running Generic Tests ***"
+        print "Coming soon!"
+        print
+
+    def run_unittests(self):
+        print "*** Running Unit Tests ***"
 
         test_modules_glob = '/opt/zenoss/ZenPacks/%s-*.egg/%s/tests/*.py' % (
             self.zenpack_name, self.zenpack_name.replace('.', '/'))
@@ -191,28 +211,72 @@ class ZenPackBuilder(object):
             print ex
             sys.exit(1)
 
+    def run_remove(self):
+        print "*** Removing ***"
+
+        try:
+            print shell("sudo -u zenoss -i zenpack --remove %s" % (
+                self.zenpack_name))
+        except ShellError, ex:
+            print ex
+            sys.exit(1)
+
 
 def main():
+    """Run zenpack_harness (ZenPackHarness) from the command line.
+
+    ZenPackHarness requires two parameters: zenoss_version and zenoss_flavor.
+    This method attempts to get these parameters from command line options or
+    from the Jenkins BUILD_TAG environment variable. The command line options
+    will take precendence over what is set in BUILD_TAG.
+
+    The following commands (steps) are supported:
+
+        build
+        install
+        generictests
+        unittests
+        remove
+
+    """
+
+    from optparse import OptionParser
+
+    zenoss_version = None
+    zenoss_flavor = None
+
+    parser = OptionParser()
+    parser.add_option('-v', '--version', help="Zenoss version to test against")
+    parser.add_option('-f', '--flavor', help="Zenoss flavor to test against")
+    options, args = parser.parse_args()
+
+    if len(args) < 1:
+        args = ('build', 'install', 'generictests', 'unittests', 'remove')
+
     build_tag = os.environ.get('BUILD_TAG', None)
-    if not build_tag:
-        print >> sys.stderr, "BUILD_TAG environment variable not set."
+    build_labels = {}
+    if build_tag:
+        build_labels = dict(
+            x.split('=') for x in build_tag.split('-')[1].split(','))
+
+    if options.version:
+        zenoss_version = options.version
+    elif 'zenoss_version' in build_labels:
+        zenoss_version = build_labels['zenoss_version']
+    else:
+        print >> sys.stderr, "Zenoss version not found on command line or BUILD_TAG."
         sys.exit(1)
 
-    build_labels = dict(
-        x.split('=') for x in build_tag.split('-')[1].split(','))
-
-    zenoss_version = build_labels.get('zenoss_version', None)
-    if not zenoss_version:
-        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_version."
-        sys.exit(1)
-
-    zenoss_flavor = build_labels.get('zenoss_flavor', None)
-    if not zenoss_flavor:
-        print >> sys.stderr, "BUILD_TAG doesn't contain zenoss_flavor."
+    if options.flavor:
+        zenoss_flavor = options.flavor
+    elif 'zenoss_flavor' in build_labels:
+        zenoss_flavor = build_labels['zenoss_flavor']
+    else:
+        print >> sys.stderr, "Zenoss flavor not found on command line or BUILD_TAG."
         sys.exit(1)
 
     if not os.path.isfile('setup.py'):
-        print >> sys.stderr, "setup.py doesn't exist."
+        print >> sys.stderr, "setup.py doesn't exist in current directory."
         sys.exit(1)
 
     zman = ZenossManager()
@@ -221,14 +285,14 @@ def main():
 
     zman.setup(zenoss_version, zenoss_flavor)
 
-    try:
-        tester = ZenPackBuilder()
-        tester.run_all()
-    finally:
-        print "*** Tearing down environment for Zenoss %s (%s) ***" % (
-            zenoss_version, zenoss_flavor)
+    harness = ZenPackHarness()
+    for arg in args:
+        harness_method = getattr(harness, 'run_%s' % arg, None)
+        if not harness_method:
+            print >> sys.stderr, "%s is not a supported command." % arg
+            sys.exit(1)
 
-        zman.tear_down()
+        harness_method()
 
 
 if __name__ == '__main__':

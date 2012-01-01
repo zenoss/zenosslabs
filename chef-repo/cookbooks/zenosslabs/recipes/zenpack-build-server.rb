@@ -30,7 +30,7 @@ include_recipe "sudo"
 
 
 # Resources
-cookbook_file "/usr/local/bin/test_zenpack.py" do
+cookbook_file "/usr/local/bin/zenpack_harness" do
     source "test_zenpack.py"
     mode "0755"
 end
