@@ -1,0 +1,187 @@
+#!/usr/bin/env python
+import jinja2
+import httplib2
+
+TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
+<matrix-project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="{{ scm_class }}">
+  {%- if scm_class == "hudson.plugins.git.GitSCM" %}
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name></name>
+        <refspec></refspec>
+        <url>{{ scm_url }}</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+    {%- for scm_branch in scm_branches %}
+      <hudson.plugins.git.BranchSpec>
+        <name>{{ scm_branch }}</name>
+      </hudson.plugins.git.BranchSpec>
+    {%- endfor %}
+    </branches>
+    <disableSubmodules>false</disableSubmodules>
+    <recursiveSubmodules>false</recursiveSubmodules>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <authorOrCommitter>false</authorOrCommitter>
+    <clean>false</clean>
+    <wipeOutWorkspace>false</wipeOutWorkspace>
+    <pruneBranches>false</pruneBranches>
+    <remotePoll>false</remotePoll>
+    <buildChooser class="hudson.plugins.git.util.DefaultBuildChooser"/>
+    <gitTool>Default</gitTool>
+    <submoduleCfg class="list"/>
+    <relativeTargetDir></relativeTargetDir>
+    <reference></reference>
+    <excludedRegions></excludedRegions>
+    <excludedUsers></excludedUsers>
+    <gitConfigName></gitConfigName>
+    <gitConfigEmail></gitConfigEmail>
+    <skipTag>false</skipTag>
+    <scmName></scmName>
+  {%- elif scm_class == "hudson.scm.SubversionSCM" %}
+    <locations>
+      <hudson.scm.SubversionSCM_-ModuleLocation>
+        <remote>{{ scm_url }}</remote>
+        <local>.</local>
+      </hudson.scm.SubversionSCM_-ModuleLocation>
+    </locations>
+    <excludedRegions></excludedRegions>
+    <includedRegions></includedRegions>
+    <excludedUsers></excludedUsers>
+    <excludedRevprop></excludedRevprop>
+    <excludedCommitMessages></excludedCommitMessages>
+    <workspaceUpdater class="hudson.scm.subversion.UpdateUpdater"/>
+  {%- endif %}
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers class="vector">
+    <hudson.triggers.SCMTrigger>
+      <spec>*/10 * * * *</spec>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <axes>
+    <hudson.matrix.LabelAxis>
+      <name>architecture</name>
+      <values>
+      {%- for architecture in architectures %}
+        <string>{{ architecture }}</string>
+      {%- endfor %}
+      </values>
+    </hudson.matrix.LabelAxis>
+    <hudson.matrix.LabelAxis>
+      <name>operating_system</name>
+      <values>
+      {%- for operating_system in operating_systems %}
+        <string>{{ operating_system }}</string>
+      {%- endfor %}
+      </values>
+    </hudson.matrix.LabelAxis>
+    <hudson.matrix.LabelAxis>
+      <name>zenoss_flavor</name>
+      <values>
+      {%- for zenoss_flavor in zenoss_flavors %}
+        <string>{{ zenoss_flavor }}</string>
+      {%- endfor %}
+      </values>
+    </hudson.matrix.LabelAxis>
+    <hudson.matrix.LabelAxis>
+      <name>zenoss_version</name>
+      <values>
+      {%- for zenoss_version in zenoss_versions %}
+        <string>{{ zenoss_version }}</string>
+      {%- endfor %}
+      </values>
+    </hudson.matrix.LabelAxis>
+  </axes>
+  <combinationFilter>{{ combination_filter }}</combinationFilter>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>**/dist/*.egg</artifacts>
+      <latestOnly>false</latestOnly>
+    </hudson.tasks.ArtifactArchiver>
+  </publishers>
+  <buildWrappers/>
+  <runSequentially>false</runSequentially>
+</matrix-project>
+"""
+
+
+class Job(object):
+    def __init__(self, name, scm, url):
+        self.name = name
+        self.scm = scm
+        self.url = url
+
+    @property
+    def xml(self):
+        context = {}
+
+        if self.scm == "git":
+            context['scm_class'] = 'hudson.plugins.git.GitSCM'
+            context['scm_branches'] = ['master']
+        elif self.scm == "subversion":
+            context['scm_class'] = 'hudson.scm.SubversionSCM'
+        else:
+            raise Exception("%s is not a supported SCM" % self.scm)
+
+        context['scm_url'] = self.url
+
+        context['architectures'] = ['x86_64']
+        context['operating_systems'] = ['centos5']
+        context['zenoss_flavors'] = ['platform', 'core', 'enterprise', 'resmgr']
+        context['zenoss_versions'] = ['3.2.1', '4.1.1']
+
+        context['combination_filter'] = '(zenoss_version == &quot;3.2.1&quot; &amp;&amp; zenoss_flavor in [&quot;platform&quot;, &quot;core&quot;, &quot;enterprise&quot;]) || (zenoss_version == &quot;4.1.1&quot; &amp;&amp; zenoss_flavor in [&quot;resmgr&quot;])'
+
+        template = jinja2.Template(TEMPLATE)
+        return template.render(context)
+
+    def add_to_jenkins(self, jenkins_url):
+        job_url = "%s/job/%s/config.xml" % (jenkins_url, self.name)
+
+        h = httplib2.Http()
+        response, content = h.request(job_url, 'GET')
+
+        if response.status != 200:
+            job_url = "%s/createItem?name=%s" % (jenkins_url, self.name)
+
+        headers = {'Content-Type': 'text/xml'}
+
+        h.request(job_url, 'POST', body=self.xml, headers=headers)
+
+
+def main():
+    jobs = (
+        Job('ZenPacks.zenoss.CloudFoundry', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.CloudFoundry.git'),
+        Job('ZenPacks.zenoss.CloudStack', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.CloudStack.git'),
+        Job('ZenPacks.zenoss.Memcached', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.Memcached.git'),
+        Job('ZenPacks.zenoss.OpenStack', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.OpenStack.git'),
+        Job('ZenPacks.zenoss.OpenStackSwift', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.OpenStackSwift.git'),
+        Job('ZenPacks.zenoss.OpenVZ', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.OpenVZ.git'),
+        Job('ZenPacks.zenoss.PostgreSQL', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.PostgreSQL.git'),
+        Job('ZenPacks.zenoss.RabbitMQ', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.RabbitMQ.git'),
+        )
+
+    print "Adding jobs to Jenkins:"
+    for job in jobs:
+        print "  - %s" % job.name
+        job.add_to_jenkins('http://jenkins.zenosslabs.com:8080')
+
+
+if __name__ == '__main__':
+    main()
