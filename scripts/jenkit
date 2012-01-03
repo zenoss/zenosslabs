@@ -30,7 +30,7 @@ TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
     <authorOrCommitter>false</authorOrCommitter>
     <clean>false</clean>
-    <wipeOutWorkspace>false</wipeOutWorkspace>
+    <wipeOutWorkspace>true</wipeOutWorkspace>
     <pruneBranches>false</pruneBranches>
     <remotePoll>false</remotePoll>
     <buildChooser class="hudson.plugins.git.util.DefaultBuildChooser"/>
@@ -56,7 +56,7 @@ TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
     <excludedUsers></excludedUsers>
     <excludedRevprop></excludedRevprop>
     <excludedCommitMessages></excludedCommitMessages>
-    <workspaceUpdater class="hudson.scm.subversion.UpdateUpdater"/>
+    <workspaceUpdater class="hudson.scm.subversion.UpdateWithCleanUpdater"/>
   {%- endif %}
   </scm>
   <canRoam>true</canRoam>
