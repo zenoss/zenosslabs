@@ -77,16 +77,16 @@ action :install do
                 not_if "test -f /opt/zenoss/.installed.#{new_resource.database[:package][:name]}"
             end
         else
-            rpm_filename = "#{new_resource.database[:rpm_prefix]}.#{rpm_release}.#{rpm_arch}.rpm"
+            rpm_filename = "#{new_resource.database[:package][:rpm_prefix]}.#{rpm_release}.#{rpm_arch}.rpm"
 
             remote_file "/tmp/#{rpm_filename}" do
-                source "#{new_resource.database[:url_prefix]}#{rpm_filename}"
+                source "#{new_resource.database[:package][:url_prefix]}#{rpm_filename}"
                 action :create_if_missing
             end
 
             package "perl-DBI"
 
-            rpm_package new_resource.database_package do
+            rpm_package new_resource.database[:package][:name] do
                 source "/tmp/#{rpm_filename}"
                 options "--nodeps --replacepkgs --replacefiles"
                 not_if "test -f /opt/zenoss/.installed.#{new_resource.database[:package][:name]}"
@@ -192,6 +192,12 @@ action :install do
             service service_name do
                 action :stop
             end
+        end
+
+        # Somehow MySQL files are becoming owned by the zenoss user during this
+        # process. Fixing it with a sledgehammer.
+        if new_resource.database[:name] == 'mysql'
+            execute "chown -R mysql:mysql /opt/zenoss/datadir"
         end
 
         zenosslabs_lvm_fs "zenoss/#{lv_name}" do
