@@ -94,6 +94,7 @@ class ZenossManager(object):
             elif zenoss_version.startswith('4'):
                 shell("sudo /sbin/service zends start")
                 shell("sudo /sbin/service rabbitmq-server start")
+                shell("sudo /sbin/service memcached start")
         except ShellError:
             pass
 
@@ -125,8 +126,9 @@ class ZenossManager(object):
 
         commands = [
             "sudo /sbin/service zenoss stop",
-            "sudo /sbin/service zends stop",
             "sudo /sbin/service mysqld stop",
+            "sudo /sbin/service zends stop",
+            "sudo /sbin/service memcached stop",
             "sudo umount /opt/zenoss",
             "sudo /usr/sbin/lvremove -f zenoss/sandbox",
             ]
