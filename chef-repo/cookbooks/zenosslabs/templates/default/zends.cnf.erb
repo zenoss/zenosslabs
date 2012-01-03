@@ -1,0 +1,26 @@
+#---------------------------------------------------------------------------
+# Zenoss DataStore Configuration
+#
+# Created by ZenDS Installer.
+#---------------------------------------------------------------------------
+[mysqld]
+socket = /opt/zends/data/zends.sock
+basedir = /opt/zends
+datadir = /opt/zends/data
+port = 13306
+user = zenoss
+innodb_file_per_table
+skip_external_locking
+#
+max_allowed_packet = 64M
+
+[client]
+socket = /opt/zends/data/zends.sock
+user = zenoss
+
+[mysql]
+max_allowed_packet = 64M
+prompt = "zends> "
+
+[mysqldump]
+max_allowed_packet = 64M

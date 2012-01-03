@@ -91,9 +91,20 @@ action :install do
                 options "--nodeps --replacepkgs --replacefiles"
                 not_if "test -f /opt/zenoss/.installed.#{new_resource.database[:package][:name]}"
             end
+
+            template "/opt/zends/etc/zends.cnf" do
+                owner "root"
+                group "root"
+                mode 0644
+                source "zends.cnf.erb"
+            end
         end
 
         file "/opt/zenoss/.installed.#{new_resource.database[:package][:name]}"
+
+        execute "rpm -e #{new_resource.database[:package][:name]} --justdb --nodeps --noscripts --notriggers" do
+            only_if "rpm -q #{new_resource.database[:package][:name]}"
+        end
 
         execute "mv #{new_resource.database[:datadir]} /opt/zenoss/datadir" do
             not_if "test -d /opt/zenoss/datadir"
