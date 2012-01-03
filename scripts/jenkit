@@ -167,6 +167,10 @@ class Job(object):
 
 def main():
     jobs = (
+        # Private Subversion Repositories
+        Job('ZenPacks.zenoss.ApacheMonitor', 'subversion', 'http://dev.zenoss.org/svnint/trunk/core/zenpacks/ZenPacks.zenoss.ApacheMonitor'),
+
+        # Public GitHub Repositories
         Job('ZenPacks.zenoss.CloudFoundry', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.CloudFoundry.git'),
         Job('ZenPacks.zenoss.CloudStack', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.CloudStack.git'),
         Job('ZenPacks.zenoss.Memcached', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.Memcached.git'),
@@ -175,6 +179,9 @@ def main():
         Job('ZenPacks.zenoss.OpenVZ', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.OpenVZ.git'),
         Job('ZenPacks.zenoss.PostgreSQL', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.PostgreSQL.git'),
         Job('ZenPacks.zenoss.RabbitMQ', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.RabbitMQ.git'),
+
+        # Private GitHub Repositories
+        Job('ZenPacks.zenoss.SolarisMonitor', 'git', 'git@github.com:zenoss/ZenPacks.zenoss.SolarisMonitor.git'),
         )
 
     print "Adding jobs to Jenkins:"
