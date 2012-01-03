@@ -123,11 +123,13 @@ class ZenossManager(object):
 
         """
 
-        commands = (
+        commands = [
             "sudo /sbin/service zenoss stop",
+            "sudo /sbin/service zends stop",
+            "sudo /sbin/service mysqld stop",
             "sudo umount /opt/zenoss",
             "sudo /usr/sbin/lvremove -f zenoss/sandbox",
-            )
+            ]
 
         for command in commands:
             try:

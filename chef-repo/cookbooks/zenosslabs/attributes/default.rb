@@ -11,28 +11,57 @@ default[:zenoss] = {
     :versions => [
         {
             :name => "3.2.1",
+
+            :database => {
+                :name => "mysql",
+                :service => "mysqld",
+                :datadir => "/var/lib/mysql",
+                :package => {
+                    :name => "mysql-server"
+                }
+            },
+
+            :daemons => ['zeoctl'],
+
             :flavors => [
                 {
                     :name => "platform",
                     :packages => [
-                        "zenoss-3.2.1-1326"
+                        {
+                            :name => "zenoss",
+                            :rpm_prefix => "zenoss-3.2.1-1326",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/"
+                        }
                     ]
-                },
-
-                {
+                },{
                     :name => "core",
                     :packages => [
-                        "zenoss-3.2.1-1326",
-                        "zenoss-core-zenpacks-3.2.1-1326"
+                        {
+                            :name => "zenoss",
+                            :rpm_prefix => "zenoss-3.2.1-1326",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/"
+                        },{
+                            :name => "zenoss-core-zenpacks",
+                            :rpm_prefix => "zenoss-core-zenpacks-3.2.1-1326",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/"
+                        }
                     ]
-                },
-
-                {
+                },{
                     :name => "enterprise",
                     :packages => [
-                        "zenoss-3.2.1-1326",
-                        "zenoss-core-zenpacks-3.2.1-1326",
-                        "zenoss-enterprise-zenpacks-3.2.1-1326"
+                        {
+                            :name => "zenoss",
+                            :rpm_prefix => "zenoss-3.2.1-1326",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/"
+                        },{
+                            :name => "zenoss-core-zenpacks",
+                            :rpm_prefix => "zenoss-core-zenpacks-3.2.1-1326",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/"
+                        },{
+                            :name => "zenoss-enterprise-zenpacks",
+                            :rpm_prefix => "zenoss-enterprise-zenpacks-3.2.1-1326",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/"
+                        }
                     ]
                 }
             ]
@@ -40,29 +69,40 @@ default[:zenoss] = {
 
         {
             :name => "4.1.1",
+
+            :database => {
+                :name => "zends",
+                :datadir => "/opt/zends/data",
+                :service => "zends",
+                :package => {
+                    :name => "zends",
+                    :rpm_prefix => "zends-5.5.15-1.r51230",
+                    :url_prefix => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/"
+                }
+            },
+
+            :daemons => ['zeneventserver', 'zeneventd'],
+
             :flavors => [
                 {
                     :name => "resmgr",
                     :packages => [
-                        "zends-5.5.15-1.r51230",
-                        "zenoss-4.1.1-1396",
-                        "zenoss-core-zenpacks-4.1.1-1396",
-                        "zenoss-enterprise-zenpacks-4.1.1-1396"
+                        {
+                            :name => "zenoss",
+                            :rpm_prefix => "zenoss-4.1.1-1396",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/"
+                        },{
+                            :name => "zenoss-core-zenpacks",
+                            :rpm_prefix => "zenoss-core-zenpacks-4.1.1-1396",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/"
+                        },{
+                            :name => "zenoss-enterprise-zenpacks",
+                            :rpm_prefix => "zenoss-enterprise-zenpacks-4.1.1-1396",
+                            :url_prefix => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/"
+                        }
                     ]
                 }
             ]
         }
-    ],
-
-    :packages => {
-        "zenoss-3.2.1-1326" => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/",
-        "zenoss-core-zenpacks-3.2.1-1326" => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/",
-        "zenoss-enterprise-zenpacks-3.2.1-1326" => "http://artifacts.zenoss.loc/releases/3.2.1/1326/enterprise/",
-
-        "zends-5.5.15-1.r51230" => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/",
-
-        "zenoss-4.1.1-1396" => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/",
-        "zenoss-core-zenpacks-4.1.1-1396" => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/",
-        "zenoss-enterprise-zenpacks-4.1.1-1396" => "http://artifacts.zenoss.loc/releases/4.1.1/1396/resmgr/"
-    }
+    ]
 }

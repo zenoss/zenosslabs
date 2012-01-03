@@ -20,7 +20,6 @@ action :install do
 
 
         # Prepare dependencies.
-        zenoss_daemons = []
         managed_services = %w{snmpd}
         managed_packages = %w{net-snmp net-snmp-utils gmp libgomp liberation-fonts}
 
@@ -33,16 +32,13 @@ action :install do
             managed_packages += "libgcj"
         end
 
-        if new_resource.version.start_with? '3'
-            zenoss_daemons += %w{zeoctl}
-            managed_packages += %w{mysql-server}
-            managed_services += %w{mysqld}
-        elsif new_resource.version.start_with? '4'
-            zenoss_daemons += %w{zeneventserver zeneventd}
-            managed_packages += %w{tk unixODBC erlang rabbitmq-server memcached libxslt perl-DBI}
-            managed_services += %w{zends rabbitmq-server memcached}
+        if new_resource.version.start_with? '4'
+            managed_packages += %w{tk unixODBC erlang rabbitmq-server memcached libxslt}
+            managed_services += %w{rabbitmq-server memcached}
         end
 
+        # ZenDS will be installed later as one of the packages in
+        # new_resource.packages.
         managed_packages.each do |pkg|
             yum_package pkg
         end
@@ -66,33 +62,75 @@ action :install do
         end
 
 
-        # Install Zenoss.
-        new_resource.packages.each do |zenoss_pkg|
-            rpm_filename = "#{zenoss_pkg}.#{rpm_release}.#{rpm_arch}.rpm"
+        # Each Zenoss configuration needs to have its database (MySQL or ZenDS)
+        # data isolated.
+        service new_resource.database[:service] do
+            action :stop
+        end
+
+        if new_resource.database[:package][:url_prefix].nil?
+            package new_resource.database[:package][:name] do
+                action :install
+            end
+
+            execute "yum -y reinstall #{new_resource.database[:package][:name]}" do
+                not_if "test -f /opt/zenoss/.installed.#{new_resource.database[:package][:name]}"
+            end
+        else
+            rpm_filename = "#{new_resource.database[:rpm_prefix]}.#{rpm_release}.#{rpm_arch}.rpm"
 
             remote_file "/tmp/#{rpm_filename}" do
-                source "#{node[:zenoss][:packages][zenoss_pkg]}#{rpm_filename}"
+                source "#{new_resource.database[:url_prefix]}#{rpm_filename}"
                 action :create_if_missing
             end
 
-            rpm_package zenoss_pkg do
+            package "perl-DBI"
+
+            rpm_package new_resource.database_package do
+                source "/tmp/#{rpm_filename}"
+                options "--nodeps --replacepkgs --replacefiles"
+                not_if "test -f /opt/zenoss/.installed.#{new_resource.database[:package][:name]}"
+            end
+        end
+
+        file "/opt/zenoss/.installed.#{new_resource.database[:package][:name]}"
+
+        execute "mv #{new_resource.database[:datadir]} /opt/zenoss/datadir" do
+            not_if "test -d /opt/zenoss/datadir"
+        end
+
+        link new_resource.database[:datadir] do
+            to "/opt/zenoss/datadir"
+        end
+
+        service new_resource.database[:service] do
+            action [ :disable, :start ]
+        end
+
+
+        # Install Zenoss.
+        new_resource.packages.each do |zenoss_pkg|
+            rpm_filename = "#{zenoss_pkg[:rpm_prefix]}.#{rpm_release}.#{rpm_arch}.rpm"
+
+            remote_file "/tmp/#{rpm_filename}" do
+                source "#{zenoss_pkg[:url_prefix]}#{rpm_filename}"
+                action :create_if_missing
+            end
+
+            rpm_package zenoss_pkg[:name] do
                 source "/tmp/#{rpm_filename}"
                 options "--nodeps --replacepkgs --replacefiles"
                 not_if "test -f /opt/zenoss/.installed.#{rpm_filename}"
             end
 
-            # Remove the package from the database because we're going to be
-            # installing many versions on the same system.
-            if zenoss_pkg.start_with? 'zenoss-'
-                file "/opt/zenoss/.installed.#{rpm_filename}"
+            file "/opt/zenoss/.installed.#{rpm_filename}"
 
-                execute "rpm -e #{zenoss_pkg} --justdb --nodeps --noscripts --notriggers" do
-                    only_if "rpm -q #{zenoss_pkg}"
-                end
+            execute "rpm -e #{zenoss_pkg[:name]} --justdb --nodeps --noscripts --notriggers" do
+                only_if "rpm -q #{zenoss_pkg[:name]}"
             end
 
             # Installation steps specific to the main zenoss package.
-            if zenoss_pkg =~ /zenoss-\d/
+            if zenoss_pkg[:name] == "zenoss"
                 file "/opt/zenoss/etc/DAEMONS_TXT_ONLY" do
                     owner "zenoss"
                     group "zenoss"
@@ -105,7 +143,7 @@ action :install do
                     mode 0644
                     source "daemons.txt.erb"
                     variables(
-                        :daemons => zenoss_daemons
+                        :daemons => new_resource.daemons
                     )
                 end
 
@@ -146,13 +184,11 @@ action :install do
 
 
         # Shutdown Zenoss and related services and unmout logical volume.
-        (%w{zenoss} + managed_services).each do |service_name|
+        execute "service zenoss stop" do
+            returns [0,1,2,3,4,5,6,7,8,9]
+        end
 
-            # When zends is running it can cause mysqld's stop to error out.
-            service "zends" do
-                action :stop
-            end
-
+        ([new_resource.database[:service]] + managed_services).each do |service_name|
             service service_name do
                 action :stop
             end

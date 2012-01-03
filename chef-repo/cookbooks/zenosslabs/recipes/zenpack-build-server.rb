@@ -40,6 +40,8 @@ node[:zenoss][:versions].each do |version|
         zenosslabs_zenoss "#{version[:name]} #{flavor[:name]}" do
             version version[:name]
             flavor flavor[:name]
+            database version[:database]
+            daemons version[:daemons]
             packages flavor[:packages]
             action :install
         end
