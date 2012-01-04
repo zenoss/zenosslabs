@@ -235,6 +235,19 @@ class ZenPackHarness(object):
             print shell("sudo -u zenoss -i zenpack --remove %s" % (
                 self.zenpack_name))
         except ShellError, ex:
+            # If a ZenPack can't be removed because it's a dependency of other
+            # installed ZenPacks, we'll skip the remove tests.
+            if "cannot be removed because it is required by" in str(ex):
+                print "ZenPack is a dependency of other installed ZenPacks.\n"
+                return
+
+            # A regression was introduced in Zenoss 4.1.0 that caused the
+            # dependency error to be covered by the following message. We'll
+            # treat it the same as a dependency violation.
+            if "exceptions must be old-style classes" in str(ex):
+                print "ZenPack is a dependency of other installed ZenPacks.\n"
+                return
+
             print ex
             sys.exit(1)
 
