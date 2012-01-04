@@ -26,6 +26,8 @@ include_recipe "git"
 include_recipe "java"
 include_recipe "zenosslabs::fixhosts"
 include_recipe "zenosslabs::jenkins-slave"
+include_recipe "zenosslabs::ant"
+include_recipe "zenosslabs::maven"
 include_recipe "sudo"
 
 
@@ -46,6 +48,13 @@ node[:zenoss][:versions].each do |version|
             action :install
         end
     end
+end
+
+template "/home/zenoss/.bashrc" do
+    owner "zenoss"
+    group "zenoss"
+    mode 0644
+    source "zenoss_bashrc.erb"
 end
 
 group "jenkins" do

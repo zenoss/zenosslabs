@@ -1,0 +1,35 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+# User specific aliases and functions
+export ZENHOME="/opt/zenoss"
+export INSTANCE_HOME="/opt/zenoss"
+export PATH="${ZENHOME}/bin:${PATH}"
+export PYTHONPATH="/opt/zenoss/lib/python"
+export LD_LIBRARY_PATH="/opt/zenoss/lib"
+
+if [ "${USE_ZENDS}" = "1" ];then
+    export LD_LIBRARY_PATH="${ZENDSHOME}/lib:${ZENHOME}/lib"
+    export PATH="${ZENDSHOME}/bin:${PATH}"
+else
+    export LD_LIBRARY_PATH="${ZENHOME}/lib"
+fi
+
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION="cpp"
+
+if [ "${USE_ZENDS}" = "1" ];then
+    export LD_LIBRARY_PATH="${ZENDSHOME}/lib:${ZENHOME}/lib"
+    export PATH="${ZENDSHOME}/bin:${PATH}"
+else
+    export LD_LIBRARY_PATH="${ZENHOME}/lib"
+fi
+
+export JAVA_HOME="/usr/java/default"
+export MAVEN_HOME="/opt/maven"
+export ANT_HOME="/opt/ant"
+
+export PATH="${PATH}:${MAVEN_HOME}/bin:${ANT_HOME}/bin"
