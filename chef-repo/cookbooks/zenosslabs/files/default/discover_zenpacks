@@ -23,6 +23,7 @@ import optparse
 import os
 import subprocess
 import sys
+import urllib
 
 
 # We want to use subprocess.check_output even if we don't have Python 2.7.
@@ -129,7 +130,85 @@ class ZenPackDiscoverer(object):
                 shell=True).rstrip()
 
 
-TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
+DISCOVERY_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="{{ scm_class }}">
+    {%- if scm_class == "hudson.plugins.git.GitSCM" %}
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name></name>
+        <refspec></refspec>
+        <url>{{ scm_url }}</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>**</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <disableSubmodules>false</disableSubmodules>
+    <recursiveSubmodules>false</recursiveSubmodules>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <authorOrCommitter>false</authorOrCommitter>
+    <clean>false</clean>
+    <wipeOutWorkspace>false</wipeOutWorkspace>
+    <pruneBranches>false</pruneBranches>
+    <remotePoll>false</remotePoll>
+    <buildChooser class="hudson.plugins.git.util.DefaultBuildChooser"/>
+    <gitTool>Default</gitTool>
+    <submoduleCfg class="list"/>
+    <relativeTargetDir></relativeTargetDir>
+    <reference></reference>
+    <excludedRegions></excludedRegions>
+    <excludedUsers></excludedUsers>
+    <gitConfigName></gitConfigName>
+    <gitConfigEmail></gitConfigEmail>
+    <skipTag>false</skipTag>
+    <scmName></scmName>
+    {%- elif scm_class == "hudson.scm.SubversionSCM" %}
+    <locations>
+      <hudson.scm.SubversionSCM_-ModuleLocation>
+        <remote>{{ scm_url }}</remote>
+        <local>.</local>
+      </hudson.scm.SubversionSCM_-ModuleLocation>
+    </locations>
+    <excludedRegions></excludedRegions>
+    <includedRegions></includedRegions>
+    <excludedUsers></excludedUsers>
+    <excludedRevprop></excludedRevprop>
+    <excludedCommitMessages></excludedCommitMessages>
+    <workspaceUpdater class="hudson.scm.subversion.UpdateUpdater"/>
+    {% endif %}
+  </scm>
+  <assignedNode>master</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  {% if scm_poll %}
+  <triggers class="vector">
+    <hudson.triggers.SCMTrigger>
+      <spec>*/10 * * * *</spec>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  {% endif %}
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>discover_zenpacks --url http://localhost:8080</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
+"""
+
+ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
 <matrix-project>
   <actions/>
   <description></description>
@@ -190,11 +269,13 @@ TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  {% if scm_poll %}
   <triggers class="vector">
     <hudson.triggers.SCMTrigger>
       <spec>*/10 * * * *</spec>
     </hudson.triggers.SCMTrigger>
   </triggers>
+  {%- endif %}
   <concurrentBuild>false</concurrentBuild>
   <axes>
     <hudson.matrix.LabelAxis>
@@ -254,6 +335,23 @@ class JenkinsJob(object):
         self.scm = scm
         self.url = url
 
+    def add_to_jenkins(self, jenkins_url):
+        job_name = urllib.quote(self.name)
+
+        job_url = "%s/job/%s/config.xml" % (jenkins_url, job_name)
+
+        h = httplib2.Http()
+        response, content = h.request(job_url, 'GET')
+
+        if response.status != 200:
+            job_url = "%s/createItem?name=%s" % (jenkins_url, job_name)
+
+        headers = {'Content-Type': 'text/xml'}
+
+        h.request(job_url, 'POST', body=self.xml, headers=headers)
+
+
+class JenkinsDiscoveryJob(JenkinsJob):
     @property
     def xml(self):
         context = {}
@@ -267,6 +365,27 @@ class JenkinsJob(object):
             raise Exception("%s is not a supported SCM" % self.scm)
 
         context['scm_url'] = self.url
+        context['scm_poll'] = False
+
+        template = jinja2.Template(DISCOVERY_JOB_TEMPLATE)
+        return template.render(context)
+
+
+class JenkinsZenPackJob(JenkinsJob):
+    @property
+    def xml(self):
+        context = {}
+
+        if self.scm == "git":
+            context['scm_class'] = 'hudson.plugins.git.GitSCM'
+            context['scm_branches'] = ['master']
+        elif self.scm == "subversion":
+            context['scm_class'] = 'hudson.scm.SubversionSCM'
+        else:
+            raise Exception("%s is not a supported SCM" % self.scm)
+
+        context['scm_url'] = self.url
+        context['scm_poll'] = False
 
         context['architectures'] = ['x86_64']
         context['operating_systems'] = ['centos5']
@@ -275,29 +394,23 @@ class JenkinsJob(object):
 
         context['combination_filter'] = '(zenoss_version == &quot;3.2.1&quot; &amp;&amp; zenoss_flavor in [&quot;platform&quot;, &quot;core&quot;, &quot;enterprise&quot;]) || (zenoss_version == &quot;4.1.1&quot; &amp;&amp; zenoss_flavor in [&quot;resmgr&quot;])'
 
-        template = jinja2.Template(TEMPLATE)
+        template = jinja2.Template(ZENPACK_JOB_TEMPLATE)
         return template.render(context)
-
-    def add_to_jenkins(self, jenkins_url):
-        job_url = "%s/job/%s/config.xml" % (jenkins_url, self.name)
-
-        h = httplib2.Http()
-        response, content = h.request(job_url, 'GET')
-
-        if response.status != 200:
-            job_url = "%s/createItem?name=%s" % (jenkins_url, self.name)
-
-        headers = {'Content-Type': 'text/xml'}
-
-        h.request(job_url, 'POST', body=self.xml, headers=headers)
 
 
 def main():
     """Command line tool combining ZenPackDiscoverer and JenkinsJob."""
 
     parser = optparse.OptionParser()
+
     parser.add_option('-u', '--url',
-        help='URL of Jenkins server to add jobs to')
+        default='http://localhost:8080',
+        help='URL of Jenkins server')
+
+    parser.add_option('-d', '--discoveryjobs',
+        default=False, action='store_true',
+        help='Add discovery jobs')
+
     options, args = parser.parse_args()
 
     jenkins_url = None
@@ -311,14 +424,52 @@ def main():
 
         sys.exit(1)
 
+    discoverer = ZenPackDiscoverer()
+
     print "Adding jobs to Jenkins:"
 
-    discoverer = ZenPackDiscoverer()
-    for zenpack in discoverer.get_zenpacks(os.getcwd()):
-        job = JenkinsJob(zenpack.name, zenpack.scm, zenpack.url)
+    if options.discoveryjobs:
+        jobs = (
+            JenkinsDiscoveryJob(
+                'Discovery - Core ZenPacks',
+                'subversion',
+                'http://dev.zenoss.org/svnint/trunk/core/zenpacks'),
 
-        print "  - %s (%s)" % (zenpack.name, zenpack.url)
-        job.add_to_jenkins(jenkins_url)
+            JenkinsDiscoveryJob(
+                'Discovery - Enterprise ZenPacks',
+                'subversion',
+                'http://dev.zenoss.org/svnint/trunk/enterprise/zenpacks'),
+
+            JenkinsDiscoveryJob(
+                'Discovery - Reporting ZenPacks',
+                'subversion',
+                'http://dev.zenoss.org/svnint/trunk/enterprise/reporting/zenpacks'),
+
+            JenkinsDiscoveryJob(
+                'Discovery - Customer ZenPacks',
+                'subversion',
+                'http://dev.zenoss.org/svnint/trunk/customer/zenpacks'),
+
+            JenkinsDiscoveryJob(
+                'Discovery - ClientServices ZenPacks',
+                'subversion',
+                'http://dev.zenoss.org/svnint/ClientServices/ZenPacks'),
+
+            JenkinsDiscoveryJob(
+                'Discovery - Community ZenPacks',
+                'git',
+                'git@github.com:zenoss/Community-ZenPacks-SubModules.git')
+                )
+
+        for job in jobs:
+            print "  - %s (%s)" % (job.name, job.url)
+            job.add_to_jenkins(jenkins_url)
+    else:
+        for zenpack in discoverer.get_zenpacks(os.getcwd()):
+            job = JenkinsZenPackJob(zenpack.name, zenpack.scm, zenpack.url)
+
+            print "  - %s (%s)" % (zenpack.name, zenpack.url)
+            job.add_to_jenkins(jenkins_url)
 
 
 if __name__ == '__main__':
