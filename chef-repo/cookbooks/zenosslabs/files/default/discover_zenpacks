@@ -1,6 +1,133 @@
 #!/usr/bin/env python
-import jinja2
+
+"""Discover ZenPacks
+
+This script is designed to be run as a Jenkins build step on a repository
+containing multiple ZenPacks. Each discovered ZenPack will be added as a job to
+the Jenkins server. If a job for the ZenPack already exists, it will simply be
+updated with the most recent settings.
+
+The Jenkins build step should be of the "Execute Shell" variety with the
+following command:
+
+    discover_zenpacks
+
+It is recommended to pin this job to the master server.
+
+"""
+
+import compiler
 import httplib2
+import jinja2
+import optparse
+import os
+import subprocess
+import sys
+
+
+# We want to use subprocess.check_output even if we don't have Python 2.7.
+try:
+    subprocess.check_output
+except AttributeError:
+    def subprocess_check_output(*args, **kwargs):
+        return subprocess.Popen(
+            ' '.join(args),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            **kwargs).communicate()[0]
+
+    subprocess.check_output = subprocess_check_output
+
+
+class ZenPackVisitor(compiler.visitor.ASTVisitor):
+    """Visitor that turns module attributes into object attributes.
+
+    Instances of this class are to be fed into the second parameter of
+    compiler.visitor.walk.
+
+    """
+
+    name = None
+    scm = None
+    url = None
+
+    def visitAssign(self, node):
+        """Called for each Assign node in the tree."""
+        name_node = node.getChildren()[0]
+        value_node = node.getChildren()[1]
+
+        name = name_node.name.lower()
+
+        if not hasattr(self, name):
+            return
+
+        value = None
+
+        # Scalars.
+        if hasattr(value_node, 'value'):
+            value = value_node.value
+
+        # Lists.
+        elif hasattr(value_node, 'nodes'):
+            value = [x.value for x in value_node.nodes]
+
+        setattr(self, name, value)
+
+
+class ZenPackDiscoverer(object):
+    def get_zenpacks(self, path):
+        for entry in os.listdir(path):
+            entry_path = os.path.join(path, entry)
+            setup_filename = os.path.join(entry_path, 'setup.py')
+
+            if not os.path.isdir(entry_path) or \
+                not entry.startswith('ZenPacks.') or \
+                not os.path.isfile(setup_filename):
+                continue
+
+            zenpack = compiler.visitor.walk(
+                compiler.parseFile(setup_filename), ZenPackVisitor())
+
+            zenpack.scm = self.get_scm(entry_path)
+            zenpack.url = self.get_url(entry_path)
+
+            yield zenpack
+
+    def get_scm(self, path):
+        """Determine the SCM (Source Control Manager) from a path.
+
+        The return value will either be `git` or `subversion`.
+
+        :param path: base path to a checked out or cloned SCM repository
+        :type path: :class:`types.StringTypes`
+        :rtype: :class:`types.StringType`
+
+        """
+
+        if os.path.isdir(os.path.join(path, '.git')):
+            return 'git'
+        elif os.path.isdir(os.path.join(path, '.svn')):
+            return 'subversion'
+
+    def get_url(self, path):
+        """Determine the SCM URL for a path.
+
+        :param path: base path to a checked out or cloned SCM repository
+        :type path: :class:`types.StringTypes`
+        :rtype: :class:`types.StringType`
+
+        """
+        scm = self.get_scm(path)
+
+        if scm == "git":
+            return subprocess.check_output(
+                "cd '%s' ; git config --get remote.origin.url" % path,
+                shell=True).rstrip()
+        elif scm == 'subversion':
+            return subprocess.check_output(
+                "svn info '%s' | grep URL | cut -d ' ' -f2" % path,
+                shell=True).rstrip()
+
 
 TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
 <matrix-project>
@@ -121,7 +248,7 @@ TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
 """
 
 
-class Job(object):
+class JenkinsJob(object):
     def __init__(self, name, scm, url):
         self.name = name
         self.scm = scm
@@ -166,28 +293,32 @@ class Job(object):
 
 
 def main():
-    jobs = (
-        # Private Subversion Repositories
-        Job('ZenPacks.zenoss.ApacheMonitor', 'subversion', 'http://dev.zenoss.org/svnint/trunk/core/zenpacks/ZenPacks.zenoss.ApacheMonitor'),
+    """Command line tool combining ZenPackDiscoverer and JenkinsJob."""
 
-        # Public GitHub Repositories
-        Job('ZenPacks.zenoss.CloudFoundry', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.CloudFoundry.git'),
-        Job('ZenPacks.zenoss.CloudStack', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.CloudStack.git'),
-        Job('ZenPacks.zenoss.Memcached', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.Memcached.git'),
-        Job('ZenPacks.zenoss.OpenStack', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.OpenStack.git'),
-        Job('ZenPacks.zenoss.OpenStackSwift', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.OpenStackSwift.git'),
-        Job('ZenPacks.zenoss.OpenVZ', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.OpenVZ.git'),
-        Job('ZenPacks.zenoss.PostgreSQL', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.PostgreSQL.git'),
-        Job('ZenPacks.zenoss.RabbitMQ', 'git', 'git://github.com/zenoss/ZenPacks.zenoss.RabbitMQ.git'),
+    parser = optparse.OptionParser()
+    parser.add_option('-u', '--url',
+        help='URL of Jenkins server to add jobs to')
+    options, args = parser.parse_args()
 
-        # Private GitHub Repositories
-        Job('ZenPacks.zenoss.SolarisMonitor', 'git', 'git@github.com:zenoss/ZenPacks.zenoss.SolarisMonitor.git'),
-        )
+    jenkins_url = None
+    if options.url:
+        jenkins_url = options.url
+    elif 'JENKINS_URL' in os.environ:
+        jenkins_url = os.environ['JENKINS_URL']
+    else:
+        print >> sys.stderr, (
+            "Jenkins URL not specified and JENKINS_URL not set.")
+
+        sys.exit(1)
 
     print "Adding jobs to Jenkins:"
-    for job in jobs:
-        print "  - %s" % job.name
-        job.add_to_jenkins('http://jenkins.zenosslabs.com:8080')
+
+    discoverer = ZenPackDiscoverer()
+    for zenpack in discoverer.get_zenpacks(os.getcwd()):
+        job = JenkinsJob(zenpack.name, zenpack.scm, zenpack.url)
+
+        print "  - %s (%s)" % (zenpack.name, zenpack.url)
+        job.add_to_jenkins(jenkins_url)
 
 
 if __name__ == '__main__':

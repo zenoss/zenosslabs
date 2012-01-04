@@ -11,6 +11,15 @@
     include_recipe recipe
 end
 
+package "subversion" do
+    action :install
+end
+
+cookbook_file "/usr/local/bin/zenpack_harness" do
+    source "zenpack_harness"
+    mode "0755"
+end
+
 include_recipe "zenosslabs::jenkins-common"
 
 # Install Jenkins.
