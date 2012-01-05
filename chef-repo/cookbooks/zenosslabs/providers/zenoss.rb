@@ -172,6 +172,7 @@ action :install do
                 end
 
                 link "/usr/local/bin/wget" do
+                    to "/bin/true"
                     action :delete
                 end
             end
