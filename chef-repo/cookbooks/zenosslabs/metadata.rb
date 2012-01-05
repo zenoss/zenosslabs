@@ -5,6 +5,7 @@ description      "Installs/Configures ZenPack Build & Test Infrastructure"
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.rdoc')   )
 version          "0.0.1"
 
+depends "jenkins"
 depends "selinux"
 depends "git"
 depends "java"

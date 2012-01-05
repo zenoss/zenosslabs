@@ -1,0 +1,19 @@
+<% if @discovery_jobs %>
+discovery:
+    <% @discovery_jobs.each do |job| %>
+    "<%= job[:name] %>":
+        url: <%= job[:url] %>
+        scm: <%= job[:scm] %>
+
+    <% end %>
+<% end %>
+
+<% if @zenpack_jobs %>
+zenpack:
+    <% @zenpack_jobs.each do |job| %>
+    "<%= job[:name] %>":
+        url: <%= job[:url] %>
+        scm: <%= job[:scm] %>
+
+    <% end %>
+<% end %>

@@ -16,6 +16,16 @@ It is recommended to pin this job to the master server.
 
 """
 
+
+# Sometimes ZenPacks with the same name can simultaneously exist in multiple
+# repositories. The following map allows alternate versions to have alternate
+# job names so Jenkins can still build and test each variety.
+def get_job_name(name, url):
+    return {
+        'git@github.com:zenoss/ZenPacks.zenoss.SolarisMonitor.git': 'ZenPacks.zenoss.SolarisMonitor-github',
+        }.get(url, name)
+
+
 import compiler
 import httplib2
 import jinja2
@@ -24,6 +34,7 @@ import os
 import subprocess
 import sys
 import urllib
+import yaml
 
 
 # We want to use subprocess.check_output even if we don't have Python 2.7.
@@ -336,7 +347,7 @@ class JenkinsJob(object):
         self.url = url
 
     def add_to_jenkins(self, jenkins_url):
-        job_name = urllib.quote(self.name)
+        job_name = urllib.quote(get_job_name(self.name, self.url))
 
         job_url = "%s/job/%s/config.xml" % (jenkins_url, job_name)
 
@@ -407,9 +418,8 @@ def main():
         default='http://localhost:8080',
         help='URL of Jenkins server')
 
-    parser.add_option('-d', '--discoveryjobs',
-        default=False, action='store_true',
-        help='Add discovery jobs')
+    parser.add_option('-j', '--jobs',
+        help='Add jobs from this YAML file')
 
     options, args = parser.parse_args()
 
@@ -428,42 +438,25 @@ def main():
 
     print "Adding jobs to Jenkins:"
 
-    if options.discoveryjobs:
-        jobs = (
-            JenkinsDiscoveryJob(
-                'Discovery - Core ZenPacks',
-                'subversion',
-                'http://dev.zenoss.org/svnint/trunk/core/zenpacks'),
+    # Add jobs from a configuration file.
+    if options.jobs:
+        job_file = open(options.jobs, 'r')
+        jobs_data = yaml.load(job_file)
+        job_file.close()
 
-            JenkinsDiscoveryJob(
-                'Discovery - Enterprise ZenPacks',
-                'subversion',
-                'http://dev.zenoss.org/svnint/trunk/enterprise/zenpacks'),
+        jobs = []
 
-            JenkinsDiscoveryJob(
-                'Discovery - Reporting ZenPacks',
-                'subversion',
-                'http://dev.zenoss.org/svnint/trunk/enterprise/reporting/zenpacks'),
+        for name, job in jobs_data.get('discovery', {}).items():
+            jobs.append(JenkinsDiscoveryJob(name, job['scm'], job['url']))
 
-            JenkinsDiscoveryJob(
-                'Discovery - Customer ZenPacks',
-                'subversion',
-                'http://dev.zenoss.org/svnint/trunk/customer/zenpacks'),
-
-            JenkinsDiscoveryJob(
-                'Discovery - ClientServices ZenPacks',
-                'subversion',
-                'http://dev.zenoss.org/svnint/ClientServices/ZenPacks'),
-
-            JenkinsDiscoveryJob(
-                'Discovery - Community ZenPacks',
-                'git',
-                'git@github.com:zenoss/Community-ZenPacks-SubModules.git')
-                )
+        for name, job in jobs_data.get('zenpack', {}).items():
+            jobs.append(JenkinsZenPackJob(name, job['scm'], job['url']))
 
         for job in jobs:
             print "  - %s (%s)" % (job.name, job.url)
             job.add_to_jenkins(jenkins_url)
+
+    # Add jobs contained in subdirectories of current working directory.
     else:
         for zenpack in discoverer.get_zenpacks(os.getcwd()):
             job = JenkinsZenPackJob(zenpack.name, zenpack.scm, zenpack.url)

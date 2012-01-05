@@ -15,29 +15,10 @@ package "subversion" do
     action :install
 end
 
-cookbook_file "/usr/local/bin/zenpack_harness" do
-    source "zenpack_harness"
-    mode "0755"
-end
-
 include_recipe "zenosslabs::jenkins-common"
 
 # Install Jenkins.
 include_recipe "jenkins"
-
-# Create an example job.
-cookbook_file "/tmp/ZenPacks.zenoss.SolarisMonitor.job.xml" do
-    source "jenkins-jobs/ZenPacks.zenoss.SolarisMonitor.job.xml"
-    mode 0644
-    owner "jenkins"
-    group "jenkins"
-end
-
-jenkins_job "ZenPacks.zenoss.SolarisMonitor" do
-    not_if "test -f /var/lib/jenkins/jobs/#{name}/config.xml"
-    config "/tmp/ZenPacks.zenoss.SolarisMonitor.job.xml"
-    action :create
-end
 
 # Install Jenkins plugins.
 %w(git).each do |plugin|
@@ -45,4 +26,21 @@ end
         jenkins_cli "install-plugin #{plugin}"
         jenkins_cli "safe-restart"
     end
+end
+
+# Install scripts and configuration file to discover Jenkins jobs.
+cookbook_file "/usr/local/bin/discover_zenpacks" do
+    source "discover_zenpacks"
+    mode "0755"
+end
+
+template "/var/lib/jenkins/jobs.yaml" do
+    owner "jenkins"
+    group "jenkins"
+    mode 0644
+    source "jobs.yaml.erb"
+    variables(
+        :discovery_jobs => node[:zenosslabs][:jenkins_jobs][:discovery_jobs],
+        :zenpack_jobs => node[:zenosslabs][:jenkins_jobs][:zenpack_jobs]
+    )
 end
