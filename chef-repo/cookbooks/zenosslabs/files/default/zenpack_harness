@@ -278,6 +278,15 @@ def main():
     parser = OptionParser()
     parser.add_option('-v', '--version', help="Zenoss version to test against")
     parser.add_option('-f', '--flavor', help="Zenoss flavor to test against")
+
+    parser.add_option('-s', '--setup',
+        help="No steps. Only setup Zenoss environment",
+        default=False, action="store_true")
+
+    parser.add_option('-t', '--teardown',
+        help="No steps. Only tear down Zenoss environment",
+        default=False, action="store_true")
+
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -305,26 +314,34 @@ def main():
         print >> sys.stderr, "Zenoss flavor not found on command line or BUILD_TAG."
         sys.exit(1)
 
-    if not os.path.isfile('setup.py'):
-        print >> sys.stderr, "setup.py doesn't exist in current directory."
-        sys.exit(1)
+    # We only need a setup.py in the current directory for running steps.
+    if not options.setup and not options.teardown:
+        if not os.path.isfile('setup.py'):
+            print >> sys.stderr, "setup.py doesn't exist in current directory."
+            sys.exit(1)
 
     zman = ZenossManager()
-    print "*** Setting up environment for Zenoss %s (%s) ***" % (
-        zenoss_version, zenoss_flavor)
 
-    zman.setup(zenoss_version, zenoss_flavor)
+    if options.setup or (not options.setup and not options.teardown):
+        print "*** Setting up environment for Zenoss %s (%s) ***" % (
+            zenoss_version, zenoss_flavor)
 
-    try:
-        harness = ZenPackHarness()
-        for arg in args:
-            harness_method = getattr(harness, 'run_%s' % arg, None)
-            if not harness_method:
-                print >> sys.stderr, "%s is not a supported command." % arg
-                sys.exit(1)
+        zman.setup(zenoss_version, zenoss_flavor)
 
-            harness_method()
-    finally:
+    if not options.setup and not options.teardown:
+        try:
+            harness = ZenPackHarness()
+            for arg in args:
+                harness_method = getattr(harness, 'run_%s' % arg, None)
+                if not harness_method:
+                    print >> sys.stderr, "%s is not a supported command." % arg
+                    sys.exit(1)
+
+                harness_method()
+        finally:
+            zman.tear_down()
+
+    if options.teardown:
         zman.tear_down()
 
 
