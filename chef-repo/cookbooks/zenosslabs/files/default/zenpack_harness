@@ -10,6 +10,7 @@ ZenPack to be tested against multiple Zenoss configurations.
 import compiler
 import glob
 import os
+import re
 import sys
 
 from subprocess import Popen, PIPE
@@ -200,7 +201,9 @@ class ZenPackHarness(object):
         visitor = compiler.visitor.walk(tree, ASTVisitor())
 
         self.zenpack_name = visitor['NAME']
-        self.zenpack_dependencies = visitor['INSTALL_REQUIRES']
+        self.zenpack_dependencies = map(
+            lambda x: re.split(r'[=<>]', x)[0],
+            visitor['INSTALL_REQUIRES'])
 
         if self.zenpack_dependencies is None:
             self.zenpack_dependencies = []
