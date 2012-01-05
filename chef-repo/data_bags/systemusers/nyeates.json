@@ -1,0 +1,5 @@
+{
+"id": "nyeates",
+"ssh_keys": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAwot8YMKhgkpByRNmW1fm6LMbdhTqk097RXTS/7NAQQtdesx8mT01F/VqtKteBAN6vD5gj799WFrkHTVnAizaOPE0z/NDEsKjAjt7oBcok1VHm441f6XPNHQ00ILJHnrjjDRy05PHS1gLT0hkrV+12RIQJf9IH3JrVwJ4wWh67V1e3jfL1nVC5GTruX3dqNr70HH11MpbfASBuY/1p+AlxCG/qDtGzzsUovETSVgcm9mhrMA5JUTEubCyVgqM+345bdlUiz0pCxLeWQaG73hoYq+W4rJwrH2Yv0jc67t2lHnAXI/w+L2OwlWN+NH7X87ZCoLVHDRaLmk5jcDflwi8Ew== nyeates@zenoss.com",
+"nova_project": "community"
+}
