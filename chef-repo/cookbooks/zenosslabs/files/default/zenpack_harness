@@ -201,12 +201,12 @@ class ZenPackHarness(object):
         visitor = compiler.visitor.walk(tree, ASTVisitor())
 
         self.zenpack_name = visitor['NAME']
-        self.zenpack_dependencies = map(
-            lambda x: re.split(r'[=<>]', x)[0],
-            visitor['INSTALL_REQUIRES'])
+        self.zenpack_dependencies = []
+        for dependency in visitor['INSTALL_REQUIRES']:
+            if not dependency.startswith('ZenPacks.'):
+                continue
 
-        if self.zenpack_dependencies is None:
-            self.zenpack_dependencies = []
+            self.zenpack_dependencies.append(re.split(r'[=<>]', dependency)[0])
 
     def run_build(self):
         print_header(1, "Building Egg")
