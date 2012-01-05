@@ -245,7 +245,7 @@ class ZenPackHarness(object):
                 ','.join('='.join(x) for x in self.build_labels.items())))
 
         for dependency in self.zenpack_dependencies:
-            print "* %s" % dependency
+            print "* %s\n" % dependency
 
             url = "%s/%s/%s" % (url_prefix, dependency, url_suffix)
 
@@ -419,14 +419,20 @@ def main():
 
     if not options.setup and not options.teardown:
         try:
-            harness = ZenPackHarness(build_labels)
-            for arg in args:
-                harness_method = getattr(harness, 'run_%s' % arg, None)
-                if not harness_method:
-                    print >> sys.stderr, "%s is not a supported command." % arg
-                    sys.exit(1)
+            try:
+                harness = ZenPackHarness(build_labels)
+                for arg in args:
+                    harness_method = getattr(harness, 'run_%s' % arg, None)
+                    if not harness_method:
+                        print >> sys.stderr, (
+                            "%s is not a supported command.") % arg
 
-                harness_method()
+                        sys.exit(1)
+
+                    harness_method()
+            except SystemExit, ex:
+                zman.tear_down()
+                sys.exit(ex.code)
         finally:
             zman.tear_down()
 
