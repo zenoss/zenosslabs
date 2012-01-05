@@ -1,0 +1,5 @@
+{
+"id": "rbooth",
+"ssh_keys": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCupVoXNHTfNjcFHgiQ5gzyNjWJ6FXhn49CbUQ3bT+hEakWzVc8gfMKUMuHJSetwOMXsFoIlg18//dBmE+weu0QcEfNowZLQQsHTVYHe5jTX5jrf/JRF09XnLjRIinpMPKsaK0zhbQcnopdxYlpN7tt5aV/dFwEar+aDTVSr237rBnOUPIsWUUUC68lSf7FXeJn5TOMQ0Ti6pjoYQ3kgI6EHAVCB69Lz+e6208Rrx87npOWsCTIkCk4yeVqSidNztQvdjupxV+0FLW/3hlFE0HAwHxd5Q1JdtPt+2LWLz8SId9U8Wm0R2gAYJM9sO6ABlQSVndP2Ig659Or20j90aCJ rbooth@zenoss.com",
+"nova_project": "zenosslabs"
+}
