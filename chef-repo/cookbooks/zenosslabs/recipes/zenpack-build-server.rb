@@ -28,6 +28,7 @@ include_recipe "zenosslabs::fixhosts"
 include_recipe "zenosslabs::jenkins-slave"
 include_recipe "zenosslabs::ant"
 include_recipe "zenosslabs::maven"
+include_recipe "zenosslabs::flex_sdk"
 include_recipe "sudo"
 
 
@@ -55,6 +56,39 @@ template "/home/zenoss/.bashrc" do
     group "zenoss"
     mode 0644
     source "zenoss_bashrc.erb"
+end
+
+directory "/home/zenoss/.m2" do
+    mode 0755
+    action :create
+end
+
+template "/home/zenoss/.m2/settings.xml" do
+    owner "zenoss"
+    group "zenoss"
+    mode 0644
+    source "m2_settings.xml.erb"
+    variables(
+        :repositories => [
+            {
+                :id => 'central',
+                :url => 'http://cmrepo.zenoss.loc/nexus/content/groups/public'
+            },{
+                :id => 'releases',
+                :url => 'http://cmrepo.zenoss.loc/nexus/content/repositories/releases'
+            },{
+                :id => 'snapshots',
+                :url => 'http://cmrepo.zenoss.loc/nexus/content/repositories/snapshots'
+            }
+        ],
+
+        :plugin_repositories => [
+            {
+                :id => 'zenoss.plugins',
+                :url => 'http://cmrepo.zenoss.loc/nexus/content/repositories/public'
+            }
+        ]
+    )
 end
 
 group "jenkins" do

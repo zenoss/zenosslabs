@@ -1,0 +1,52 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                        http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <profiles>
+    <profile>
+      <id>zenoss</id>
+      <activation>
+        <!-- To disable this profile, run mvn -Dzenoss.maven.disabled <...> -->
+        <property>
+          <name>!zenoss.maven.disabled</name>
+        </property>
+      </activation>
+      <repositories>
+        <% @repositories.each do |repository| %>
+        <repository>
+          <id><%= repository[:id] %></id>
+          <url><%= repository[:url] %></url>
+          <releases>
+            <enabled>true</enabled>
+            <checksumPolicy>fail</checksumPolicy>
+            <updatePolicy>always</updatePolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <checksumPolicy>fail</checksumPolicy>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+        </repository>
+        <% end %>
+      </repositories>
+      <pluginRepositories>
+        <% @plugin_repositories.each do |plugin_repository| %>
+        <pluginRepository>
+          <id><%= plugin_repository[:id] %></id>
+          <url><%= plugin_repository[:url] %></url>
+          <releases>
+            <enabled>true</enabled>
+            <checksumPolicy>fail</checksumPolicy>
+            <updatePolicy>always</updatePolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <checksumPolicy>fail</checksumPolicy>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+        </pluginRepository>
+        <% end %>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+</settings>
