@@ -80,6 +80,21 @@ def shell(command):
     return stdout
 
 
+def print_header(level, title):
+    if level != 0:
+        print "\n"
+
+    print title
+    if level < 2:
+        print "=" * 79
+    elif level == 2:
+        print "-" * 79
+    elif level > 2:
+        print "~" * 79
+
+    print
+
+
 class ZenossManager(object):
     """Manages multiple Zenoss configurations on the same server."""
 
@@ -98,6 +113,7 @@ class ZenossManager(object):
     def setup(self, zenoss_version, zenoss_flavor):
         """Setup a Zenoss environment for testing ZenPacks."""
 
+        print "* Tearing down any existing environment"
         self.tear_down()
 
         lv_name = "zenoss/%s_%s" % (zenoss_version, zenoss_flavor)
@@ -107,27 +123,37 @@ class ZenossManager(object):
             raise Exception("%s doesn't exist." % lv_device)
 
         try:
+            print "* Creating zenoss/sandbox logical volume"
+            print "* Mounting sandbox volume on /opt/zenoss"
             self.run_bundle([
                 "sudo /usr/sbin/lvcreate -l25%%ORIGIN -s -n sandbox %s" % lv_name,
                 "sudo mount /dev/zenoss/sandbox /opt/zenoss",
                 ])
 
             if zenoss_version.startswith('3'):
+                print "* Linking MySQL datadir to /opt/zenoss/datadir"
+                print "* Starting mysqld"
                 self.run_bundle([
                     "sudo ln -sf /opt/zenoss/datadir /var/lib/mysql",
                     "sudo /sbin/service mysqld start",
                     ])
+
             elif zenoss_version.startswith('4'):
+                print "* Linking ZenDS datadir to /opt/zenoss/datadir"
+                print "* Starting zends"
                 self.run_bundle([
                     "sudo ln -sf /opt/zenoss/datadir /opt/zends/data",
                     "sudo /sbin/service zends start",
                     ])
 
+                print "* Starting rabbitmq-server"
+                print "* Starting memcached"
                 self.run_bundles([
                     ("sudo /sbin/service rabbitmq-server start",),
                     ("sudo /sbin/service memcached start",),
                     ], suppress_errors=True)
 
+            print "* Starting zenoss (minimal daemons)"
             self.run_bundle([
                 "sudo /sbin/service zenoss start",
                 ])
@@ -155,11 +181,18 @@ class ZenossManager(object):
 class ZenPackHarness(object):
     """Comprehensive harness to build and test Zenpacks."""
 
+    build_labels = None
     zenpack_name = None
     zenpack_directory = None
+    zenpack_dependencies = None
 
-    def __init__(self):
+    def __init__(self, build_labels=None):
         self.zenpack_directory = os.getcwd()
+
+        if build_labels is None:
+            self.build_labels = {}
+        else:
+            self.build_labels = build_labels
 
         tree = compiler.parseFile(os.path.join(
             self.zenpack_directory, 'setup.py'))
@@ -167,9 +200,13 @@ class ZenPackHarness(object):
         visitor = compiler.visitor.walk(tree, ASTVisitor())
 
         self.zenpack_name = visitor['NAME']
+        self.zenpack_dependencies = visitor['INSTALL_REQUIRES']
+
+        if self.zenpack_dependencies is None:
+            self.zenpack_dependencies = []
 
     def run_build(self):
-        print "*** Building Egg ***"
+        print_header(1, "Building Egg")
 
         try:
             shell("sudo chmod 775 .")
@@ -187,8 +224,58 @@ class ZenPackHarness(object):
             print ex
             sys.exit(1)
 
+    def install_dependencies(self):
+        print_header(1, "Installing Dependencies")
+
+        jenkins_url = os.environ.get('JENKINS_URL', None)
+        if not jenkins_url:
+            print "Dependencies can't be installed without JENKINS_URL."
+            sys.exit(1)
+
+        if len(self.build_labels.keys()) < 1:
+            print "Dependencies can't be installed without BUILD_TAG."
+            sys.exit(1)
+
+        url_prefix = "%s/job" % jenkins_url
+        url_suffix = (
+            '%s/lastSuccessfulBuild/artifact/%%2Azip%%2A/archive.zip' % (
+                ','.join('='.join(x) for x in self.build_labels.items())))
+
+        for dependency in self.zenpack_dependencies:
+            print "* %s" % dependency
+
+            url = "%s/%s/%s" % (url_prefix, dependency, url_suffix)
+
+            try:
+                print "  * downloading.."
+                shell(
+                    "sudo -u zenoss -i "
+                    "wget -O /opt/zenoss/zenpack_eggs/%s.zip '%s'" % (
+                        dependency, url))
+
+                print "  * unzipping.."
+                shell(
+                    "sudo -u zenoss -i "
+                    "unzip -j -d /opt/zenoss/zenpack_eggs "
+                    "/opt/zenoss/zenpack_eggs/%s.zip" % (
+                        dependency))
+
+                print "  * installing.."
+                shell(
+                    "sudo -u zenoss -i zenpack --install "
+                    "/opt/zenoss/zenpack_eggs/%s-*.egg 2>&1" % (
+                        dependency))
+
+                print
+            except ShellError, ex:
+                print ex
+                sys.exit(1)
+
     def run_install(self):
-        print "*** Installing ***"
+        if self.zenpack_dependencies:
+            self.install_dependencies()
+
+        print_header(1, "Installing")
 
         try:
             print shell(
@@ -201,12 +288,11 @@ class ZenPackHarness(object):
             sys.exit(1)
 
     def run_generictests(self):
-        print "*** Running Generic Tests ***"
+        print_header(1, "Running Generic Tests")
         print "Coming soon!"
-        print
 
     def run_unittests(self):
-        print "*** Running Unit Tests ***"
+        print_header(1, "Running Unit Tests")
 
         test_modules_glob = '/opt/zenoss/ZenPacks/%s-*.egg/%s/tests/*.py' % (
             self.zenpack_name, self.zenpack_name.replace('.', '/'))
@@ -229,7 +315,7 @@ class ZenPackHarness(object):
             sys.exit(1)
 
     def run_remove(self):
-        print "*** Removing ***"
+        print_header(1, "Removing")
 
         try:
             print shell("sudo -u zenoss -i zenpack --remove %s" % (
@@ -323,14 +409,14 @@ def main():
     zman = ZenossManager()
 
     if options.setup or (not options.setup and not options.teardown):
-        print "*** Setting up environment for Zenoss %s (%s) ***" % (
-            zenoss_version, zenoss_flavor)
+        print_header(0, "Setting up environment for Zenoss %s (%s)" % (
+            zenoss_version, zenoss_flavor))
 
         zman.setup(zenoss_version, zenoss_flavor)
 
     if not options.setup and not options.teardown:
         try:
-            harness = ZenPackHarness()
+            harness = ZenPackHarness(build_labels)
             for arg in args:
                 harness_method = getattr(harness, 'run_%s' % arg, None)
                 if not harness_method:
