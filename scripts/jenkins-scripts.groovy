@@ -21,3 +21,19 @@ for (item in Hudson.instance.items) {
         break;
     }
 }
+
+/*
+ * Schedule builds for all jobs that have never been built.
+ */
+import hudson.model.*
+
+println("Scheduling build for all unbuilt jobs:")
+
+for (item in Hudson.instance.items) {
+    if (item.getLastBuild() == null && item.isBuildable() && !item.isBuilding() && !item.isInQueue()) {
+        println("  - " + item.name)
+
+        cause = new Cause.RemoteCause("damsel", "initial build script")
+        item.scheduleBuild(cause)
+    }
+}
