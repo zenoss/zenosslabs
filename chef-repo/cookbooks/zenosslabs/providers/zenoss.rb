@@ -159,7 +159,7 @@ action :install do
                 end
 
                 if new_resource.daemons.include? 'zeneventd'
-                    template "/opt/zenoss/etc/zeneventd.cnf" do
+                    template "/opt/zenoss/etc/zeneventd.conf" do
                         owner "zenoss"
                         group "zenoss"
                         mode 0644
