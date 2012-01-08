@@ -37,3 +37,35 @@ for (item in Hudson.instance.items) {
         item.scheduleBuild(cause)
     }
 }
+
+/*
+ * Schedule builds for all discovery jobs.
+ */
+import hudson.model.*
+
+println("Scheduling build for all discovery jobs:")
+
+for (item in Hudson.instance.items) {
+    if (item.name.startsWith('Discovery')) {
+        println("  - " + item.name)
+
+        cause = new Cause.RemoteCause("damsel", "batch discovery build")
+        item.scheduleBuild(cause)
+    }
+}
+
+/*
+ * Schedule builds for all ZenPack jobs.
+ */
+import hudson.model.*
+
+println("Scheduling build for all ZenPack jobs:")
+
+for (item in Hudson.instance.items) {
+    if (item.name.startsWith('ZenPacks.')) {
+        println("  - " + item.name)
+
+        cause = new Cause.RemoteCause("damsel", "batch ZenPack build")
+        item.scheduleBuild(cause)
+    }
+}
