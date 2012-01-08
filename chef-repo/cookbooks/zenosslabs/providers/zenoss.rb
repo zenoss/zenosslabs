@@ -158,6 +158,15 @@ action :install do
                     )
                 end
 
+                if new_resource.daemons.include? 'zeneventd'
+                    template "/opt/zenoss/etc/zeneventd.cnf" do
+                        owner "zenoss"
+                        group "zenoss"
+                        mode 0644
+                        source "zeneventd.conf.erb"
+                    end
+                end
+
                 # Alias wget to true so Zenoss startup doesn't have to wait for
                 # the initial device add to timeout.
                 link "/usr/local/bin/wget" do
