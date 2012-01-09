@@ -69,3 +69,13 @@ for (item in Hudson.instance.items) {
         item.scheduleBuild(cause)
     }
 }
+
+/*
+ *
+ * Schedule builds for all broken builds.
+ */
+import hudson.model.*
+activeJobs = Hudson.instance.items.findAll{job -> job.isBuildable()}
+failedRuns = activeJobs.findAll{job -> job.lastBuild != null && job.lastBuild.result == Result.FAILURE}
+cause = new Cause.RemoteCause("damsel", "rebuild broken builds")
+failedRuns.each{run -> run.scheduleBuild(cause)}
