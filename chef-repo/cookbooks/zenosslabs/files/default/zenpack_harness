@@ -174,8 +174,7 @@ class ZenossManager(object):
             ("sudo /sbin/service mysqld stop",),
             ("sudo /sbin/service zends stop",),
             ("sudo /sbin/service memcached stop",),
-            ("sudo pkill -9 -f zeneventserver",),
-            ("sudo pkill -9 -f /opt/zenoss/bin/python",),
+            ("sudo pkill -9 -f /opt/zenoss",),
             ("sudo umount -f /opt/zenoss",),
             ("sudo /usr/sbin/lvremove -f zenoss/sandbox",),
             ], suppress_errors=True)
