@@ -179,10 +179,10 @@ default[:zenosslabs] = {
                 :scm => 'git',
                 :url => 'git@github.com:zenoss/ZenPacks.zenoss.Memcached.git'
             },{
-                :name => 'ZenPacks.zenoss.NeoCatalog',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.NeoCatalog.git'
-            },{
+            #     :name => 'ZenPacks.zenoss.NeoCatalog',
+            #     :scm => 'git',
+            #     :url => 'git@github.com:zenoss/ZenPacks.zenoss.NeoCatalog.git'
+            # },{
                 :name => 'ZenPacks.zenoss.OpenStack',
                 :scm => 'git',
                 :url => 'git@github.com:zenoss/ZenPacks.zenoss.OpenStack.git'
