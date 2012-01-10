@@ -333,17 +333,22 @@ class JenkinsZenPackJob(JenkinsJob):
         context['zenoss_flavors'] = ['platform', 'core', 'enterprise', 'resmgr']
         context['zenoss_versions'] = ['3.2.1', '4.1.1']
 
-        context['combination_filter'] = xml_escape(
+        combination_filter = (
             '('
             '(zenoss_version.startsWith("3.") &&'
             ' zenoss_flavor in ["platform", "core", "enterprise"])'
-            '||'
-            '(zenoss_version == "4.1.1" &&'
+            ' || '
+            '(zenoss_version.startsWith("4.1.") &&'
             ' zenoss_flavor in ["resmgr"])'
-            ') && %s' % self.combination_filter)
+            ')')
 
-        template = jinja2.Template(ZENPACK_JOB_TEMPLATE)
-        return template.render(context)
+        if self.combination_filter:
+            combination_filter = '%s && %s' % (
+                combination_filter, self.combination_filter)
+
+        context['combination_filter'] = xml_escape(combination_filter)
+
+        return context
 
 
 class ZenPackVisitor(compiler.visitor.ASTVisitor):
@@ -353,6 +358,9 @@ class ZenPackVisitor(compiler.visitor.ASTVisitor):
     compiler.visitor.walk.
 
     """
+
+    name = None
+    compat_zenoss_vers = None
 
     def visitAssign(self, node):
         """Called for each Assign node in the tree."""
@@ -391,40 +399,35 @@ def get_zenpack_jobs(path):
 
         visitor = compiler.visitor.walk(
             compiler.parseFile(setup_filename), ZenPackVisitor()
-            ).zenpack
+            )
 
         job = JenkinsZenPackJob(
             visitor.name,
             get_scm(entry_path),
-            get_url(entry_path))
+            get_url(entry_path),
+            combination_filter=get_combination_filter(
+                visitor.compat_zenoss_vers))
 
         # Append (zenoss-x.x) to the job name if we're discovering this
         # ZenPack from a subversion maintenance branch.
         if job.scm == 'subversion':
-            if "/core/zenpacks" in job.url or "/enterprise/zenpacks" in job.url:
-                job.combination_filter = 'zenoss_version == "trunk"'
-            else:
-                match = re.search(r'\/zenoss-([^\/]+)\/', job.url)
-                if match:
-                    zenoss_version_prefix = match.group(1).rstrip('.x')
-                    job.name = "%s (zenoss-%s)" % (
-                        job.name, zenoss_version_prefix)
+            match = re.search(r'\/zenoss-([^\/]+)\/', job.url)
+            if match:
+                zenoss_version_prefix = match.group(1).rstrip('.x')
+                job.name = "%s (zenoss-%s)" % (
+                    job.name, zenoss_version_prefix)
 
-                    job.combination_filter = \
-                        'zenoss_version.startsWith("%s")' % (
-                            zenoss_version_prefix)
+                job.combination_filter = \
+                    'zenoss_version.startsWith("%s")' % (
+                        zenoss_version_prefix)
 
         # If we're discovering a ZenPack using git we'll create specific
         # jobs for each zenoss-x.x.x branch in the repository.
         if job.scm == 'git':
-            found_zenoss_branch = False
-
-            for branch in get_git_branches(path):
+            for branch in get_git_branches(entry_path):
                 match = re.search(r'zenoss-(.+)', branch)
                 if not match:
                     continue
-
-                found_zenoss_branch = True
 
                 zenoss_version_prefix = match.group(1).rstrip('.x')
 
@@ -441,11 +444,6 @@ def get_zenpack_jobs(path):
                     job.url,
                     branch,
                     branch_combination_filter)
-
-            # Only add trunk filter to ZenPacks in git if they have branches for
-            # for specific Zenoss versions.
-            if found_zenoss_branch:
-                job.combination_filter = 'zenoss_version == "trunk"'
 
         yield job
 
@@ -485,6 +483,31 @@ def get_url(path):
         return subprocess.check_output(
             "svn info '%s' | grep URL | cut -d ' ' -f2" % path,
             shell=True).rstrip()
+
+
+def get_combination_filter(compat_zenoss_vers):
+    """Get a Jenkins combinationFilter for the provided compat_zenoss_vers."""
+
+    match = re.search(r'([<>=])*(\d+\.\d+\.\d+)', compat_zenoss_vers)
+    if not match:
+        return None
+
+    comparison, version = match.groups()
+    if comparison != '>=':
+        return None
+
+    # The following assumes that we test against 3.2.1, 4.1.1.
+
+    if version == '4.1.70' or version.startswith('4.2.'):
+        return 'zenoss_version.startsWith("4.2.")'
+    elif version == '4.0.70' or version.startswith('4.1.'):
+        return '(zenoss_version.startsWith("4.1.") || zenoss_version.startsWith("4.2."))'
+    elif version.startswith('4.0.'):
+        return 'zenoss_version.startsWith("4.")'
+    elif version.startswith('3.2.'):
+        return '(zenoss_version.startsWith("3.2.") || zenoss_version.startsWith("4."))'
+    else:
+        return None
 
 
 def get_git_branches(path):

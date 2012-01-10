@@ -219,7 +219,7 @@ class ZenPackHarness(object):
 
             print shell(
                 "sudo -u zenoss -i "
-                "'cd %s ; python setup.py bdist_egg'" % (
+                "'cd \"%s\" ; python setup.py bdist_egg'" % (
                     self.zenpack_directory))
 
             shell("sudo -u zenoss -i mkdir -p /opt/zenoss/zenpack_eggs")
