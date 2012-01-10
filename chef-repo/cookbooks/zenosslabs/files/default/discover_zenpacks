@@ -542,7 +542,7 @@ def main():
             jobs.append(JenkinsZenPackJob(name, job['scm'], job['url']))
 
         for job in jobs:
-            print "  - %s (%s)" % (job.name, job.url)
+            print "  - %s" % job.name
             job.add_to_jenkins(jenkins_url)
 
     # Add jobs contained in subdirectories of current working directory.
