@@ -17,130 +17,6 @@ It is recommended to pin this job to the master server.
 """
 
 
-# Sometimes ZenPacks with the same name can simultaneously exist in multiple
-# repositories. The following map allows alternate versions to have alternate
-# job names so Jenkins can still build and test each variety.
-def get_job_name(name, url):
-    return {
-        'git@github.com:zenoss/ZenPacks.zenoss.SolarisMonitor.git': 'ZenPacks.zenoss.SolarisMonitor-github',
-        }.get(url, name)
-
-
-import compiler
-import httplib2
-import jinja2
-import optparse
-import os
-import subprocess
-import sys
-import urllib
-import yaml
-
-
-# We want to use subprocess.check_output even if we don't have Python 2.7.
-try:
-    subprocess.check_output
-except AttributeError:
-    def subprocess_check_output(*args, **kwargs):
-        return subprocess.Popen(
-            ' '.join(args),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            **kwargs).communicate()[0]
-
-    subprocess.check_output = subprocess_check_output
-
-
-class ZenPackVisitor(compiler.visitor.ASTVisitor):
-    """Visitor that turns module attributes into object attributes.
-
-    Instances of this class are to be fed into the second parameter of
-    compiler.visitor.walk.
-
-    """
-
-    name = None
-    scm = None
-    url = None
-
-    def visitAssign(self, node):
-        """Called for each Assign node in the tree."""
-        name_node = node.getChildren()[0]
-        value_node = node.getChildren()[1]
-
-        name = name_node.name.lower()
-
-        if not hasattr(self, name):
-            return
-
-        value = None
-
-        # Scalars.
-        if hasattr(value_node, 'value'):
-            value = value_node.value
-
-        # Lists.
-        elif hasattr(value_node, 'nodes'):
-            value = [x.value for x in value_node.nodes]
-
-        setattr(self, name, value)
-
-
-class ZenPackDiscoverer(object):
-    def get_zenpacks(self, path):
-        for entry in os.listdir(path):
-            entry_path = os.path.join(path, entry)
-            setup_filename = os.path.join(entry_path, 'setup.py')
-
-            if not os.path.isdir(entry_path) or \
-                not entry.startswith('ZenPacks.') or \
-                not os.path.isfile(setup_filename):
-                continue
-
-            zenpack = compiler.visitor.walk(
-                compiler.parseFile(setup_filename), ZenPackVisitor())
-
-            zenpack.scm = self.get_scm(entry_path)
-            zenpack.url = self.get_url(entry_path)
-
-            yield zenpack
-
-    def get_scm(self, path):
-        """Determine the SCM (Source Control Manager) from a path.
-
-        The return value will either be `git` or `subversion`.
-
-        :param path: base path to a checked out or cloned SCM repository
-        :type path: :class:`types.StringTypes`
-        :rtype: :class:`types.StringType`
-
-        """
-
-        if os.path.isdir(os.path.join(path, '.git')):
-            return 'git'
-        elif os.path.isdir(os.path.join(path, '.svn')):
-            return 'subversion'
-
-    def get_url(self, path):
-        """Determine the SCM URL for a path.
-
-        :param path: base path to a checked out or cloned SCM repository
-        :type path: :class:`types.StringTypes`
-        :rtype: :class:`types.StringType`
-
-        """
-        scm = self.get_scm(path)
-
-        if scm == "git":
-            return subprocess.check_output(
-                "cd '%s' ; git config --get remote.origin.url" % path,
-                shell=True).rstrip()
-        elif scm == 'subversion':
-            return subprocess.check_output(
-                "svn info '%s' | grep URL | cut -d ' ' -f2" % path,
-                shell=True).rstrip()
-
-
 DISCOVERY_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
@@ -159,7 +35,7 @@ DISCOVERY_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
     </userRemoteConfigs>
     <branches>
       <hudson.plugins.git.BranchSpec>
-        <name>**</name>
+        <name>master</name>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <disableSubmodules>false</disableSubmodules>
@@ -236,11 +112,9 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
-    {%- for scm_branch in scm_branches %}
       <hudson.plugins.git.BranchSpec>
         <name>{{ scm_branch }}</name>
       </hudson.plugins.git.BranchSpec>
-    {%- endfor %}
     </branches>
     <disableSubmodules>false</disableSubmodules>
     <recursiveSubmodules>false</recursiveSubmodules>
@@ -340,14 +214,81 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
 """
 
 
+import compiler
+import httplib2
+import jinja2
+import optparse
+import os
+import re
+import subprocess
+import sys
+import urllib
+import xml.dom.minidom
+import yaml
+
+
+# We want to use subprocess.check_output even if we don't have Python 2.7.
+try:
+    subprocess.check_output
+except AttributeError:
+    def subprocess_check_output(*args, **kwargs):
+        return subprocess.Popen(
+            ' '.join(args),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            **kwargs).communicate()[0]
+
+    subprocess.check_output = subprocess_check_output
+
+
+def xml_escape(string):
+    """Convert string to escaped XML."""
+
+    text = xml.dom.minidom.Text()
+    text.data = string
+    return text.toxml()
+
+
 class JenkinsJob(object):
+    """Abstract base class for Jenkins jobs.
+
+    Use the JenkinsDiscoveryJob or JenkinsZenPackJob concrete subclasses
+    instead of this.
+
+    """
+
+    name = None
+    url = None
+
+    template = None
+
     def __init__(self, name, scm, url):
         self.name = name
         self.scm = scm
         self.url = url
 
+    @property
+    def template_context(self):
+        context = {}
+
+        if self.scm == "git":
+            context['scm_class'] = 'hudson.plugins.git.GitSCM'
+        elif self.scm == "subversion":
+            context['scm_class'] = 'hudson.scm.SubversionSCM'
+        else:
+            raise Exception("%s is not a supported SCM" % self.scm)
+
+        context['scm_url'] = self.url
+        context['scm_poll'] = False
+
+        return context
+
+    @property
+    def xml(self):
+        return jinja2.Template(self.template).render(self.template_context)
+
     def add_to_jenkins(self, jenkins_url):
-        job_name = urllib.quote(get_job_name(self.name, self.url))
+        job_name = urllib.quote(self.name, self.url)
 
         job_url = "%s/job/%s/config.xml" % (jenkins_url, job_name)
 
@@ -363,50 +304,200 @@ class JenkinsJob(object):
 
 
 class JenkinsDiscoveryJob(JenkinsJob):
-    @property
-    def xml(self):
-        context = {}
-
-        if self.scm == "git":
-            context['scm_class'] = 'hudson.plugins.git.GitSCM'
-            context['scm_branches'] = ['master']
-        elif self.scm == "subversion":
-            context['scm_class'] = 'hudson.scm.SubversionSCM'
-        else:
-            raise Exception("%s is not a supported SCM" % self.scm)
-
-        context['scm_url'] = self.url
-        context['scm_poll'] = False
-
-        template = jinja2.Template(DISCOVERY_JOB_TEMPLATE)
-        return template.render(context)
+    template = DISCOVERY_JOB_TEMPLATE
 
 
 class JenkinsZenPackJob(JenkinsJob):
+    template = ZENPACK_JOB_TEMPLATE
+
+    branch = None
+    combination_filter = None
+
+    def __init__(self, name, scm, url, branch=None, combination_filter=None):
+        super(JenkinsZenPackJob, self).__init__(name, scm, url)
+        self.branch = branch
+        self.combination_filter = combination_filter
+
     @property
-    def xml(self):
-        context = {}
+    def template_context(self):
+        context = super(JenkinsZenPackJob, self).template_context
 
         if self.scm == "git":
-            context['scm_class'] = 'hudson.plugins.git.GitSCM'
-            context['scm_branches'] = ['master']
-        elif self.scm == "subversion":
-            context['scm_class'] = 'hudson.scm.SubversionSCM'
-        else:
-            raise Exception("%s is not a supported SCM" % self.scm)
-
-        context['scm_url'] = self.url
-        context['scm_poll'] = False
+            if self.branch is None:
+                context['scm_branch'] = 'master'
+            else:
+                context['scm_branch'] = self.branch
 
         context['architectures'] = ['x86_64']
         context['operating_systems'] = ['centos5']
         context['zenoss_flavors'] = ['platform', 'core', 'enterprise', 'resmgr']
         context['zenoss_versions'] = ['3.2.1', '4.1.1']
 
-        context['combination_filter'] = '(zenoss_version == &quot;3.2.1&quot; &amp;&amp; zenoss_flavor in [&quot;platform&quot;, &quot;core&quot;, &quot;enterprise&quot;]) || (zenoss_version == &quot;4.1.1&quot; &amp;&amp; zenoss_flavor in [&quot;resmgr&quot;])'
+        context['combination_filter'] = xml_escape(
+            '('
+            '(zenoss_version.startsWith("3.") &&'
+            ' zenoss_flavor in ["platform", "core", "enterprise"])'
+            '||'
+            '(zenoss_version == "4.1.1" &&'
+            ' zenoss_flavor in ["resmgr"])'
+            ') && %s' % self.combination_filter)
 
         template = jinja2.Template(ZENPACK_JOB_TEMPLATE)
         return template.render(context)
+
+
+class ZenPackVisitor(compiler.visitor.ASTVisitor):
+    """Visitor that turns module attributes into object attributes.
+
+    Instances of this class are to be fed into the second parameter of
+    compiler.visitor.walk.
+
+    """
+
+    def visitAssign(self, node):
+        """Called for each Assign node in the tree."""
+        name_node = node.getChildren()[0]
+        value_node = node.getChildren()[1]
+
+        name = name_node.name.lower()
+
+        if not hasattr(self, name):
+            return
+
+        value = None
+
+        # Scalars.
+        if hasattr(value_node, 'value'):
+            value = value_node.value
+
+        # Lists.
+        elif hasattr(value_node, 'nodes'):
+            value = [x.value for x in value_node.nodes]
+
+        setattr(self, name, value)
+
+
+def get_zenpack_jobs(path):
+    """Yields JenkinsZenPackJobs for each ZenPack in path."""
+
+    for entry in os.listdir(path):
+        entry_path = os.path.join(path, entry)
+        setup_filename = os.path.join(entry_path, 'setup.py')
+
+        if not os.path.isdir(entry_path) or \
+            not entry.startswith('ZenPacks.') or \
+            not os.path.isfile(setup_filename):
+            continue
+
+        visitor = compiler.visitor.walk(
+            compiler.parseFile(setup_filename), ZenPackVisitor()
+            ).zenpack
+
+        job = JenkinsZenPackJob(
+            visitor.name,
+            get_scm(entry_path),
+            get_url(entry_path))
+
+        # Append (zenoss-x.x) to the job name if we're discovering this
+        # ZenPack from a subversion maintenance branch.
+        if job.scm == 'subversion':
+            if "/core/zenpacks" in job.url or "/enterprise/zenpacks" in job.url:
+                job.combination_filter = 'zenoss_version == "trunk"'
+            else:
+                match = re.search(r'\/zenoss-([^\/]+)\/', job.url)
+                if match:
+                    zenoss_version_prefix = match.group(1).rstrip('.x')
+                    job.name = "%s (zenoss-%s)" % (
+                        job.name, zenoss_version_prefix)
+
+                    job.combination_filter = \
+                        'zenoss_version.startsWith("%s")' % (
+                            zenoss_version_prefix)
+
+        # If we're discovering a ZenPack using git we'll create specific
+        # jobs for each zenoss-x.x.x branch in the repository.
+        if job.scm == 'git':
+            found_zenoss_branch = False
+
+            for branch in get_git_branches(path):
+                match = re.search(r'zenoss-(.+)', branch)
+                if not match:
+                    continue
+
+                found_zenoss_branch = True
+
+                zenoss_version_prefix = match.group(1).rstrip('.x')
+
+                branch_job_name = "%s (zenoss-%s)" % (
+                    job.name, zenoss_version_prefix)
+
+                branch_combination_filter = \
+                    'zenoss_version.startsWith("%s")' % (
+                        zenoss_version_prefix)
+
+                yield JenkinsZenPackJob(
+                    branch_job_name,
+                    job.scm,
+                    job.url,
+                    branch,
+                    branch_combination_filter)
+
+            # Only add trunk filter to ZenPacks in git if they have branches for
+            # for specific Zenoss versions.
+            if found_zenoss_branch:
+                job.combination_filter = 'zenoss_version == "trunk"'
+
+        yield job
+
+
+def get_scm(path):
+    """Determine the SCM (Source Control Manager) from a path.
+
+    The return value will either be `git` or `subversion`.
+
+    :param path: base path to a checked out or cloned SCM repository
+    :type path: :class:`types.StringTypes`
+    :rtype: :class:`types.StringType`
+
+    """
+
+    if os.path.isdir(os.path.join(path, '.git')):
+        return 'git'
+    elif os.path.isdir(os.path.join(path, '.svn')):
+        return 'subversion'
+
+
+def get_url(path):
+    """Determine the SCM URL for a path.
+
+    :param path: base path to a checked out or cloned SCM repository
+    :type path: :class:`types.StringTypes`
+    :rtype: :class:`types.StringType`
+
+    """
+    scm = get_scm(path)
+
+    if scm == "git":
+        return subprocess.check_output(
+            "cd '%s' ; git config --get remote.origin.url" % path,
+            shell=True).rstrip()
+    elif scm == 'subversion':
+        return subprocess.check_output(
+            "svn info '%s' | grep URL | cut -d ' ' -f2" % path,
+            shell=True).rstrip()
+
+
+def get_git_branches(path):
+    """Returns a list of Git branches in path."""
+
+    branch_output = subprocess.check_output(
+        "cd '%s' ; git branch -a" % path,
+        shell=True)
+
+    for line in branch_output.split('\n'):
+        branch = line.strip().split('/')[-1]
+        if branch:
+            yield branch
 
 
 def main():
@@ -434,8 +525,6 @@ def main():
 
         sys.exit(1)
 
-    discoverer = ZenPackDiscoverer()
-
     print "Adding jobs to Jenkins:"
 
     # Add jobs from a configuration file.
@@ -458,10 +547,8 @@ def main():
 
     # Add jobs contained in subdirectories of current working directory.
     else:
-        for zenpack in discoverer.get_zenpacks(os.getcwd()):
-            job = JenkinsZenPackJob(zenpack.name, zenpack.scm, zenpack.url)
-
-            print "  - %s (%s)" % (zenpack.name, zenpack.url)
+        for job in get_zenpack_jobs(os.getcwd()):
+            print "  - %s" % job.name
             job.add_to_jenkins(jenkins_url)
 
 
