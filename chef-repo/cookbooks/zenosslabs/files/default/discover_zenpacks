@@ -491,7 +491,7 @@ def get_combination_filter(compat_zenoss_vers):
     if not compat_zenoss_vers:
         return None
 
-    match = re.search(r'([<>=]*)\s*(\d+\.\d+\.\d+)', compat_zenoss_vers)
+    match = re.search(r'([<>=]*)\s*([\d+\.]+)', compat_zenoss_vers)
     if not match:
         return None
 
