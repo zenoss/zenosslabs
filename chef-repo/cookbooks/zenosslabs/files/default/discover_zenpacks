@@ -488,7 +488,10 @@ def get_url(path):
 def get_combination_filter(compat_zenoss_vers):
     """Get a Jenkins combinationFilter for the provided compat_zenoss_vers."""
 
-    match = re.search(r'([<>=])*(\d+\.\d+\.\d+)', compat_zenoss_vers)
+    if not compat_zenoss_vers:
+        return None
+
+    match = re.search(r'([<>=]*)\s*(\d+\.\d+\.\d+)', compat_zenoss_vers)
     if not match:
         return None
 
