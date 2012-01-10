@@ -4,8 +4,6 @@ discovery:
     "<%= job[:name] %>":
         url: <%= job[:url] %>
         scm: <%= job[:scm] %>
-        jenkins_tag: <%= job[:jenkins_tag] %>
-        jenkins_filter: <%= job[:jenkins_filter] %>
 
     <% end %>
 <% end %>
@@ -16,7 +14,6 @@ zenpack:
     "<%= job[:name] %>":
         url: <%= job[:url] %>
         scm: <%= job[:scm] %>
-        jenkins_filter: <%= job[:jenkins_filter] %>
 
     <% end %>
 <% end %>
