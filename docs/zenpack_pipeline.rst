@@ -49,7 +49,7 @@ Update for Zenoss 4 compt.          ZenPacks.zenoss.ServiceNowIntegrator    TBD 
 MixMax Threshold per-ME basis       ZenPacks.zenoss.ConfigurableThreshold   TBD     TBD
 Bind Monitoring templates logically ZenPacks.zenoss.OrganizerTemplates      TBD     TBD
 XML defined components              ZenPacks.zenoss.GenericComponent        TBD     TBD
-Async Ptyhon collector daemon       ZenPacks.zenoss.PythonCollector         TBD     TBD
+Async Python collector daemon       ZenPacks.zenoss.PythonCollector         TBD     TBD
 Granular Service Monitoring Config  ZenPacks.zenoss.DeviceClassServices     TBD     TBD
 NetApp monitoring overhaul          ZenPacks.zenoss.NetAppMonitor           TBD     TBD
 EMC CLARiiON Storage Monitoring     ZenPacks.zenoss.EMC.CLARiiON            1.0.0   TBD
