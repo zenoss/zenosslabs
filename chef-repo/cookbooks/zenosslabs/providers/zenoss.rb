@@ -203,6 +203,14 @@ action :install do
             creates "/opt/zenoss/bin/coverage"
         end
 
+        execute "su - zenoss -c 'pip install pyflakes'" do
+            creates "/opt/zenos/bin/pyflakes"
+        end
+
+        execute "su - zenoss -c 'pip install pep8'" do
+            creates "/opt/zenos/bin/pep8"
+        end
+
 
         # Shutdown Zenoss and related services and unmout logical volume.
         execute "service zenoss stop" do
