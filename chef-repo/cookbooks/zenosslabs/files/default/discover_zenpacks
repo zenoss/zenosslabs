@@ -199,14 +199,104 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
   <combinationFilter>{{ combination_filter }}</combinationFilter>
   <builders>
     <hudson.tasks.Shell>
-      <command>zenpack_harness</command>
+      <command>zenpack_harness --setup</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness pyflakes</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness pep8</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness build</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness install</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness generictests</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness unittests</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>zenpack_harness remove</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
+    <hudson.plugins.warnings.WarningsPublisher>
+      <healthy></healthy>
+      <unHealthy></unHealthy>
+      <thresholdLimit>low</thresholdLimit>
+      <pluginName>[WARNINGS] </pluginName>
+      <defaultEncoding></defaultEncoding>
+      <canRunOnFailed>false</canRunOnFailed>
+      <useDeltaValues>false</useDeltaValues>
+      <thresholds>
+        <unstableTotalAll></unstableTotalAll>
+        <unstableTotalHigh></unstableTotalHigh>
+        <unstableTotalNormal></unstableTotalNormal>
+        <unstableTotalLow></unstableTotalLow>
+        <failedTotalAll></failedTotalAll>
+        <failedTotalHigh></failedTotalHigh>
+        <failedTotalNormal></failedTotalNormal>
+        <failedTotalLow></failedTotalLow>
+      </thresholds>
+      <shouldDetectModules>false</shouldDetectModules>
+      <dontComputeNew>true</dontComputeNew>
+      <parserConfigurations/>
+      <consoleLogParsers>
+        <string>pyflakes</string>
+        <string>pep8</string>
+      </consoleLogParsers>
+    </hudson.plugins.warnings.WarningsPublisher>
+    <hudson.plugins.analysis.collector.AnalysisPublisher>
+      <healthy></healthy>
+      <unHealthy></unHealthy>
+      <thresholdLimit>low</thresholdLimit>
+      <pluginName>[ANALYSIS-COLLECTOR] </pluginName>
+      <defaultEncoding></defaultEncoding>
+      <canRunOnFailed>false</canRunOnFailed>
+      <useDeltaValues>false</useDeltaValues>
+      <thresholds>
+        <unstableTotalAll></unstableTotalAll>
+        <unstableTotalHigh></unstableTotalHigh>
+        <unstableTotalNormal></unstableTotalNormal>
+        <unstableTotalLow></unstableTotalLow>
+        <failedTotalAll></failedTotalAll>
+        <failedTotalHigh></failedTotalHigh>
+        <failedTotalNormal></failedTotalNormal>
+        <failedTotalLow></failedTotalLow>
+      </thresholds>
+      <shouldDetectModules>false</shouldDetectModules>
+      <dontComputeNew>true</dontComputeNew>
+      <isCheckStyleDeactivated>true</isCheckStyleDeactivated>
+      <isDryDeactivated>true</isDryDeactivated>
+      <isFindBugsDeactivated>true</isFindBugsDeactivated>
+      <isPmdDeactivated>true</isPmdDeactivated>
+      <isOpenTasksDeactivated>true</isOpenTasksDeactivated>
+      <isWarningsDeactivated>false</isWarningsDeactivated>
+    </hudson.plugins.analysis.collector.AnalysisPublisher>
     <hudson.tasks.ArtifactArchiver>
       <artifacts>**/dist/*.egg</artifacts>
       <latestOnly>false</latestOnly>
     </hudson.tasks.ArtifactArchiver>
+    <htmlpublisher.HtmlPublisher>
+      <reportTargets>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>Coverage Report</reportName>
+          <reportDir>cover</reportDir>
+          <reportFiles>index.html</reportFiles>
+          <keepAll>false</keepAll>
+          <wrapperName>htmlpublisher-wrapper.html</wrapperName>
+        </htmlpublisher.HtmlPublisherTarget>
+      </reportTargets>
+    </htmlpublisher.HtmlPublisher>
+    <hudson.tasks.junit.JUnitResultArchiver>
+      <testResults>nosetests.xml</testResults>
+      <keepLongStdio>false</keepLongStdio>
+      <testDataPublishers/>
+    </hudson.tasks.junit.JUnitResultArchiver>
   </publishers>
   <buildWrappers/>
   <runSequentially>false</runSequentially>

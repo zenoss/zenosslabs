@@ -8,7 +8,6 @@ ZenPack to be tested against multiple Zenoss configurations.
 """
 
 import compiler
-import glob
 import os
 import re
 import sys
@@ -209,6 +208,30 @@ class ZenPackHarness(object):
 
             self.zenpack_dependencies.append(re.split(r'[=<>]', dependency)[0])
 
+    def run_pyflakes(self):
+        print_header(1, "Running PyFlakes Static Analyzer")
+
+        try:
+            print shell(
+                "sudo -u zenoss -i "
+                "'cd %s ; find ZenPacks/ -name \\*.py | xargs pyflakes' "
+                "|| :" % self.zenpack_directory)
+
+        except ShellError:
+            pass
+
+    def run_pep8(self):
+        print_header(1, "Running PEP-8 Code Style Analyzer")
+
+        try:
+            print shell(
+                "sudo -u zenoss -i "
+                "'cd %s ; find ZenPacks/ -name \\*.py | xargs pep8' "
+                "|| :" % self.zenpack_directory)
+
+        except ShellError:
+            pass
+
     def run_build(self):
         print_header(1, "Building Egg")
 
@@ -296,27 +319,28 @@ class ZenPackHarness(object):
         print "Coming soon!"
 
     def run_unittests(self):
-        print_header(1, "Running Unit Tests")
-
-        test_modules_glob = '/opt/zenoss/ZenPacks/%s-*.egg/%s/tests/*.py' % (
-            self.zenpack_name, self.zenpack_name.replace('.', '/'))
-
-        # We need __init__.py and at least one other file.
-        if len(glob.glob(test_modules_glob)) < 2:
-            print "No unit tests found.\n"
-            return
+        print_header(1, "Running Code Coverage Report")
 
         try:
             print shell(
                 "sudo -u zenoss -i nosetests "
-                "-w /opt/zenoss/ZenPacks/%(name)s-*.egg/ZenPacks "
-                "--with-coverage --cover-package=%(name)s "
-                "%(name)s.tests 2>&1" % (
-                    {'name': self.zenpack_name}),)
+                "-w '/opt/zenoss/ZenPacks/%s-*.egg/ZenPacks' "
+                "--with-xunit "
+                "--xunit-file='%s/nosetests.xml' "
+                "--with-coverage "
+                "--cover-package=%s "
+                "--cover-html "
+                "--cover-html-dir='%s/cover' "
+                "%s.tests "
+                "2>&1 || :" % (
+                    self.zenpack_name,
+                    self.zenpack_directory,
+                    self.zenpack_name,
+                    self.zenpack_directory,
+                    self.zenpack_name))
 
-        except ShellError, ex:
-            print ex
-            sys.exit(1)
+        except ShellError:
+            raise
 
     def run_remove(self):
         print_header(1, "Removing")
@@ -324,6 +348,10 @@ class ZenPackHarness(object):
         try:
             print shell("sudo -u zenoss -i zenpack --remove %s" % (
                 self.zenpack_name))
+
+            # On successfully removal there is no output. Providing some.
+            print "Done."
+
         except ShellError, ex:
             # If a ZenPack can't be removed because it's a dependency of other
             # installed ZenPacks, we'll skip the remove tests.
@@ -352,6 +380,8 @@ def main():
 
     The following commands (steps) are supported:
 
+        pyflakes
+        pep8
         build
         install
         generictests
@@ -388,7 +418,10 @@ def main():
 
     # Default to running all steps if none are specified.
     if len(args) < 1:
-        args = ('build', 'install', 'generictests', 'unittests', 'remove')
+        args = (
+            'pyflakes', 'pep8', 'build', 'install', 'generictests', 'unittests',
+            'remove',
+            )
 
     # Get Zenoss configuration info from command line or environment variables.
     build_tag = os.environ.get('BUILD_TAG', None)
