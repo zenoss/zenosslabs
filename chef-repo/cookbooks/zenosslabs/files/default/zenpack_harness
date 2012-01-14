@@ -370,18 +370,27 @@ def main():
     parser.add_option('-f', '--flavor', help="Zenoss flavor to test against")
 
     parser.add_option('-s', '--setup',
-        help="No steps. Only setup Zenoss environment",
+        help="Setup Zenoss environment",
         default=False, action="store_true")
 
     parser.add_option('-t', '--teardown',
-        help="No steps. Only tear down Zenoss environment",
+        help="Tear down Zenoss environment",
         default=False, action="store_true")
 
     options, args = parser.parse_args()
 
+    zman = ZenossManager()
+
+    # A teardown requires no parameters or environment variables.
+    if options.teardown:
+        zman.tear_down()
+        sys.exit(0)
+
+    # Default to running all steps if none are specified.
     if len(args) < 1:
         args = ('build', 'install', 'generictests', 'unittests', 'remove')
 
+    # Get Zenoss configuration info from command line or environment variables.
     build_tag = os.environ.get('BUILD_TAG', None)
     build_labels = {}
     if build_tag:
@@ -405,40 +414,27 @@ def main():
         sys.exit(1)
 
     # We only need a setup.py in the current directory for running steps.
-    if not options.setup and not options.teardown:
-        if not os.path.isfile('setup.py'):
-            print >> sys.stderr, "setup.py doesn't exist in current directory."
-            sys.exit(1)
-
-    zman = ZenossManager()
-
-    if options.setup or (not options.setup and not options.teardown):
+    if options.setup:
         print_header(0, "Setting up environment for Zenoss %s (%s)" % (
             zenoss_version, zenoss_flavor))
 
         zman.setup(zenoss_version, zenoss_flavor)
+        sys.exit(0)
 
-    if not options.setup and not options.teardown:
-        try:
-            try:
-                harness = ZenPackHarness(build_labels)
-                for arg in args:
-                    harness_method = getattr(harness, 'run_%s' % arg, None)
-                    if not harness_method:
-                        print >> sys.stderr, (
-                            "%s is not a supported command.") % arg
+    if not os.path.isfile('setup.py'):
+        print >> sys.stderr, "setup.py doesn't exist in current directory."
+        sys.exit(1)
 
-                        sys.exit(1)
+    harness = ZenPackHarness(build_labels)
+    for step in args:
+        harness_method = getattr(harness, 'run_%s' % step, None)
+        if not harness_method:
+            print >> sys.stderr, (
+                "%s is not a supported step.") % step
 
-                    harness_method()
-            except SystemExit, ex:
-                zman.tear_down()
-                sys.exit(ex.code)
-        finally:
-            zman.tear_down()
+            sys.exit(1)
 
-    if options.teardown:
-        zman.tear_down()
+        harness_method()
 
 
 if __name__ == '__main__':
