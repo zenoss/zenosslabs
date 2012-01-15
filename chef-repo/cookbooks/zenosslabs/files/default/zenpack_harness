@@ -8,6 +8,7 @@ ZenPack to be tested against multiple Zenoss configurations.
 """
 
 import compiler
+import glob
 import os
 import re
 import sys
@@ -319,7 +320,36 @@ class ZenPackHarness(object):
         print "Coming soon!"
 
     def run_unittests(self):
-        print_header(1, "Running Code Coverage Report")
+        print_header(1, "Running Unit Tests")
+
+        cover_dir = os.path.join(self.zenpack_directory, 'cover')
+
+        test_modules_glob = '/opt/zenoss/ZenPacks/%s-*.egg/%s/tests/*.py' % (
+            self.zenpack_name, self.zenpack_name.replace('.', '/'))
+
+        # We need __init__.py and at least one other file.
+        if len(glob.glob(test_modules_glob)) < 2:
+            print "No unit tests found.\n"
+
+            # Create empty coverage report.
+            if not os.path.isdir(cover_dir):
+                os.mkdir(cover_dir)
+
+            cover_f = open(os.path.join(cover_dir, 'index.html'), 'w')
+            cover_f.write("No unit tests to provide coverage for.\n")
+            cover_f.close()
+
+            # Create empty XUnit report.
+            xunit_f = open(os.path.join(
+                self.zenpack_directory, 'nosetests.xml'), 'w')
+
+            xunit_f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            xunit_f.write('<testsuite name="nosetests" tests="0" errors="0" failures="0" skip="0">\n')
+            xunit_f.write('<testcase classname="Nothing" name="testNothing" time="0.000" />\n')
+            xunit_f.write('</testsuite>\n')
+            xunit_f.close()
+
+            return
 
         try:
             print shell(
@@ -330,13 +360,13 @@ class ZenPackHarness(object):
                 "--with-coverage "
                 "--cover-package=%s "
                 "--cover-html "
-                "--cover-html-dir='%s/cover' "
+                "--cover-html-dir='%s' "
                 "%s.tests "
                 "2>&1 || :" % (
                     self.zenpack_name,
                     self.zenpack_directory,
                     self.zenpack_name,
-                    self.zenpack_directory,
+                    cover_dir,
                     self.zenpack_name))
 
         except ShellError:
