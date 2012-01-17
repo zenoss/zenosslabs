@@ -98,3 +98,20 @@ end
 group "zenoss" do
     members ["jenkins"]
 end
+
+# The jenkins workspace can get quite large. Mount it elsewhere.
+directory "/var/lib/jenkins/workspace" do
+    owner "jenkins"
+    group "jenkins"
+    mode "0755"
+    action :create
+end
+
+zenosslabs_lvm_fs "zenoss/workspace" do
+    device "/dev/vdb"
+    vg_name "zenoss"
+    lv_name "workspace"
+    size "10G"
+    mount_point "/var/lib/jenkins/workspace"
+    action [ :create, :format, :mount ]
+end
