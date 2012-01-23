@@ -156,7 +156,7 @@ class ZenossManager(object):
 
             print "* Starting zenoss (minimal daemons)"
             self.run_bundle([
-                "sudo /sbin/service zenoss start",
+                "sudo -u zenoss -i 'zenoss start'",
                 ])
         except ShellError, ex:
             print ex
