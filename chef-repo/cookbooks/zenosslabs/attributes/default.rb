@@ -115,18 +115,44 @@ default[:zenosslabs] = {
                 :scm => 'subversion',
                 :url => 'http://dev.zenoss.org/svnint/trunk/core/zenpacks'
             },{
-                :name => 'Discovery - Community ZenPacks',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/Community-ZenPacks-SubModules.git'
+                :name => 'Discovery - Core ZenPacks (zenoss-4.1)',
+                :scm => 'subversion',
+                :url => 'http://dev.zenoss.org/svnint/branches/core/zenoss-4.1.x/zenpacks'
             },{
+                :name => 'Discovery - Core ZenPacks (zenoss-3.2)',
+                :scm => 'subversion',
+                :url => 'http://dev.zenoss.org/svnint/branches/core/zenoss-3.2.x/zenpacks'
+            },
+
+            {
                 :name => 'Discovery - Enterprise ZenPacks',
                 :scm => 'subversion',
                 :url => 'http://dev.zenoss.org/svnint/trunk/enterprise/zenpacks'
             },{
+                :name => 'Discovery - Enterprise ZenPacks (zenoss-4.1)',
+                :scm => 'subversion',
+                :url => 'http://dev.zenoss.org/svnint/branches/zenoss-4.1.x/zenpacks'
+            },{
+                :name => 'Discovery - Enterprise ZenPacks (zenoss-3.2)',
+                :scm => 'subversion',
+                :url => 'http://dev.zenoss.org/svnint/branches/zenoss-3.2.x/zenpacks'
+            },
+
+            {
                 :name => 'Discovery - Reporting ZenPacks',
                 :scm => 'subversion',
                 :url => 'http://dev.zenoss.org/svnint/trunk/enterprise/reporting/zenpacks'
             },{
+                :name => 'Discovery - Reporting ZenPacks (zenoss-4.1)',
+                :scm => 'subversion',
+                :url => 'http://dev.zenoss.org/svnint/branches/zenoss-4.1.x/reporting/zenpacks'
+            },{
+                :name => 'Discovery - Reporting ZenPacks (zenoss-3.1)',
+                :scm => 'subversion',
+                :url => 'http://dev.zenoss.org/svnint/branches/zenoss-3.1.x/reporting/zenpacks'
+            },
+
+            {
                 :name => 'Discovery - Customer ZenPacks',
                 :scm => 'subversion',
                 :url => 'http://dev.zenoss.org/svnint/trunk/customer/zenpacks'
@@ -134,94 +160,24 @@ default[:zenosslabs] = {
                 :name => 'Discovery - ClientServices ZenPacks',
                 :scm => 'subversion',
                 :url => 'http://dev.zenoss.org/svnint/ClientServices/ZenPacks'
-            }
-        ],
+            },{
+                :name => 'Discovery - Accenture ZenPacks',
+                :scm => 'subversion',
+                :url => 'https://dev.zenoss.com/svn-accenture'
+            },
 
-        :zenpack_jobs => [
             {
-                :name => 'ZenPacks.Blizzard.Custom',
+                :name => 'Discovery - GitHub Public ZenPacks',
                 :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.Blizzard.Custom.git'
+                :url => 'git@github.com:zenoss/zenpacks.git'
             },{
-                :name => 'ZenPacks.zenoss.AutoTune',
+                :name => 'Discovery - GitHub Private ZenPacks',
                 :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.AutoTune.git'
+                :url => 'git@github.com:zenoss/private-zenpacks.git'
             },{
-                :name => 'ZenPacks.zenoss.CalculatedPerformance',
+                :name => 'Discovery - Community ZenPacks',
                 :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.CalculatedPerformance.git'
-            },{
-                :name => 'ZenPacks.zenoss.CallManagerMonitor',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.CallManagerMonitor.git'
-            },{
-                :name => 'ZenPacks.zenoss.CloudFoundry',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.CloudFoundry.git'
-            },{
-                :name => 'ZenPacks.zenoss.CloudStack',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.CloudStack.git'
-            },{
-                :name => 'ZenPacks.zenoss.Demo',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.Demo.git'
-            },{
-                :name => 'ZenPacks.zenoss.DeviceClassServices',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.DeviceClassServices.git'
-            },{
-                :name => 'ZenPacks.zenoss.GOM',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.GOM.git'
-            },{
-                :name => 'ZenPacks.zenoss.Memcached',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.Memcached.git'
-            },{
-                :name => 'ZenPacks.zenoss.NeoCatalog',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.NeoCatalog.git'
-            },{
-                :name => 'ZenPacks.zenoss.OpenStack',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.OpenStack.git'
-            },{
-                :name => 'ZenPacks.zenoss.OpenStackSwift',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.OpenStackSwift.git'
-            },{
-                :name => 'ZenPacks.zenoss.OpenVZ',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.OpenVZ.git'
-            },{
-                :name => 'ZenPacks.zenoss.PostgreSQL',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.PostgreSQL.git'
-            },{
-                :name => 'ZenPacks.zenoss.Puppet',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.Puppet.git'
-            },{
-                :name => 'ZenPacks.zenoss.RabbitMQ',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.RabbitMQ.git'
-            },{
-                :name => 'ZenPacks.zenoss.RRDtoolReports',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.RRDtoolReports.git'
-            },{
-                :name => 'ZenPacks.zenoss.ScrutinizerIntegrator',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.ScrutinizerIntegrator.git'
-            },{
-                :name => 'ZenPacks.zenoss.ServiceNowIntegrator',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.ServiceNowIntegrator.git'
-            },{
-                :name => 'ZenPacks.zenoss.SolarisMonitor',
-                :scm => 'git',
-                :url => 'git@github.com:zenoss/ZenPacks.zenoss.SolarisMonitor.git'
+                :url => 'git@github.com:zenoss/Community-ZenPacks-SubModules.git'
             }
         ]
     }

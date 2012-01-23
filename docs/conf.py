@@ -56,6 +56,7 @@ html_logo = '_static/new-zenoss-logo.png'
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
+    '**': ['localtoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'],
     'index': ['localtoc.html', 'sourcelink.html', 'searchbox.html'],
     }
 

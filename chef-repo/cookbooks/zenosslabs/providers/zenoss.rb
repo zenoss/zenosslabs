@@ -158,6 +158,15 @@ action :install do
                     )
                 end
 
+                if new_resource.daemons.include? 'zeneventd'
+                    template "/opt/zenoss/etc/zeneventd.conf" do
+                        owner "zenoss"
+                        group "zenoss"
+                        mode 0644
+                        source "zeneventd.conf.erb"
+                    end
+                end
+
                 # Alias wget to true so Zenoss startup doesn't have to wait for
                 # the initial device add to timeout.
                 link "/usr/local/bin/wget" do
@@ -192,6 +201,14 @@ action :install do
 
         execute "su - zenoss -c 'pip install coverage'" do
             creates "/opt/zenoss/bin/coverage"
+        end
+
+        execute "su - zenoss -c 'pip install pyflakes'" do
+            creates "/opt/zenos/bin/pyflakes"
+        end
+
+        execute "su - zenoss -c 'pip install pep8'" do
+            creates "/opt/zenos/bin/pep8"
         end
 
 

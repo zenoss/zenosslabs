@@ -10,6 +10,7 @@ ZenPack to be tested against multiple Zenoss configurations.
 import compiler
 import glob
 import os
+import re
 import sys
 
 from subprocess import Popen, PIPE
@@ -173,6 +174,7 @@ class ZenossManager(object):
             ("sudo /sbin/service mysqld stop",),
             ("sudo /sbin/service zends stop",),
             ("sudo /sbin/service memcached stop",),
+            ("sudo pkill -9 -f /opt/zenoss",),
             ("sudo umount -f /opt/zenoss",),
             ("sudo /usr/sbin/lvremove -f zenoss/sandbox",),
             ], suppress_errors=True)
@@ -200,10 +202,36 @@ class ZenPackHarness(object):
         visitor = compiler.visitor.walk(tree, ASTVisitor())
 
         self.zenpack_name = visitor['NAME']
-        self.zenpack_dependencies = visitor['INSTALL_REQUIRES']
+        self.zenpack_dependencies = []
+        for dependency in visitor['INSTALL_REQUIRES']:
+            if not dependency.startswith('ZenPacks.'):
+                continue
 
-        if self.zenpack_dependencies is None:
-            self.zenpack_dependencies = []
+            self.zenpack_dependencies.append(re.split(r'[=<>]', dependency)[0])
+
+    def run_pyflakes(self):
+        print_header(1, "Running PyFlakes Static Analyzer")
+
+        try:
+            print shell(
+                "sudo -u zenoss -i "
+                "'cd %s ; find ZenPacks/ -name \\*.py | xargs pyflakes' "
+                "|| :" % self.zenpack_directory)
+
+        except ShellError:
+            pass
+
+    def run_pep8(self):
+        print_header(1, "Running PEP-8 Code Style Analyzer")
+
+        try:
+            print shell(
+                "sudo -u zenoss -i "
+                "'cd %s ; find ZenPacks/ -name \\*.py | xargs pep8' "
+                "|| :" % self.zenpack_directory)
+
+        except ShellError:
+            pass
 
     def run_build(self):
         print_header(1, "Building Egg")
@@ -215,7 +243,7 @@ class ZenPackHarness(object):
 
             print shell(
                 "sudo -u zenoss -i "
-                "'cd %s ; python setup.py bdist_egg'" % (
+                "'cd \"%s\" ; python setup.py bdist_egg'" % (
                     self.zenpack_directory))
 
             shell("sudo -u zenoss -i mkdir -p /opt/zenoss/zenpack_eggs")
@@ -242,7 +270,7 @@ class ZenPackHarness(object):
                 ','.join('='.join(x) for x in self.build_labels.items())))
 
         for dependency in self.zenpack_dependencies:
-            print "* %s" % dependency
+            print "* %s\n" % dependency
 
             url = "%s/%s/%s" % (url_prefix, dependency, url_suffix)
 
@@ -294,25 +322,55 @@ class ZenPackHarness(object):
     def run_unittests(self):
         print_header(1, "Running Unit Tests")
 
+        cover_dir = os.path.join(self.zenpack_directory, 'cover')
+
         test_modules_glob = '/opt/zenoss/ZenPacks/%s-*.egg/%s/tests/*.py' % (
             self.zenpack_name, self.zenpack_name.replace('.', '/'))
 
         # We need __init__.py and at least one other file.
         if len(glob.glob(test_modules_glob)) < 2:
             print "No unit tests found.\n"
+
+            # Create empty coverage report.
+            if not os.path.isdir(cover_dir):
+                os.mkdir(cover_dir)
+
+            cover_f = open(os.path.join(cover_dir, 'index.html'), 'w')
+            cover_f.write("No unit tests to provide coverage for.\n")
+            cover_f.close()
+
+            # Create empty XUnit report.
+            xunit_f = open(os.path.join(
+                self.zenpack_directory, 'nosetests.xml'), 'w')
+
+            xunit_f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            xunit_f.write('<testsuite name="nosetests" tests="0" errors="0" failures="0" skip="0">\n')
+            xunit_f.write('<testcase classname="Nothing" name="testNothing" time="0.000" />\n')
+            xunit_f.write('</testsuite>\n')
+            xunit_f.close()
+
             return
 
         try:
             print shell(
                 "sudo -u zenoss -i nosetests "
-                "-w /opt/zenoss/ZenPacks/%(name)s-*.egg/ZenPacks "
-                "--with-coverage --cover-package=%(name)s "
-                "%(name)s.tests 2>&1" % (
-                    {'name': self.zenpack_name}),)
+                "-w '/opt/zenoss/ZenPacks/%s-*.egg/ZenPacks' "
+                "--with-xunit "
+                "--xunit-file='%s/nosetests.xml' "
+                "--with-coverage "
+                "--cover-package=%s "
+                "--cover-html "
+                "--cover-html-dir='%s' "
+                "%s.tests "
+                "2>&1 || :" % (
+                    self.zenpack_name,
+                    self.zenpack_directory,
+                    self.zenpack_name,
+                    cover_dir,
+                    self.zenpack_name))
 
-        except ShellError, ex:
-            print ex
-            sys.exit(1)
+        except ShellError:
+            raise
 
     def run_remove(self):
         print_header(1, "Removing")
@@ -320,6 +378,10 @@ class ZenPackHarness(object):
         try:
             print shell("sudo -u zenoss -i zenpack --remove %s" % (
                 self.zenpack_name))
+
+            # On successfully removal there is no output. Providing some.
+            print "Done."
+
         except ShellError, ex:
             # If a ZenPack can't be removed because it's a dependency of other
             # installed ZenPacks, we'll skip the remove tests.
@@ -348,6 +410,8 @@ def main():
 
     The following commands (steps) are supported:
 
+        pyflakes
+        pep8
         build
         install
         generictests
@@ -366,18 +430,30 @@ def main():
     parser.add_option('-f', '--flavor', help="Zenoss flavor to test against")
 
     parser.add_option('-s', '--setup',
-        help="No steps. Only setup Zenoss environment",
+        help="Setup Zenoss environment",
         default=False, action="store_true")
 
     parser.add_option('-t', '--teardown',
-        help="No steps. Only tear down Zenoss environment",
+        help="Tear down Zenoss environment",
         default=False, action="store_true")
 
     options, args = parser.parse_args()
 
-    if len(args) < 1:
-        args = ('build', 'install', 'generictests', 'unittests', 'remove')
+    zman = ZenossManager()
 
+    # A teardown requires no parameters or environment variables.
+    if options.teardown:
+        zman.tear_down()
+        sys.exit(0)
+
+    # Default to running all steps if none are specified.
+    if len(args) < 1:
+        args = (
+            'pyflakes', 'pep8', 'build', 'install', 'generictests', 'unittests',
+            'remove',
+            )
+
+    # Get Zenoss configuration info from command line or environment variables.
     build_tag = os.environ.get('BUILD_TAG', None)
     build_labels = {}
     if build_tag:
@@ -401,34 +477,27 @@ def main():
         sys.exit(1)
 
     # We only need a setup.py in the current directory for running steps.
-    if not options.setup and not options.teardown:
-        if not os.path.isfile('setup.py'):
-            print >> sys.stderr, "setup.py doesn't exist in current directory."
-            sys.exit(1)
-
-    zman = ZenossManager()
-
-    if options.setup or (not options.setup and not options.teardown):
+    if options.setup:
         print_header(0, "Setting up environment for Zenoss %s (%s)" % (
             zenoss_version, zenoss_flavor))
 
         zman.setup(zenoss_version, zenoss_flavor)
+        sys.exit(0)
 
-    if not options.setup and not options.teardown:
-        try:
-            harness = ZenPackHarness(build_labels)
-            for arg in args:
-                harness_method = getattr(harness, 'run_%s' % arg, None)
-                if not harness_method:
-                    print >> sys.stderr, "%s is not a supported command." % arg
-                    sys.exit(1)
+    if not os.path.isfile('setup.py'):
+        print >> sys.stderr, "setup.py doesn't exist in current directory."
+        sys.exit(1)
 
-                harness_method()
-        finally:
-            zman.tear_down()
+    harness = ZenPackHarness(build_labels)
+    for step in args:
+        harness_method = getattr(harness, 'run_%s' % step, None)
+        if not harness_method:
+            print >> sys.stderr, (
+                "%s is not a supported step.") % step
 
-    if options.teardown:
-        zman.tear_down()
+            sys.exit(1)
+
+        harness_method()
 
 
 if __name__ == '__main__':
