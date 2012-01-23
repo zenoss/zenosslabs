@@ -40,14 +40,23 @@ end
 
 node[:zenoss][:versions].each do |version|
     version[:flavors].each do |flavor|
+        installed_file = "/.installed.#{version[:name]}_#{flavor[:name]}"
+
         zenosslabs_zenoss "#{version[:name]} #{flavor[:name]}" do
+            not_if "test -f #{installed_file}"
             version version[:name]
             flavor flavor[:name]
             database version[:database]
             daemons version[:daemons]
+            extra_daemons flavor[:extra_daemons] or []
             packages flavor[:packages]
             action :install
         end
+
+        # This speeds up repeated runs considerably. However, if something is
+        # changed within the zenoss resource provider, these install files will
+        # need to be manually deleted.
+        file installed_file
     end
 end
 

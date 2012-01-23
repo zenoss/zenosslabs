@@ -17,6 +17,8 @@ It is recommended to pin this job to the master server.
 """
 
 
+TRUNK_VERSION = "4.2"
+
 DISCOVERY_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
@@ -421,15 +423,18 @@ class JenkinsZenPackJob(JenkinsJob):
         context['architectures'] = ['x86_64']
         context['operating_systems'] = ['centos5']
         context['zenoss_flavors'] = ['platform', 'core', 'enterprise', 'resmgr']
-        context['zenoss_versions'] = ['3.2.1', '4.1.1']
+        context['zenoss_versions'] = ['3.2', '4.1', '4.2']
 
         combination_filter = (
             '('
-            '(zenoss_version.startsWith("3.") &&'
+            '(zenoss_version == "3.2" &&'
             ' zenoss_flavor in ["platform", "core", "enterprise"])'
             ' || '
-            '(zenoss_version.startsWith("4.1.") &&'
+            '(zenoss_version == "4.1" &&'
             ' zenoss_flavor in ["resmgr"])'
+            ' || '
+            '(zenoss_version == "4.2" &&'
+            ' zenoss_flavor in ["platform", "core", "resmgr"])'
             ')')
 
         if self.combination_filter:
@@ -498,18 +503,23 @@ def get_zenpack_jobs(path):
             combination_filter=get_combination_filter(
                 visitor.compat_zenoss_vers))
 
+        # If we're building from the core or enterprise ZenPack trunks we can
+        # assume that there's a maintenance branch to build against older
+        # Zenoss versions.
+        if job.scm == 'subversion' and \
+            re.search(r'/trunk/(core|enterprise)/zenpacks', job.url):
+            job.combination_filter = 'zenoss_version == "%s"' % TRUNK_VERSION
+
         # Append (zenoss-x.x) to the job name if we're discovering this
         # ZenPack from a subversion maintenance branch.
         if job.scm == 'subversion':
             match = re.search(r'\/zenoss-([^\/]+)\/', job.url)
             if match:
-                zenoss_version_prefix = match.group(1).rstrip('.x')
-                job.name = "%s (zenoss-%s)" % (
-                    job.name, zenoss_version_prefix)
+                zenoss_version = match.group(1).rstrip('.x')
+                job.name = "%s (zenoss-%s)" % (job.name, zenoss_version)
 
-                job.combination_filter = \
-                    'zenoss_version.startsWith("%s")' % (
-                        zenoss_version_prefix)
+                job.combination_filter = 'zenoss_version == "%s"' % (
+                    zenoss_version)
 
         # If we're discovering a ZenPack using git we'll create specific
         # jobs for each zenoss-x.x.x branch in the repository.
@@ -519,14 +529,17 @@ def get_zenpack_jobs(path):
                 if not match:
                     continue
 
-                zenoss_version_prefix = match.group(1).rstrip('.x')
+                zenoss_version = match.group(1).rstrip('.x')
 
-                branch_job_name = "%s (zenoss-%s)" % (
-                    job.name, zenoss_version_prefix)
+                branch_job_name = "%s (zenoss-%s)" % (job.name, zenoss_version)
 
-                branch_combination_filter = \
-                    'zenoss_version.startsWith("%s")' % (
-                        zenoss_version_prefix)
+                branch_combination_filter = 'zenoss_version == "%s"' % (
+                    zenoss_version)
+
+                # Stop building master against older versions of Zenoss if a
+                # maintenance branch exists.
+                job.combination_filter = '%s && zenoss_version != "%s"' % (
+                    job.combination_filter, zenoss_version)
 
                 yield JenkinsZenPackJob(
                     branch_job_name,
@@ -589,18 +602,31 @@ def get_combination_filter(compat_zenoss_vers):
     if comparison != '>=':
         return None
 
-    # The following assumes that we test against 3.2.1, 4.1.1.
+    # The following assumes that we test against 3.2, 4.1 and 4.2.
+    normalized = None
 
-    if version == '4.1.70' or version.startswith('4.2.'):
-        return 'zenoss_version.startsWith("4.2.")'
-    elif version == '4.0.70' or version.startswith('4.1.'):
-        return '(zenoss_version.startsWith("4.1.") || zenoss_version.startsWith("4.2."))'
-    elif version.startswith('4.0.'):
-        return 'zenoss_version.startsWith("4.")'
-    elif version.startswith('3.2.'):
-        return '(zenoss_version.startsWith("3.2.") || zenoss_version.startsWith("4."))'
+    # Alpha/Beta version numbers.
+    if version == '4.1.70':
+        normalized = '4.2'
+    elif version == '4.0.70':
+        normalized = '4.1'
+    elif version == '3.1.70':
+        normalized = '4.0'
     else:
-        return None
+        # Break down to major, or minor version part only.
+        version_parts = version.split('.')
+        if len(version_parts) == 1:
+            normalized = version_parts[0]
+        else:
+            normalized = '.'.join(version_parts[:2])
+
+    # Build appropriate combination filter.
+    if normalized == '4.2':
+        return 'zenoss_version == "4.2"'
+    elif normalized in ('4', '4.1'):
+        return 'zenoss_version in ["4.1", "4.2"]'
+    else:
+        return 'zenoss_version in ["3.2", "4.1", "4.2"]'
 
 
 def get_git_branches(path):

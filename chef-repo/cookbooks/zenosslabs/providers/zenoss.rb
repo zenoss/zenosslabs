@@ -148,6 +148,7 @@ action :install do
                     mode 0644
                 end
 
+                # Basic set of platform daemons.
                 template "/opt/zenoss/etc/daemons.txt" do
                     owner "zenoss"
                     group "zenoss"
@@ -187,6 +188,17 @@ action :install do
             end
         end
 
+        # Add extra daemons that foundational ZenPacks might have installed.
+        template "/opt/zenoss/etc/daemons.txt" do
+            owner "zenoss"
+            group "zenoss"
+            mode 0644
+            source "daemons.txt.erb"
+            variables(
+                :daemons => new_resource.daemons + (new_resource.extra_daemons or [])
+            )
+        end
+
 
         # Extra Python tools required for building and testing must be
         # installed into each Zenoss configuration because Zenoss bundles its
@@ -214,13 +226,18 @@ action :install do
 
         # Shutdown Zenoss and related services and unmout logical volume.
         execute "service zenoss stop" do
-            returns [0,1,2,3,4,5,6,7,8,9]
+            returns [0,1,2,3,4,5,6,7,8,9,127]
         end
 
         ([new_resource.database[:service]] + managed_services).each do |service_name|
             service service_name do
                 action :stop
             end
+        end
+
+        # Just in case a ZenPack starts a daemon we weren't expecting.
+        execute "pkill -9 -f /opt/zenoss" do
+            only_if "pgrep -f /opt/zenoss"
         end
 
         # Somehow MySQL files are becoming owned by the zenoss user during this
