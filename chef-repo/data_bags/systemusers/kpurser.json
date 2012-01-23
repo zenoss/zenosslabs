@@ -1,0 +1,5 @@
+{
+"id": "kpurser",
+"ssh_keys":"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDQz9/rPwWLm5p2MV0/wdbkULJibYMh5MsSyhM5kPpjrwtwuc1xn/Hd2S3LPSZl5wkRefTJu7xHfIL7wKHAJhbYORNWtmnTumeeABBSOxnZ4prZ4/4RpoSnxaTJCuk1YdqjvE2/ZEkgx5wQSuGIi+g8XpvB85aubBe+qI+iiAkWAe8K7GsZlhwysPQcOeNtB1MabQY4pJbcGxx2QwGJZxavxBaZtbtp9OdfxWR5TeLFUF/yZX/IjTWc9wI9vzB3rKbpiXAQFmdrU79pn3lCe0bBCEtTzzfayGaHQI+HTjhnDveMOerWmsMqWg8mK7o0c8952JD3YdOuvQsgTNzM8rRZ kpurser@zenoss.com",
+"nova_project": "sales"
+}
