@@ -531,6 +531,10 @@ def get_zenpack_jobs(path):
 
                 zenoss_version = match.group(1).rstrip('.x')
 
+                # Don't bother adding jobs for which we have no build servers.
+                if zenoss_version not in ('3.2', '4.1', '4.2'):
+                    continue
+
                 branch_job_name = "%s (zenoss-%s)" % (job.name, zenoss_version)
 
                 branch_combination_filter = 'zenoss_version == "%s"' % (
