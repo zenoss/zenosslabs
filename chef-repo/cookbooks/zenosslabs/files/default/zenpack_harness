@@ -170,7 +170,7 @@ class ZenossManager(object):
 
         """
         self.run_bundles([
-            ("sudo -u zenoss -i 'zenoss start'",),
+            ("sudo -u zenoss -i 'zenoss stop'",),
             ("sudo /sbin/service mysqld stop",),
             ("sudo /sbin/service zends stop",),
             ("sudo /sbin/service memcached stop",),
