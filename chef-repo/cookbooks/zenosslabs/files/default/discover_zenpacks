@@ -507,7 +507,7 @@ def get_zenpack_jobs(path):
         # assume that there's a maintenance branch to build against older
         # Zenoss versions.
         if job.scm == 'subversion' and \
-            re.search(r'/trunk/(core|enterprise)/zenpacks', job.url):
+            re.search(r'/trunk/(core|enterprise)(/reporting)?/zenpacks', job.url):
             job.combination_filter = 'zenoss_version == "%s"' % TRUNK_VERSION
 
         # Append (zenoss-x.x) to the job name if we're discovering this
