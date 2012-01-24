@@ -123,6 +123,10 @@ action :install do
         new_resource.packages.each do |zenoss_pkg|
             rpm_filename = "#{zenoss_pkg[:rpm_prefix]}.#{rpm_release}.#{rpm_arch}.rpm"
 
+            execute "pkill -9 -f /opt/zenoss" do
+                returns [0, 1]
+            end
+
             remote_file "/tmp/#{rpm_filename}" do
                 source "#{zenoss_pkg[:url_prefix]}#{rpm_filename}"
                 action :create_if_missing

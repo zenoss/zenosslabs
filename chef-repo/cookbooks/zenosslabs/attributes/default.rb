@@ -215,11 +215,6 @@ default[:zenosslabs] = {
                 :scm => 'subversion',
                 :url => 'http://dev.zenoss.org/svnint/branches/zenoss-4.1.x/reporting/zenpacks',
                 :private => true
-            },{
-                :name => 'Discovery - Reporting ZenPacks (zenoss-3.2)',
-                :scm => 'subversion',
-                :url => 'http://dev.zenoss.org/svnint/branches/zenoss-3.2.x/reporting/zenpacks',
-                :private => true
             },
 
             {
