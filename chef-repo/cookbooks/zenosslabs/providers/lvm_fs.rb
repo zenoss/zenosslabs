@@ -60,6 +60,8 @@ action :umount do
 
     lv_device = "/dev/mapper/#{new_resource.vg_name}-#{new_resource.lv_name}"
 
+    execute "kill -9 $(lsof -Fp /opt/zenoss | cut -b2-)"
+
     mount mount_point do
         device lv_device
         fstype "ext3"

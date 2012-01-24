@@ -33,6 +33,8 @@ include_recipe "sudo"
 
 
 # Resources
+package "lsof"
+
 cookbook_file "/usr/local/bin/zenpack_harness" do
     source "zenpack_harness"
     mode "0755"
@@ -68,6 +70,8 @@ template "/home/zenoss/.bashrc" do
 end
 
 directory "/home/zenoss/.m2" do
+    owner "zenoss"
+    group "zenoss"
     mode 0755
     action :create
 end
@@ -100,6 +104,8 @@ template "/home/zenoss/.m2/settings.xml" do
     )
 end
 
+# Make jenkins and zenoss members of each other's groups. This is done because
+# ZenPack source lives under the Jenkins workspace, but must be built by zenoss.
 group "jenkins" do
     members ["zenoss"]
 end
@@ -108,7 +114,7 @@ group "zenoss" do
     members ["jenkins"]
 end
 
-# The jenkins workspace can get quite large. Mount it elsewhere.
+# The jenkins workspace can get quite large. Mount it on secondary storage.
 directory "/var/lib/jenkins/workspace" do
     owner "jenkins"
     group "jenkins"
