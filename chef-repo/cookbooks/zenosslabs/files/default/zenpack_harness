@@ -116,6 +116,7 @@ class ZenossManager(object):
 
         print "* Tearing down any existing environment"
         self.tear_down()
+        self.tear_down()
 
         lv_name = "zenoss/%s_%s" % (zenoss_version, zenoss_flavor)
         lv_device = "/dev/%s" % lv_name
