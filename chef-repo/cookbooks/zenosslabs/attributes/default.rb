@@ -232,11 +232,6 @@ default[:zenosslabs] = {
                 :scm => 'subversion',
                 :url => 'http://dev.zenoss.org/svnint/ClientServices/ZenPacks',
                 :private => true
-            },{
-                :name => 'Discovery - Accenture ZenPacks',
-                :scm => 'subversion',
-                :url => 'https://dev.zenoss.com/svn-accenture',
-                :private => true
             },
 
             {
