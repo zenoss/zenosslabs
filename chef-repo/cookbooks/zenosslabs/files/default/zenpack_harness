@@ -10,6 +10,7 @@ ZenPack to be tested against multiple Zenoss configurations.
 import compiler
 import glob
 import os
+import pkg_resources
 import re
 import sys
 
@@ -186,10 +187,10 @@ class ZenPackHarness(object):
     """Comprehensive harness to build and test Zenpacks."""
 
     build_labels = None
+    zenoss_version = None
     zenpack_name = None
     zenpack_directory = None
     zenpack_dependencies = None
-    artifact_path = None
 
     def __init__(self, build_labels=None):
         self.zenpack_directory = os.getcwd()
@@ -199,13 +200,9 @@ class ZenPackHarness(object):
         else:
             self.build_labels = build_labels
 
-            try:
-                self.artifact_path = os.path.join(
-                    build_labels['zenoss_version'],
-                    build_labels['operating_system'],
-                    build_labels['architecture'])
-            except Exception:
-                self.artifact_path = None
+            if 'zenoss_version' in build_labels:
+                self.zenoss_version = '.'.join(
+                    build_labels['zenoss_version'].split('.')[:2])
 
         tree = compiler.parseFile(os.path.join(
             self.zenpack_directory, 'setup.py'))
@@ -262,54 +259,47 @@ class ZenPackHarness(object):
 
             # Stage files into a directory with the right hierarchy so Jenkins
             # can automatically push it to a distribution site.
-            if self.artifact_path:
-                shell("mkdir -p %s" % self.artifact_path)
-                shell("mv dist/ZenPacks.*.egg %s/" % self.artifact_path)
+            if self.zenoss_version:
+                shell("mkdir -p %s" % self.zenoss_version)
+                shell("mv dist/ZenPacks.*.egg %s/" % self.zenoss_version)
 
         except ShellError, ex:
             print ex
             sys.exit(1)
 
-    def install_dependencies(self):
-        print_header(1, "Installing Dependencies")
+    def install_dependencies(self, dependencies):
+        platform = shell(
+            "sudo -u zenoss -i 'python -c \""
+            "import pkg_resources; "
+            "print pkg_resources.get_supported_platform()"
+            "\"'").strip()
 
-        jenkins_url = os.environ.get('JENKINS_URL', None)
-        if not jenkins_url:
-            print "Dependencies can't be installed without JENKINS_URL."
-            sys.exit(1)
+        python = shell(
+            "sudo -u zenoss -i 'python -c \""
+            "import pkg_resources; "
+            "print pkg_resources.PY_MAJOR"
+            "\"'").strip()
 
-        if len(self.build_labels.keys()) < 1:
-            print "Dependencies can't be installed without BUILD_TAG."
-            sys.exit(1)
+        url_prefix = "http://192.168.4.4/api/download/"
+        url_suffix = "\?zenoss_version=%s\&platform=%s\&python=%s" % (
+            self.zenoss_version, platform, python)
 
-        url_prefix = "%s/job" % jenkins_url
-        url_suffix = (
-            '%s/lastSuccessfulBuild/artifact/%%2Azip%%2A/archive.zip' % (
-                ','.join('='.join(x) for x in self.build_labels.items())))
-
-        for dependency in self.zenpack_dependencies:
+        for dependency in dependencies:
             print "* %s\n" % dependency
 
-            url = "%s/%s/%s" % (url_prefix, dependency, url_suffix)
+            url = "%s%s%s" % (url_prefix, dependency, url_suffix)
 
             try:
                 print "  * downloading.."
                 shell(
                     "sudo -u zenoss -i "
-                    "wget -O /opt/zenoss/zenpack_eggs/%s.zip '%s'" % (
+                    "wget -O /opt/zenoss/zenpack_eggs/%s.egg '%s'" % (
                         dependency, url))
-
-                print "  * unzipping.."
-                shell(
-                    "sudo -u zenoss -i "
-                    "unzip -j -d /opt/zenoss/zenpack_eggs "
-                    "/opt/zenoss/zenpack_eggs/%s.zip" % (
-                        dependency))
 
                 print "  * installing.."
                 shell(
                     "sudo -u zenoss -i zenpack --install "
-                    "/opt/zenoss/zenpack_eggs/%s-*.egg 2>&1" % (
+                    "/opt/zenoss/zenpack_eggs/%s.egg 2>&1" % (
                         dependency))
 
                 print
@@ -319,7 +309,17 @@ class ZenPackHarness(object):
 
     def run_install(self):
         if self.zenpack_dependencies:
-            self.install_dependencies()
+            print_header(1, "Installing Dependencies")
+
+            if len(self.build_labels.keys()) < 1:
+                print "Dependencies can't be installed without BUILD_TAG."
+                sys.exit(1)
+
+            if self.zenoss_version is None:
+                print "Unable to determine Zenoss version."
+                sys.exit(1)
+
+            self.install_dependencies(self.zenpack_dependencies)
 
         print_header(1, "Installing")
 

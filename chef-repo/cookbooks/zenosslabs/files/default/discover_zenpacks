@@ -279,10 +279,6 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
       <isOpenTasksDeactivated>true</isOpenTasksDeactivated>
       <isWarningsDeactivated>false</isWarningsDeactivated>
     </hudson.plugins.analysis.collector.AnalysisPublisher>
-    <hudson.tasks.ArtifactArchiver>
-      <artifacts>**/dist/*.egg</artifacts>
-      <latestOnly>false</latestOnly>
-    </hudson.tasks.ArtifactArchiver>
     <htmlpublisher.HtmlPublisher>
       <reportTargets>
         <htmlpublisher.HtmlPublisherTarget>
@@ -299,6 +295,37 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
       <keepLongStdio>false</keepLongStdio>
       <testDataPublishers/>
     </hudson.tasks.junit.JUnitResultArchiver>
+    <jenkins.plugins.publish__over__ssh.BapSshPublisherPlugin>
+      <consolePrefix>SSH: </consolePrefix>
+      <delegate>
+        <publishers>
+          <jenkins.plugins.publish__over__ssh.BapSshPublisher>
+            <configName>zenpacks</configName>
+            <verbose>false</verbose>
+            <transfers>
+              <jenkins.plugins.publish__over__ssh.BapSshTransfer>
+                <remoteDirectory></remoteDirectory>
+                <sourceFiles>**/ZenPacks.*.egg</sourceFiles>
+                <excludes></excludes>
+                <removePrefix></removePrefix>
+                <remoteDirectorySDF>false</remoteDirectorySDF>
+                <flatten>false</flatten>
+                <cleanRemote>false</cleanRemote>
+                <execCommand></execCommand>
+                <execTimeout>120000</execTimeout>
+                <usePty>false</usePty>
+              </jenkins.plugins.publish__over__ssh.BapSshTransfer>
+            </transfers>
+            <useWorkspaceInPromotion>false</useWorkspaceInPromotion>
+            <usePromotionTimestamp>false</usePromotionTimestamp>
+          </jenkins.plugins.publish__over__ssh.BapSshPublisher>
+        </publishers>
+        <continueOnError>false</continueOnError>
+        <failOnError>false</failOnError>
+        <alwaysPublishFromMaster>false</alwaysPublishFromMaster>
+        <hostConfigurationAccess class="jenkins.plugins.publish_over_ssh.BapSshPublisherPlugin" reference="../.."/>
+      </delegate>
+    </jenkins.plugins.publish__over__ssh.BapSshPublisherPlugin>
   </publishers>
   <buildWrappers/>
   <runSequentially>false</runSequentially>

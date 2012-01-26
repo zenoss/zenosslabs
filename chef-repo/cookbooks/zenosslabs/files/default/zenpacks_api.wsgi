@@ -33,8 +33,7 @@ def download(name=None):
         abort(400, "/<name> must be appended to the URL.")
 
     if not request.query.zenoss_version:
-        abort(400,
-            "Missing parameter: zenoss_version. Example: %s" % (
+        abort(400, "Missing parameter: zenoss_version. Example: %s" % (
             EXAMPLE_ZENOSS_VERSION))
 
     zenoss_version_parts = request.query.zenoss_version.split('.') + ['0', '0']
@@ -42,33 +41,34 @@ def download(name=None):
 
     eggs_path = os.path.join(FILES_PATH, zenoss_version)
     if not os.path.isdir(eggs_path):
-        abort(404,
-            "No ZenPacks available for Zenoss %s" % (
+        abort(404, "No ZenPacks available for Zenoss %s" % (
             request.query.zenoss_version))
 
     if not request.query.platform:
-        abort(400,
-            "Missing parameter: platform. Example: %s" % EXAMPLE_PLATFORM)
+        abort(400, "Missing parameter: platform. Example: %s" % (
+            EXAMPLE_PLATFORM))
 
     python_version = request.query.python
     if not python_version:
         python_version = PYTHON_VERSION_MAP.get(zenoss_version, None)
 
     if not python_version:
-        abort(400,
-            "Missing parameter: python. Example: %s" % EXAMPLE_PYTHON)
+        abort(400, "Missing parameter: python. Example: %s" % EXAMPLE_PYTHON)
 
     environment = pkg_resources.Environment(
         search_path=[eggs_path],
         platform=request.query.platform,
         python=python_version)
 
-    requirement = pkg_resources.Requirement.parse('ZenPacks.zenoss.CloudStack')
+    requirement = pkg_resources.Requirement.parse(name)
     working_set = pkg_resources.WorkingSet(entries=[eggs_path])
     package = environment.best_match(requirement, working_set)
 
+    if not package:
+        abort(404, "No ZenPack found meeting your criteria.")
+
     return static_file(
-        os.path.basename(package.location),  # filename
+        os.path.basename(package.location),
         root=eggs_path,
         download=True)
 

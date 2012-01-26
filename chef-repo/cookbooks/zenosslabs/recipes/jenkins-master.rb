@@ -21,7 +21,7 @@ include_recipe "zenosslabs::jenkins-common"
 include_recipe "jenkins"
 
 # Install Jenkins plugins.
-%w(git analysis-core analysis-collector bulk-builder htmlpublisher warnings).each do |plugin|
+%w(git analysis-core analysis-collector bulk-builder htmlpublisher warnings publish-over-ssh).each do |plugin|
     if not FileTest.exist?("/var/lib/jenkins/plugins/#{plugin}.hpi")
         jenkins_cli "install-plugin #{plugin}"
         jenkins_cli "safe-restart"
