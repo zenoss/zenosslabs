@@ -189,6 +189,7 @@ class ZenPackHarness(object):
     zenpack_name = None
     zenpack_directory = None
     zenpack_dependencies = None
+    artifact_path = None
 
     def __init__(self, build_labels=None):
         self.zenpack_directory = os.getcwd()
@@ -197,6 +198,14 @@ class ZenPackHarness(object):
             self.build_labels = {}
         else:
             self.build_labels = build_labels
+
+            try:
+                self.artifact_path = os.path.join(
+                    build_labels['zenoss_version'],
+                    build_labels['operating_system'],
+                    build_labels['architecture'])
+            except Exception:
+                self.artifact_path = None
 
         tree = compiler.parseFile(os.path.join(
             self.zenpack_directory, 'setup.py'))
@@ -250,6 +259,13 @@ class ZenPackHarness(object):
 
             shell("sudo -u zenoss -i mkdir -p /opt/zenoss/zenpack_eggs")
             shell("sudo cp dist/*.egg /opt/zenoss/zenpack_eggs/")
+
+            # Stage files into a directory with the right hierarchy so Jenkins
+            # can automatically push it to a distribution site.
+            if self.artifact_path:
+                shell("mkdir -p %s" % self.artifact_path)
+                shell("mv dist/ZenPacks.*.egg %s/" % self.artifact_path)
+
         except ShellError, ex:
             print ex
             sys.exit(1)

@@ -44,3 +44,16 @@ template "/var/lib/jenkins/jobs.yaml" do
         :zenpack_jobs => node[:zenosslabs][:jenkins_jobs][:zenpack_jobs]
     )
 end
+
+
+# Install apache2 to serve ZenPack eggs.
+%w{apache2 apache2::mod_autoindex}.each do |recipe|
+    include_recipe recipe
+end
+
+web_app "zenpacks.zenosslabs.com" do
+    template "zenpacks_www.conf.erb"
+    server_name "zenpacks.zenosslabs.com"
+    server_aliases [node['hostname'], node['fqdn'], node['ipaddress']]
+    docroot "/srv/www/zenpacks"
+end
