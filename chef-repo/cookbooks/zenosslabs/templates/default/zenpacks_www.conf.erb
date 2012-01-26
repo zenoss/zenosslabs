@@ -1,20 +1,26 @@
 <VirtualHost *:80>
-  ServerName <%= @params[:server_name] %>
-  ServerAlias <% @params[:server_aliases].each do |a| %><%= "#{a}" %> <% end %>
-  DocumentRoot <%= @params[:docroot] %>
-  
-  <Directory <%= @params[:docroot] %>>
-    Options +Indexes
-    AllowOverride None
-    Order allow,deny
-    Allow from all
-  </Directory>
-  
-  <Location /server-status>
-    SetHandler server-status
+    ServerName <%= @params[:server_name] %>
+    ServerAlias <% @params[:server_aliases].each do |a| %><%= "#{a}" %> <% end %>
+    DocumentRoot <%= @params[:docroot] %>
 
-    Order Deny,Allow
-    Deny from all
-    Allow from 127.0.0.1
-  </Location>
+    WSGIDaemonProcess zenpacks.zenosslabs.com processes=2 threads=15 display-name=%{GROUP}
+    WSGIProcessGroup zenpacks.zenosslabs.com
+    WSGIScriptAlias /api /srv/zenpacks/wsgi-scripts/zenpacks_api.wsgi
+
+    Alias /icons/ "/usr/share/apache2/icons/"
+
+    <Directory <%= @params[:docroot] %>>
+        Options +Indexes
+        AllowOverride None
+        Order allow,deny
+        Allow from all
+    </Directory>
+  
+    <Location /server-status>
+        SetHandler server-status
+
+        Order Deny,Allow
+        Deny from all
+        Allow from 127.0.0.1
+    </Location>
 </VirtualHost>
