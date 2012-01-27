@@ -14,6 +14,7 @@ import glob
 import os
 import pkg_resources
 import re
+import shutil
 import sys
 import urllib
 
@@ -128,7 +129,12 @@ class ZenPackHarness(object):
         self.workspace = os.path.join(WORKSPACE_BASE, self.zenpack_name)
 
         # Setup a symlink to the Jenkins workspace.
-        os.makedirs(WORKSPACE_BASE)
+        if not os.path.isdir(WORKSPACE_BASE):
+            os.makedirs(WORKSPACE_BASE)
+
+        if os.path.exists(self.workspace):
+            os.unlink(self.workspace)
+
         os.symlink(workspace, self.workspace)
 
     def run_pyflakes(self):
@@ -159,16 +165,19 @@ class ZenPackHarness(object):
         try:
             shell("rm -Rf build dist *.egg-info")
 
-            print shell("cd %s ; python setup.py bdist_egg'" % self.workspace)
+            print shell("cd %s ; python setup.py bdist_egg" % self.workspace)
 
             shell("mkdir -p /opt/zenoss/zenpack_eggs")
-            shell("cp dist/ZenPacks.*.egg /opt/zenoss/zenpack_eggs/")
+            shell("cp %s/dist/ZenPacks.*.egg /opt/zenoss/zenpack_eggs/" % (
+                self.workspace))
 
             # Stage files into a directory with the right hierarchy so Jenkins
             # can automatically push it to a distribution site.
             if self.zenoss_version:
-                shell("mkdir -p %s" % self.zenoss_version)
-                shell("mv dist/ZenPacks.*.egg %s/" % self.zenoss_version)
+                staging_dir = os.path.join(self.workspace, self.zenoss_version)
+                shell("mkdir -p %s" % staging_dir)
+                shell("mv %s/dist/ZenPacks.*.egg %s/" % (
+                    self.workspace, staging_dir))
 
         except ShellError, ex:
             print ex
@@ -179,7 +188,7 @@ class ZenPackHarness(object):
         python = pkg_resources.PY_MAJOR
 
         url_prefix = "http://192.168.4.4/api/download/"
-        url_suffix = "\?zenoss_version=%s\&platform=%s\&python=%s" % (
+        url_suffix = "?zenoss_version=%s&platform=%s&python=%s" % (
             self.zenoss_version, platform, python)
 
         for dependency in dependencies:
@@ -196,7 +205,7 @@ class ZenPackHarness(object):
                     cgi.parse_header(
                         headers['Content-Disposition'])[1]['filename'])
 
-                os.rename(filename, egg_path)
+                shutil.move(filename, egg_path)
 
                 print "  * installing.."
                 shell("zenpack --install %s 2>&1" % egg_path)
@@ -210,10 +219,6 @@ class ZenPackHarness(object):
     def run_install(self):
         if self.zenpack_dependencies:
             print_header(1, "Installing Dependencies")
-
-            if len(self.build_labels.keys()) < 1:
-                print "Dependencies can't be installed without BUILD_TAG."
-                sys.exit(1)
 
             if self.zenoss_version is None:
                 print "Unable to determine Zenoss version."
@@ -278,7 +283,7 @@ class ZenPackHarness(object):
                 "--cover-package=%(zenpack_name)s "
                 "--cover-html "
                 "--cover-html-dir=%(cover_dir)s "
-                "%(zenpack_name)s.tests' "
+                "%(zenpack_name)s.tests "
                 "2>&1 || :" % {
                      'zenpack_name': self.zenpack_name,
                      'workspace': self.workspace,
@@ -347,7 +352,7 @@ def main():
             sys.exit(1)
 
     # Default to running all steps if none are specified.
-    if len(sys.argv) < 1:
+    if len(args) < 1:
         args = (
             'pyflakes',
             'pep8',

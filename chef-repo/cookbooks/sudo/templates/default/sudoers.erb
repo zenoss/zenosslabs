@@ -6,6 +6,10 @@
 
 Defaults        !lecture,tty_tickets,!fqdn
 
+<% @sudoers_envkeeps.each do |envkeep| -%>
+Defaults        += <% envkeep %>
+<% end -%>
+
 # User privilege specification
 root          ALL=(ALL) ALL
 

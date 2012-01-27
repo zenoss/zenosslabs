@@ -201,28 +201,28 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
   <combinationFilter>{{ combination_filter }}</combinationFilter>
   <builders>
     <hudson.tasks.Shell>
-      <command>zenpack_harness --setup</command>
+      <command>sudo zenoss_manager --setup</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness pyflakes</command>
+      <command>sudo -u zenoss -i zenpack_harness pyflakes</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness pep8</command>
+      <command>sudo -u zenoss -i zenpack_harness pep8</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness build</command>
+      <command>sudo -u zenoss -i zenpack_harness build</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness install</command>
+      <command>sudo -u zenoss -i zenpack_harness install</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness generictests</command>
+      <command>sudo -u zenoss -i zenpack_harness generictests</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness unittests</command>
+      <command>sudo -u zenoss -i zenpack_harness unittests</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness remove</command>
+      <command>sudo -u zenoss -i zenpack_harness remove</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>

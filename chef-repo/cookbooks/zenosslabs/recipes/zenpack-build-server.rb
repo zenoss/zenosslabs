@@ -10,6 +10,7 @@
 # Attributes
 node[:authorization] = {
     "sudo" => {
+        "env_keep" => ['WORKSPACE', 'BUILD_TAG'],
         "users" => ["jenkins"],
         "passwordless" => true
     }

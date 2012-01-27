@@ -30,6 +30,7 @@ template "/etc/sudoers" do
   variables(
     :sudoers_groups => node['authorization']['sudo']['groups'],
     :sudoers_users => node['authorization']['sudo']['users'],
-    :passwordless => node['authorization']['sudo']['passwordless']
+    :passwordless => node['authorization']['sudo']['passwordless'],
+    :sudoers_envkeeps => node['authorization']['sudo']['env_keep']
   )
 end
