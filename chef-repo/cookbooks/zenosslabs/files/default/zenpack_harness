@@ -308,6 +308,12 @@ class ZenPackHarness(object):
         print_header(1, "Removing")
 
         try:
+            # DistributedCollector stops zeneventserver on Zenoss 4+. We must
+            # start it to remove the Zenpack.
+            if self.zenoss_version.startswith('4.') and \
+                self.zenpack_name == 'ZenPacks.zenoss.DistributedCollector':
+                shell("zenoss start")
+
             print shell("zenpack --remove %s" % self.zenpack_name)
 
             # On successfully removal there is no output. Providing some.
