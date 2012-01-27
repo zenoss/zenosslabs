@@ -124,7 +124,8 @@ class ZenPackHarness(object):
             if not dependency.startswith('ZenPacks.'):
                 continue
 
-            self.zenpack_dependencies.append(re.split(r'[=<>]', dependency)[0])
+            self.zenpack_dependencies.append(
+                re.split(r'[=<>]', dependency)[0].strip())
 
         self.workspace = os.path.join(WORKSPACE_BASE, self.zenpack_name)
 
@@ -191,13 +192,14 @@ class ZenPackHarness(object):
         url_suffix = "?zenoss_version=%s&platform=%s&python=%s" % (
             self.zenoss_version, platform, python)
 
-        for dependency in dependencies:
-            print "* %s\n" % dependency
+        # Track dependencies that have already been installed.
+        installed = set()
 
+        for dependency in dependencies:
             url = "%s%s%s" % (url_prefix, dependency, url_suffix)
 
             try:
-                print "  * downloading.."
+                print "* %s: downloading.." % dependency
                 filename, headers = urllib.urlretrieve(url)
 
                 egg_path = os.path.join(
@@ -207,10 +209,19 @@ class ZenPackHarness(object):
 
                 shutil.move(filename, egg_path)
 
-                print "  * installing.."
+                # Follow the tail of dependencies.
+                sub_dependencies = []
+
+                for distribution in pkg_resources.find_distributions(egg_path):
+                    for requirement in distribution.requires():
+                        sub_dependencies.append(requirement.project_name)
+
+                self.install_dependencies(sub_dependencies)
+
+                print "* %s: installing.." % dependency
                 shell("zenpack --install %s 2>&1" % egg_path)
 
-                print
+                installed.add(os.path.basename(egg_path).split('-')[0])
 
             except ShellError, ex:
                 print ex
