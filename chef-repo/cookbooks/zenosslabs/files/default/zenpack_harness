@@ -1,20 +1,26 @@
 #!/usr/bin/env python
 """zenpack_harness
 
-Provides a comprehensive harness for building and testing ZenPacks. Also
-manages multiple Zenoss configurations installed on the same server to allow a
-ZenPack to be tested against multiple Zenoss configurations.
+Provides a comprehensive harness for building and testing ZenPacks.
+
+.. important::
+    This command should be run as the zenoss user with a full login shell.
 
 """
 
+import cgi
 import compiler
 import glob
 import os
 import pkg_resources
 import re
 import sys
+import urllib
 
 from subprocess import Popen, PIPE
+
+
+WORKSPACE_BASE = '/opt/zenoss/workspace'
 
 
 class ASTVisitor(compiler.visitor.ASTVisitor):
@@ -97,116 +103,18 @@ def print_header(level, title):
     print
 
 
-class ZenossManager(object):
-    """Manages multiple Zenoss configurations on the same server."""
-
-    def run_bundle(self, bundle, suppress_errors=False):
-        try:
-            for command in bundle:
-                shell(command)
-        except ShellError, ex:
-            if not suppress_errors:
-                raise ex
-
-    def run_bundles(self, bundles, suppress_errors=False):
-        for bundle in bundles:
-            self.run_bundle(bundle, suppress_errors=suppress_errors)
-
-    def setup(self, zenoss_version, zenoss_flavor):
-        """Setup a Zenoss environment for testing ZenPacks."""
-
-        print "* Tearing down any existing environment"
-        self.tear_down()
-        self.tear_down()
-
-        lv_name = "zenoss/%s_%s" % (zenoss_version, zenoss_flavor)
-        lv_device = "/dev/%s" % lv_name
-
-        if not os.path.exists(lv_device):
-            raise Exception("%s doesn't exist." % lv_device)
-
-        try:
-            print "* Creating zenoss/sandbox logical volume"
-            print "* Mounting sandbox volume on /opt/zenoss"
-            self.run_bundle([
-                "sudo /usr/sbin/lvcreate -l25%%ORIGIN -s -n sandbox %s" % lv_name,
-                "sudo mount /dev/zenoss/sandbox /opt/zenoss",
-                ])
-
-            if zenoss_version.startswith('3'):
-                print "* Linking MySQL datadir to /opt/zenoss/datadir"
-                print "* Starting mysqld"
-                self.run_bundle([
-                    "sudo ln -sf /opt/zenoss/datadir /var/lib/mysql",
-                    "sudo /sbin/service mysqld start",
-                    ])
-
-            elif zenoss_version.startswith('4'):
-                print "* Linking ZenDS datadir to /opt/zenoss/datadir"
-                print "* Starting zends"
-                self.run_bundle([
-                    "sudo ln -sf /opt/zenoss/datadir /opt/zends/data",
-                    "sudo /sbin/service zends start",
-                    ])
-
-                print "* Starting rabbitmq-server"
-                print "* Starting memcached"
-                self.run_bundles([
-                    ("sudo /sbin/service rabbitmq-server start",),
-                    ("sudo /sbin/service memcached start",),
-                    ], suppress_errors=True)
-
-            print "* Starting zenoss (minimal daemons)"
-            self.run_bundle([
-                "sudo -u zenoss -i 'zenoss start'",
-                ])
-        except ShellError, ex:
-            print ex
-            sys.exit(1)
-
-    def tear_down(self):
-        """Tear down the Zenoss test environment.
-
-        tear_down shouldn't need to be called explicitly as setup will call it
-        before doing a setup.
-
-        """
-        self.run_bundles([
-            ("sudo -u zenoss -i 'zenoss stop'",),
-            ("sudo /sbin/service mysqld stop",),
-            ("sudo /sbin/service zends stop",),
-            ("sudo /sbin/service memcached stop",),
-            ("sudo pkill -9 -f /opt/zenoss",),
-            ("sudo kill -9 $(lsof -Fp /opt/zenoss | cut -b2-)",),
-            ("sudo umount -f /opt/zenoss",),
-            ("sudo /usr/sbin/lvremove -f zenoss/sandbox",),
-            ], suppress_errors=True)
-
-
 class ZenPackHarness(object):
     """Comprehensive harness to build and test Zenpacks."""
 
-    build_labels = None
+    workspace = None
     zenoss_version = None
     zenpack_name = None
-    zenpack_directory = None
     zenpack_dependencies = None
 
-    def __init__(self, build_labels=None):
-        self.zenpack_directory = os.getcwd()
+    def __init__(self, workspace=None, zenoss_version=None):
+        self.zenoss_version = zenoss_version
 
-        if build_labels is None:
-            self.build_labels = {}
-        else:
-            self.build_labels = build_labels
-
-            if 'zenoss_version' in build_labels:
-                self.zenoss_version = '.'.join(
-                    build_labels['zenoss_version'].split('.')[:2])
-
-        tree = compiler.parseFile(os.path.join(
-            self.zenpack_directory, 'setup.py'))
-
+        tree = compiler.parseFile(os.path.join(workspace, 'setup.py'))
         visitor = compiler.visitor.walk(tree, ASTVisitor())
 
         self.zenpack_name = visitor['NAME']
@@ -217,14 +125,19 @@ class ZenPackHarness(object):
 
             self.zenpack_dependencies.append(re.split(r'[=<>]', dependency)[0])
 
+        self.workspace = os.path.join(WORKSPACE_BASE, self.zenpack_name)
+
+        # Setup a symlink to the Jenkins workspace.
+        os.makedirs(WORKSPACE_BASE)
+        os.symlink(workspace, self.workspace)
+
     def run_pyflakes(self):
         print_header(1, "Running PyFlakes Static Analyzer")
 
         try:
             print shell(
-                "sudo -u zenoss -i "
-                "'cd %s ; find ZenPacks/ -name \\*.py | xargs pyflakes' "
-                "|| :" % self.zenpack_directory)
+                "find %s/ZenPacks -name \\*.py | xargs pyflakes || :" % (
+                    self.workspace))
 
         except ShellError:
             pass
@@ -234,9 +147,8 @@ class ZenPackHarness(object):
 
         try:
             print shell(
-                "sudo -u zenoss -i "
-                "'cd %s ; find ZenPacks/ -name \\*.py | xargs pep8' "
-                "|| :" % self.zenpack_directory)
+                "find %s/ZenPacks -name \\*.py | xargs pep8 || :" % (
+                    self.workspace))
 
         except ShellError:
             pass
@@ -245,17 +157,12 @@ class ZenPackHarness(object):
         print_header(1, "Building Egg")
 
         try:
-            shell("sudo chmod 775 .")
-            shell("sudo chown -R zenoss:jenkins .")
-            shell("sudo rm -Rf build dist *.egg-info")
+            shell("rm -Rf build dist *.egg-info")
 
-            print shell(
-                "sudo -u zenoss -i "
-                "'cd \"%s\" ; python setup.py bdist_egg'" % (
-                    self.zenpack_directory))
+            print shell("cd %s ; python setup.py bdist_egg'" % self.workspace)
 
-            shell("sudo -u zenoss -i mkdir -p /opt/zenoss/zenpack_eggs")
-            shell("sudo cp dist/*.egg /opt/zenoss/zenpack_eggs/")
+            shell("mkdir -p /opt/zenoss/zenpack_eggs")
+            shell("cp dist/ZenPacks.*.egg /opt/zenoss/zenpack_eggs/")
 
             # Stage files into a directory with the right hierarchy so Jenkins
             # can automatically push it to a distribution site.
@@ -268,17 +175,8 @@ class ZenPackHarness(object):
             sys.exit(1)
 
     def install_dependencies(self, dependencies):
-        platform = shell(
-            "sudo -u zenoss -i 'python -c \""
-            "import pkg_resources; "
-            "print pkg_resources.get_supported_platform()"
-            "\"'").strip()
-
-        python = shell(
-            "sudo -u zenoss -i 'python -c \""
-            "import pkg_resources; "
-            "print pkg_resources.PY_MAJOR"
-            "\"'").strip()
+        platform = pkg_resources.get_supported_platform()
+        python = pkg_resources.PY_MAJOR
 
         url_prefix = "http://192.168.4.4/api/download/"
         url_suffix = "\?zenoss_version=%s\&platform=%s\&python=%s" % (
@@ -291,18 +189,20 @@ class ZenPackHarness(object):
 
             try:
                 print "  * downloading.."
-                shell(
-                    "sudo -u zenoss -i "
-                    "wget -O /opt/zenoss/zenpack_eggs/%s.egg '%s'" % (
-                        dependency, url))
+                filename, headers = urllib.urlretrieve(url)
+
+                egg_path = os.path.join(
+                    '/opt/zenoss/zenpack_eggs',
+                    cgi.parse_header(
+                        headers['Content-Disposition'])[1]['filename'])
+
+                os.rename(filename, egg_path)
 
                 print "  * installing.."
-                shell(
-                    "sudo -u zenoss -i zenpack --install "
-                    "/opt/zenoss/zenpack_eggs/%s.egg 2>&1" % (
-                        dependency))
+                shell("zenpack --install %s 2>&1" % egg_path)
 
                 print
+
             except ShellError, ex:
                 print ex
                 sys.exit(1)
@@ -325,7 +225,7 @@ class ZenPackHarness(object):
 
         try:
             print shell(
-                "sudo -u zenoss -i zenpack --install "
+                "zenpack --install "
                 "/opt/zenoss/zenpack_eggs/%s-*.egg 2>&1" % (
                     self.zenpack_name))
 
@@ -340,7 +240,7 @@ class ZenPackHarness(object):
     def run_unittests(self):
         print_header(1, "Running Unit Tests")
 
-        cover_dir = os.path.join(self.zenpack_directory, 'cover')
+        cover_dir = os.path.join(self.workspace, 'cover')
 
         test_modules_glob = '/opt/zenoss/ZenPacks/%s-*.egg/%s/tests/*.py' % (
             self.zenpack_name, self.zenpack_name.replace('.', '/'))
@@ -358,8 +258,7 @@ class ZenPackHarness(object):
             cover_f.close()
 
             # Create empty XUnit report.
-            xunit_f = open(os.path.join(
-                self.zenpack_directory, 'nosetests.xml'), 'w')
+            xunit_f = open(os.path.join(self.workspace, 'nosetests.xml'), 'w')
 
             xunit_f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             xunit_f.write('<testsuite name="nosetests" tests="0" errors="0" failures="0" skip="0">\n')
@@ -371,21 +270,20 @@ class ZenPackHarness(object):
 
         try:
             print shell(
-                "sudo -u zenoss -i nosetests "
-                "-w '/opt/zenoss/ZenPacks/%s-*.egg/ZenPacks' "
+                "nosetests "
+                "-w /opt/zenoss/ZenPacks/%(zenpack_name)s-*.egg/ZenPacks "
                 "--with-xunit "
-                "--xunit-file='%s/nosetests.xml' "
+                "--xunit-file=%(workspace)s/nosetests.xml "
                 "--with-coverage "
-                "--cover-package=%s "
+                "--cover-package=%(zenpack_name)s "
                 "--cover-html "
-                "--cover-html-dir='%s' "
-                "%s.tests "
-                "2>&1 || :" % (
-                    self.zenpack_name,
-                    self.zenpack_directory,
-                    self.zenpack_name,
-                    cover_dir,
-                    self.zenpack_name))
+                "--cover-html-dir=%(cover_dir)s "
+                "%(zenpack_name)s.tests' "
+                "2>&1 || :" % {
+                     'zenpack_name': self.zenpack_name,
+                     'workspace': self.workspace,
+                     'cover_dir': cover_dir,
+                     })
 
         except ShellError:
             raise
@@ -394,8 +292,7 @@ class ZenPackHarness(object):
         print_header(1, "Removing")
 
         try:
-            print shell("sudo -u zenoss -i zenpack --remove %s" % (
-                self.zenpack_name))
+            print shell("zenpack --remove %s" % self.zenpack_name)
 
             # On successfully removal there is no output. Providing some.
             print "Done."
@@ -419,94 +316,50 @@ class ZenPackHarness(object):
 
 
 def main():
-    """Run zenpack_harness (ZenPackHarness) from the command line.
-
-    ZenPackHarness requires two parameters: zenoss_version and zenoss_flavor.
-    This method attempts to get these parameters from command line options or
-    from the Jenkins BUILD_TAG environment variable. The command line options
-    will take precendence over what is set in BUILD_TAG.
-
-    The following commands (steps) are supported:
-
-        pyflakes
-        pep8
-        build
-        install
-        generictests
-        unittests
-        remove
-
-    """
-
     from optparse import OptionParser
 
-    zenoss_version = None
-    zenoss_flavor = None
-
     parser = OptionParser()
-    parser.add_option('-v', '--version', help="Zenoss version to test against")
-    parser.add_option('-f', '--flavor', help="Zenoss flavor to test against")
-
-    parser.add_option('-s', '--setup',
-        help="Setup Zenoss environment",
-        default=False, action="store_true")
-
-    parser.add_option('-t', '--teardown',
-        help="Tear down Zenoss environment",
-        default=False, action="store_true")
+    parser.add_option('-w', '--workspace', help="ZenPack source directory")
+    parser.add_option('-v', '--version', help="Zenoss version")
 
     options, args = parser.parse_args()
 
-    zman = ZenossManager()
+    # Get Zenoss configuration info from command line or environment variables.
+    workspace = options.workspace
+    if not workspace:
+        workspace = os.environ.get('WORKSPACE', None)
+        if not workspace:
+            print >> sys.stderr, "Workspace not specified."
+            sys.exit(1)
 
-    # A teardown requires no parameters or environment variables.
-    if options.teardown:
-        zman.tear_down()
-        sys.exit(0)
+    zenoss_version = options.version
+    if not zenoss_version:
+        build_labels = {}
+
+        build_tag = os.environ.get('BUILD_TAG', None)
+        if build_tag:
+            build_labels = dict(
+                x.split('=') for x in build_tag.split('-')[1].split(','))
+
+        zenoss_version = build_labels.get('zenoss_version', None)
+        if not zenoss_version:
+            print >> sys.stderr, "Zenoss version not specified."
+            sys.exit(1)
 
     # Default to running all steps if none are specified.
-    if len(args) < 1:
+    if len(sys.argv) < 1:
         args = (
-            'pyflakes', 'pep8', 'build', 'install', 'generictests', 'unittests',
+            'pyflakes',
+            'pep8',
+            'build',
+            'install',
+            'generictests',
+            'unittests',
             'remove',
             )
 
-    # Get Zenoss configuration info from command line or environment variables.
-    build_tag = os.environ.get('BUILD_TAG', None)
-    build_labels = {}
-    if build_tag:
-        build_labels = dict(
-            x.split('=') for x in build_tag.split('-')[1].split(','))
+    harness = ZenPackHarness(workspace=workspace, zenoss_version=zenoss_version)
 
-    if options.version:
-        zenoss_version = options.version
-    elif 'zenoss_version' in build_labels:
-        zenoss_version = build_labels['zenoss_version']
-    else:
-        print >> sys.stderr, "Zenoss version not found on command line or BUILD_TAG."
-        sys.exit(1)
-
-    if options.flavor:
-        zenoss_flavor = options.flavor
-    elif 'zenoss_flavor' in build_labels:
-        zenoss_flavor = build_labels['zenoss_flavor']
-    else:
-        print >> sys.stderr, "Zenoss flavor not found on command line or BUILD_TAG."
-        sys.exit(1)
-
-    # We only need a setup.py in the current directory for running steps.
-    if options.setup:
-        print_header(0, "Setting up environment for Zenoss %s (%s)" % (
-            zenoss_version, zenoss_flavor))
-
-        zman.setup(zenoss_version, zenoss_flavor)
-        sys.exit(0)
-
-    if not os.path.isfile('setup.py'):
-        print >> sys.stderr, "setup.py doesn't exist in current directory."
-        sys.exit(1)
-
-    harness = ZenPackHarness(build_labels)
     for step in args:
         harness_method = getattr(harness, 'run_%s' % step, None)
         if not harness_method:

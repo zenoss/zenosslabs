@@ -35,9 +35,11 @@ include_recipe "sudo"
 # Resources
 package "lsof"
 
-cookbook_file "/usr/local/bin/zenpack_harness" do
-    source "zenpack_harness"
-    mode "0755"
+%w{zenoss_manager zenpack_harness}.each do |script|
+    cookbook_file "/usr/local/bin/#{script}" do
+        source script
+        mode "0755"
+    end
 end
 
 node[:zenoss][:versions].each do |version|
