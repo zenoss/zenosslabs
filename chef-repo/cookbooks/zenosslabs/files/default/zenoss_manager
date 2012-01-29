@@ -199,6 +199,13 @@ def main():
 
         zman.setup(zenoss_version, zenoss_flavor)
 
+    # Fix workspace permissions if Jenkins is calling us.
+    if os.environ.get('WORKSPACE', None) and os.path.isfile('setup.py'):
+        shell("sudo chmod 775 .")
+        shell("sudo chown -R zenoss:jenkins .")
+        shell("sudo rm -Rf build dist *.egg-info")
+        shell("rm -Rf build dist *.egg-info")
+
 
 if __name__ == '__main__':
     main()
