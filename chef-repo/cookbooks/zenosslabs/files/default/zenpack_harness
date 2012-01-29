@@ -223,6 +223,12 @@ class ZenPackHarness(object):
                 print "* %s: installing.." % dependency
                 shell("zenpack --install %s 2>&1" % egg_path)
 
+                # DistributedCollector stops zeneventserver on Zenoss 4+. We
+                # must start it to pave the way for the next ZenPack.
+                if self.zenoss_version.startswith('4.') and \
+                    dependency == 'ZenPacks.zenoss.DistributedCollector':
+                    shell("zenoss start")
+
                 installed.add(os.path.basename(egg_path).split('-')[0])
 
             except ShellError, ex:
