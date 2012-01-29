@@ -121,9 +121,6 @@ class ZenPackHarness(object):
         self.zenpack_name = visitor['NAME']
         self.zenpack_dependencies = []
         for dependency in visitor['INSTALL_REQUIRES']:
-            if not dependency.startswith('ZenPacks.'):
-                continue
-
             self.zenpack_dependencies.append(
                 re.split(r'[=<>]', dependency)[0].strip())
 
@@ -196,6 +193,11 @@ class ZenPackHarness(object):
         installed = set()
 
         for dependency in dependencies:
+            if not dependency.startswith('ZenPacks.'):
+                print "* %s: pip installing.."
+                shell("pip install dependency")
+                continue
+
             url = "%s%s%s" % (url_prefix, dependency, url_suffix)
 
             try:
