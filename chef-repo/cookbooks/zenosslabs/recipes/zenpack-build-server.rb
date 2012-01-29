@@ -34,7 +34,9 @@ include_recipe "sudo"
 
 
 # Resources
-package "lsof"
+%w{lsof python-devel openldap-devel pcre-devel}.each do |pkg_name|
+    package pkg_name
+end
 
 %w{zenoss_manager zenpack_harness}.each do |script|
     cookbook_file "/usr/local/bin/#{script}" do
