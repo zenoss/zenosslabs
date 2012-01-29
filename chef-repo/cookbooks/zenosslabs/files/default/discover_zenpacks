@@ -654,7 +654,7 @@ def get_combination_filter(compat_zenoss_vers):
     # Build appropriate combination filter.
     if normalized == '4.2':
         return 'zenoss_version == "4.2"'
-    elif normalized in ('4', '4.1'):
+    elif normalized in ('4.0', '4.1'):
         return 'zenoss_version in ["4.1", "4.2"]'
     else:
         return 'zenoss_version in ["3.2", "4.1", "4.2"]'
