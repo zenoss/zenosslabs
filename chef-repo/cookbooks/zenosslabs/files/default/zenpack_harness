@@ -195,7 +195,7 @@ class ZenPackHarness(object):
         for dependency in dependencies:
             if not dependency.startswith('ZenPacks.'):
                 print "* %s: pip installing.."
-                shell("pip install dependency")
+                shell("pip install %s" % dependency)
                 continue
 
             url = "%s%s%s" % (url_prefix, dependency, url_suffix)
