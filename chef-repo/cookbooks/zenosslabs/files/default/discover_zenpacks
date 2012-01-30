@@ -398,7 +398,7 @@ class JenkinsJob(object):
             raise Exception("%s is not a supported SCM" % self.scm)
 
         context['scm_url'] = self.url
-        context['scm_poll'] = False
+        context['scm_poll'] = True
 
         return context
 
