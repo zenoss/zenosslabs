@@ -169,14 +169,6 @@ class ZenPackHarness(object):
             shell("cp %s/dist/ZenPacks.*.egg /opt/zenoss/zenpack_eggs/" % (
                 self.workspace))
 
-            # Stage files into a directory with the right hierarchy so Jenkins
-            # can automatically push it to a distribution site.
-            if self.zenoss_version:
-                staging_dir = os.path.join(self.workspace, self.zenoss_version)
-                shell("mkdir -p %s" % staging_dir)
-                shell("mv %s/dist/ZenPacks.*.egg %s/" % (
-                    self.workspace, staging_dir))
-
         except ShellError, ex:
             print ex
             sys.exit(1)

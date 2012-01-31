@@ -304,10 +304,10 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
             <verbose>false</verbose>
             <transfers>
               <jenkins.plugins.publish__over__ssh.BapSshTransfer>
-                <remoteDirectory></remoteDirectory>
-                <sourceFiles>**/ZenPacks.*.egg</sourceFiles>
+                <remoteDirectory>{{ egg_publish_dir }}</remoteDirectory>
+                <sourceFiles>dist/ZenPacks.*.egg</sourceFiles>
                 <excludes></excludes>
-                <removePrefix></removePrefix>
+                <removePrefix>dist</removePrefix>
                 <remoteDirectorySDF>false</remoteDirectorySDF>
                 <flatten>false</flatten>
                 <cleanRemote>false</cleanRemote>
@@ -429,11 +429,15 @@ class JenkinsDiscoveryJob(JenkinsJob):
 class JenkinsZenPackJob(JenkinsJob):
     template = ZENPACK_JOB_TEMPLATE
 
+    egg_publish_dir = None
     branch = None
     combination_filter = None
 
-    def __init__(self, name, scm, url, branch=None, combination_filter=None):
+    def __init__(self, name, scm, url, egg_publish_dir, branch=None,
+                 combination_filter=None):
+
         super(JenkinsZenPackJob, self).__init__(name, scm, url)
+        self.egg_publish_dir = egg_publish_dir
         self.branch = branch
         self.combination_filter = combination_filter
 
@@ -446,6 +450,8 @@ class JenkinsZenPackJob(JenkinsJob):
                 context['scm_branch'] = 'master'
             else:
                 context['scm_branch'] = self.branch
+
+        context['egg_publish_dir'] = self.egg_publish_dir
 
         context['architectures'] = ['x86_64']
         context['operating_systems'] = ['centos5']
@@ -510,6 +516,24 @@ class ZenPackVisitor(compiler.visitor.ASTVisitor):
 def get_zenpack_jobs(path):
     """Yields JenkinsZenPackJobs for each ZenPack in path."""
 
+    scm = get_scm(path)
+    url = get_url(path)
+
+    # Default to private eggs for safety.
+    egg_publish_dir = 'private_eggs'
+
+    # Identify repositories that should build public eggs.
+    if scm == 'git':
+        if 'zenoss/zenpacks.git' in url:
+            egg_publish_dir = 'eggs'
+        elif 'zenoss/Community-ZenPacks-SubModules' in url:
+            egg_publish_dir = 'eggs'
+    elif scm == 'subversion':
+        if re.search(r'/core(/zenoss-[^/]+)?/zenpacks', url):
+            egg_publish_dir = 'eggs'
+        elif 'http://dev.zenoss.org/svn/' in url:
+            egg_publish_dir = 'eggs'
+
     for entry in os.listdir(path):
         entry_path = os.path.join(path, entry)
         setup_filename = os.path.join(entry_path, 'setup.py')
@@ -527,6 +551,7 @@ def get_zenpack_jobs(path):
             visitor.name,
             get_scm(entry_path),
             get_url(entry_path),
+            egg_publish_dir,
             combination_filter=get_combination_filter(
                 visitor.compat_zenoss_vers))
 
@@ -576,6 +601,7 @@ def get_zenpack_jobs(path):
                     branch_job_name,
                     job.scm,
                     job.url,
+                    egg_publish_dir,
                     branch,
                     branch_combination_filter)
 
