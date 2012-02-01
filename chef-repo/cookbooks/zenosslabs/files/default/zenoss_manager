@@ -1,0 +1,211 @@
+#!/usr/bin/env python
+"""zenoss_manager
+
+Provides an easy way to manage multiple Zenoss configurations installed on the
+same server. Each configuration is expected to live in an isolated logical
+volumes in a volume group named ``zenoss`` where each logical volume is named as
+follows.
+
+    * ``zenoss/4.2_platform``
+    * ``zenoss/4.2_core``
+    * ``zenoss/3.2_platform``
+    * ``zenoss/3.2_core``
+    * etc..
+
+When this script activates a chosen configuration it will take an LVM snapshot
+of one of the pristine volume groups above. When this script tears down an
+environment it will destroy the snapshot.
+
+.. important:: This command must be run with root privileges.
+
+"""
+
+import os
+import sys
+
+from subprocess import Popen, PIPE
+
+
+class ShellError(Exception):
+    def __init__(self, command, returncode, stdout=None, stderr=None):
+        self.command = command
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+    def __str__(self):
+        buf = "'%s' returned non-zero exit status %s" % (
+            self.command, self.returncode)
+
+        if self.stdout:
+            buf = "%s\n\n--- STDOUT ---\n%s" % (buf, self.stdout)
+
+        if self.stderr:
+            buf = "%s\n\n--- STDERR ---\n%s" % (buf, self.stderr)
+
+        return buf
+
+    def __repr__(self):
+        return str(self)
+
+
+def shell(command):
+    """Helper method to get the output from a command."""
+    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+    stdout, stderr = p.communicate()
+
+    if p.returncode != 0:
+        raise ShellError(command, p.returncode, stdout, stderr)
+
+    return stdout
+
+
+class ZenossManager(object):
+    """Manages multiple Zenoss configurations on the same server."""
+
+    def run_bundle(self, bundle, suppress_errors=False):
+        try:
+            for command in bundle:
+                shell(command)
+        except ShellError, ex:
+            if not suppress_errors:
+                raise ex
+
+    def run_bundles(self, bundles, suppress_errors=False):
+        for bundle in bundles:
+            self.run_bundle(bundle, suppress_errors=suppress_errors)
+
+    def setup(self, zenoss_version, zenoss_flavor):
+        """Setup a Zenoss environment for testing ZenPacks."""
+
+        print "* Tearing down any existing environment"
+        self.teardown()
+        self.teardown()
+
+        lv_name = "zenoss/%s_%s" % (zenoss_version, zenoss_flavor)
+        lv_device = "/dev/%s" % lv_name
+
+        if not os.path.exists(lv_device):
+            raise Exception("%s doesn't exist." % lv_device)
+
+        try:
+            print "* Creating zenoss/sandbox logical volume"
+            print "* Mounting sandbox volume on /opt/zenoss"
+            self.run_bundle([
+                "/usr/sbin/lvcreate -l25%%ORIGIN -s -n sandbox %s" % lv_name,
+                "mount /dev/zenoss/sandbox /opt/zenoss",
+                ])
+
+            if zenoss_version.startswith('3'):
+                print "* Linking MySQL datadir to /opt/zenoss/datadir"
+                print "* Starting mysqld"
+                self.run_bundle([
+                    "ln -sf /opt/zenoss/datadir /var/lib/mysql",
+                    "/sbin/service mysqld start",
+                    ])
+
+            elif zenoss_version.startswith('4'):
+                print "* Linking ZenDS datadir to /opt/zenoss/datadir"
+                print "* Starting zends"
+                self.run_bundle([
+                    "ln -sf /opt/zenoss/datadir /opt/zends/data",
+                    "/sbin/service zends start",
+                    ])
+
+                print "* Starting rabbitmq-server"
+                print "* Starting memcached"
+                self.run_bundles([
+                    ("/sbin/service rabbitmq-server start",),
+                    ("/sbin/service memcached start",),
+                    ], suppress_errors=True)
+
+            print "* Starting zenoss (minimal daemons)"
+            self.run_bundle([
+                "sudo -u zenoss -i 'zenoss start'",
+                ])
+
+        except ShellError, ex:
+            print ex
+            sys.exit(1)
+
+    def teardown(self):
+        self.run_bundles([
+            ("sudo -u zenoss -i 'zenoss stop'",),
+            ("/sbin/service mysqld stop",),
+            ("/sbin/service zends stop",),
+            ("/sbin/service memcached stop",),
+            ("pkill -9 -f /opt/zenoss",),
+            ("kill -9 $(lsof -Fp /opt/zenoss | cut -b2-)",),
+            ("umount -f /opt/zenoss",),
+            ("/usr/sbin/lvremove -f zenoss/sandbox",),
+            ], suppress_errors=True)
+
+
+def main():
+    from optparse import OptionParser
+
+    zenoss_version = None
+    zenoss_flavor = None
+
+    parser = OptionParser()
+    parser.add_option('-v', '--version', help="Zenoss version to test against")
+    parser.add_option('-f', '--flavor', help="Zenoss flavor to test against")
+
+    parser.add_option('-s', '--setup',
+        help="Setup Zenoss environment",
+        default=False, action="store_true")
+
+    parser.add_option('-t', '--teardown',
+        help="Tear down Zenoss environment",
+        default=False, action="store_true")
+
+    options, args = parser.parse_args()
+
+    if not options.setup and not options.teardown:
+        print >> sys.stderr, (
+            "You must specify either either setup (-s) or teardown (-t).")
+
+        sys.exit(1)
+
+    zman = ZenossManager()
+
+    if options.teardown:
+        zman.teardown()
+        sys.exit(0)
+
+    if options.setup:
+        # Get Zenoss info from command line or environment variables.
+        build_tag = os.environ.get('BUILD_TAG', None)
+        build_labels = {}
+        if build_tag:
+            build_labels = dict(
+                x.split('=') for x in build_tag.split('-')[1].split(','))
+
+        if options.version:
+            zenoss_version = options.version
+        elif 'zenoss_version' in build_labels:
+            zenoss_version = build_labels['zenoss_version']
+        else:
+            print >> sys.stderr, "Zenoss version not found on command line or BUILD_TAG."
+            sys.exit(1)
+
+        if options.flavor:
+            zenoss_flavor = options.flavor
+        elif 'zenoss_flavor' in build_labels:
+            zenoss_flavor = build_labels['zenoss_flavor']
+        else:
+            print >> sys.stderr, "Zenoss flavor not found on command line or BUILD_TAG."
+            sys.exit(1)
+
+        zman.setup(zenoss_version, zenoss_flavor)
+
+    # Fix workspace permissions if Jenkins is calling us.
+    if os.environ.get('WORKSPACE', None) and os.path.isfile('setup.py'):
+        shell("sudo chmod 775 .")
+        shell("sudo chown -R zenoss:jenkins .")
+        shell("sudo rm -Rf build dist *.egg-info")
+        shell("rm -Rf build dist *.egg-info")
+
+
+if __name__ == '__main__':
+    main()

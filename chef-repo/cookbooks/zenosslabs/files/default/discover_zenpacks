@@ -17,6 +17,8 @@ It is recommended to pin this job to the master server.
 """
 
 
+TRUNK_VERSION = "4.2"
+
 DISCOVERY_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
@@ -199,28 +201,28 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
   <combinationFilter>{{ combination_filter }}</combinationFilter>
   <builders>
     <hudson.tasks.Shell>
-      <command>zenpack_harness --setup</command>
+      <command>sudo zenoss_manager --setup</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness pyflakes</command>
+      <command>sudo -u zenoss -i zenpack_harness pyflakes</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness pep8</command>
+      <command>sudo -u zenoss -i zenpack_harness pep8</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness build</command>
+      <command>sudo -u zenoss -i zenpack_harness build</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness install</command>
+      <command>sudo -u zenoss -i zenpack_harness install</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness generictests</command>
+      <command>sudo -u zenoss -i zenpack_harness generictests</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness unittests</command>
+      <command>sudo -u zenoss -i zenpack_harness unittests</command>
     </hudson.tasks.Shell>
     <hudson.tasks.Shell>
-      <command>zenpack_harness remove</command>
+      <command>sudo -u zenoss -i zenpack_harness remove</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
@@ -277,10 +279,6 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
       <isOpenTasksDeactivated>true</isOpenTasksDeactivated>
       <isWarningsDeactivated>false</isWarningsDeactivated>
     </hudson.plugins.analysis.collector.AnalysisPublisher>
-    <hudson.tasks.ArtifactArchiver>
-      <artifacts>**/dist/*.egg</artifacts>
-      <latestOnly>false</latestOnly>
-    </hudson.tasks.ArtifactArchiver>
     <htmlpublisher.HtmlPublisher>
       <reportTargets>
         <htmlpublisher.HtmlPublisherTarget>
@@ -297,6 +295,37 @@ ZENPACK_JOB_TEMPLATE = """<?xml version='1.0' encoding='UTF-8'?>
       <keepLongStdio>false</keepLongStdio>
       <testDataPublishers/>
     </hudson.tasks.junit.JUnitResultArchiver>
+    <jenkins.plugins.publish__over__ssh.BapSshPublisherPlugin>
+      <consolePrefix>SSH: </consolePrefix>
+      <delegate>
+        <publishers>
+          <jenkins.plugins.publish__over__ssh.BapSshPublisher>
+            <configName>zenpacks</configName>
+            <verbose>false</verbose>
+            <transfers>
+              <jenkins.plugins.publish__over__ssh.BapSshTransfer>
+                <remoteDirectory>{{ egg_publish_dir }}</remoteDirectory>
+                <sourceFiles>dist/ZenPacks.*.egg</sourceFiles>
+                <excludes></excludes>
+                <removePrefix>dist</removePrefix>
+                <remoteDirectorySDF>false</remoteDirectorySDF>
+                <flatten>false</flatten>
+                <cleanRemote>false</cleanRemote>
+                <execCommand></execCommand>
+                <execTimeout>120000</execTimeout>
+                <usePty>false</usePty>
+              </jenkins.plugins.publish__over__ssh.BapSshTransfer>
+            </transfers>
+            <useWorkspaceInPromotion>false</useWorkspaceInPromotion>
+            <usePromotionTimestamp>false</usePromotionTimestamp>
+          </jenkins.plugins.publish__over__ssh.BapSshPublisher>
+        </publishers>
+        <continueOnError>false</continueOnError>
+        <failOnError>false</failOnError>
+        <alwaysPublishFromMaster>false</alwaysPublishFromMaster>
+        <hostConfigurationAccess class="jenkins.plugins.publish_over_ssh.BapSshPublisherPlugin" reference="../.."/>
+      </delegate>
+    </jenkins.plugins.publish__over__ssh.BapSshPublisherPlugin>
   </publishers>
   <buildWrappers/>
   <runSequentially>false</runSequentially>
@@ -369,7 +398,7 @@ class JenkinsJob(object):
             raise Exception("%s is not a supported SCM" % self.scm)
 
         context['scm_url'] = self.url
-        context['scm_poll'] = False
+        context['scm_poll'] = True
 
         return context
 
@@ -400,11 +429,15 @@ class JenkinsDiscoveryJob(JenkinsJob):
 class JenkinsZenPackJob(JenkinsJob):
     template = ZENPACK_JOB_TEMPLATE
 
+    egg_publish_dir = None
     branch = None
     combination_filter = None
 
-    def __init__(self, name, scm, url, branch=None, combination_filter=None):
+    def __init__(self, name, scm, url, egg_publish_dir, branch=None,
+                 combination_filter=None):
+
         super(JenkinsZenPackJob, self).__init__(name, scm, url)
+        self.egg_publish_dir = egg_publish_dir
         self.branch = branch
         self.combination_filter = combination_filter
 
@@ -418,18 +451,23 @@ class JenkinsZenPackJob(JenkinsJob):
             else:
                 context['scm_branch'] = self.branch
 
+        context['egg_publish_dir'] = self.egg_publish_dir
+
         context['architectures'] = ['x86_64']
         context['operating_systems'] = ['centos5']
         context['zenoss_flavors'] = ['platform', 'core', 'enterprise', 'resmgr']
-        context['zenoss_versions'] = ['3.2.1', '4.1.1']
+        context['zenoss_versions'] = ['3.2', '4.1', '4.2']
 
         combination_filter = (
             '('
-            '(zenoss_version.startsWith("3.") &&'
+            '(zenoss_version == "3.2" &&'
             ' zenoss_flavor in ["platform", "core", "enterprise"])'
             ' || '
-            '(zenoss_version.startsWith("4.1.") &&'
+            '(zenoss_version == "4.1" &&'
             ' zenoss_flavor in ["resmgr"])'
+            ' || '
+            '(zenoss_version == "4.2" &&'
+            ' zenoss_flavor in ["platform", "core", "resmgr"])'
             ')')
 
         if self.combination_filter:
@@ -478,6 +516,24 @@ class ZenPackVisitor(compiler.visitor.ASTVisitor):
 def get_zenpack_jobs(path):
     """Yields JenkinsZenPackJobs for each ZenPack in path."""
 
+    scm = get_scm(path)
+    url = get_url(path)
+
+    # Default to private eggs for safety.
+    egg_publish_dir = 'private_eggs'
+
+    # Identify repositories that should build public eggs.
+    if scm == 'git':
+        if 'zenoss/zenpacks.git' in url:
+            egg_publish_dir = 'eggs'
+        elif 'zenoss/Community-ZenPacks-SubModules' in url:
+            egg_publish_dir = 'eggs'
+    elif scm == 'subversion':
+        if re.search(r'/core(/zenoss-[^/]+)?/zenpacks', url):
+            egg_publish_dir = 'eggs'
+        elif 'http://dev.zenoss.org/svn/' in url:
+            egg_publish_dir = 'eggs'
+
     for entry in os.listdir(path):
         entry_path = os.path.join(path, entry)
         setup_filename = os.path.join(entry_path, 'setup.py')
@@ -495,21 +551,27 @@ def get_zenpack_jobs(path):
             visitor.name,
             get_scm(entry_path),
             get_url(entry_path),
+            egg_publish_dir,
             combination_filter=get_combination_filter(
                 visitor.compat_zenoss_vers))
+
+        # If we're building from the core or enterprise ZenPack trunks we can
+        # assume that there's a maintenance branch to build against older
+        # Zenoss versions.
+        if job.scm == 'subversion' and \
+            re.search(r'/trunk/(core|enterprise)(/reporting)?/zenpacks', job.url):
+            job.combination_filter = 'zenoss_version == "%s"' % TRUNK_VERSION
 
         # Append (zenoss-x.x) to the job name if we're discovering this
         # ZenPack from a subversion maintenance branch.
         if job.scm == 'subversion':
             match = re.search(r'\/zenoss-([^\/]+)\/', job.url)
             if match:
-                zenoss_version_prefix = match.group(1).rstrip('.x')
-                job.name = "%s (zenoss-%s)" % (
-                    job.name, zenoss_version_prefix)
+                zenoss_version = match.group(1).rstrip('.x')
+                job.name = "%s (zenoss-%s)" % (job.name, zenoss_version)
 
-                job.combination_filter = \
-                    'zenoss_version.startsWith("%s")' % (
-                        zenoss_version_prefix)
+                job.combination_filter = 'zenoss_version == "%s"' % (
+                    zenoss_version)
 
         # If we're discovering a ZenPack using git we'll create specific
         # jobs for each zenoss-x.x.x branch in the repository.
@@ -519,19 +581,27 @@ def get_zenpack_jobs(path):
                 if not match:
                     continue
 
-                zenoss_version_prefix = match.group(1).rstrip('.x')
+                zenoss_version = match.group(1).rstrip('.x')
 
-                branch_job_name = "%s (zenoss-%s)" % (
-                    job.name, zenoss_version_prefix)
+                # Don't bother adding jobs for which we have no build servers.
+                if zenoss_version not in ('3.2', '4.1', '4.2'):
+                    continue
 
-                branch_combination_filter = \
-                    'zenoss_version.startsWith("%s")' % (
-                        zenoss_version_prefix)
+                branch_job_name = "%s (zenoss-%s)" % (job.name, zenoss_version)
+
+                branch_combination_filter = 'zenoss_version == "%s"' % (
+                    zenoss_version)
+
+                # Stop building master against older versions of Zenoss if a
+                # maintenance branch exists.
+                job.combination_filter = '%s && zenoss_version != "%s"' % (
+                    job.combination_filter, zenoss_version)
 
                 yield JenkinsZenPackJob(
                     branch_job_name,
                     job.scm,
                     job.url,
+                    egg_publish_dir,
                     branch,
                     branch_combination_filter)
 
@@ -589,18 +659,31 @@ def get_combination_filter(compat_zenoss_vers):
     if comparison != '>=':
         return None
 
-    # The following assumes that we test against 3.2.1, 4.1.1.
+    # The following assumes that we test against 3.2, 4.1 and 4.2.
+    normalized = None
 
-    if version == '4.1.70' or version.startswith('4.2.'):
-        return 'zenoss_version.startsWith("4.2.")'
-    elif version == '4.0.70' or version.startswith('4.1.'):
-        return '(zenoss_version.startsWith("4.1.") || zenoss_version.startsWith("4.2."))'
-    elif version.startswith('4.0.'):
-        return 'zenoss_version.startsWith("4.")'
-    elif version.startswith('3.2.'):
-        return '(zenoss_version.startsWith("3.2.") || zenoss_version.startsWith("4."))'
+    # Alpha/Beta version numbers.
+    if version == '4.1.70':
+        normalized = '4.2'
+    elif version == '4.0.70':
+        normalized = '4.1'
+    elif version == '3.1.70':
+        normalized = '4.0'
     else:
-        return None
+        # Break down to major, or minor version part only.
+        version_parts = version.split('.')
+        if len(version_parts) == 1:
+            normalized = version_parts[0]
+        else:
+            normalized = '.'.join(version_parts[:2])
+
+    # Build appropriate combination filter.
+    if normalized == '4.2':
+        return 'zenoss_version == "4.2"'
+    elif normalized in ('4.0', '4.1'):
+        return 'zenoss_version in ["4.1", "4.2"]'
+    else:
+        return 'zenoss_version in ["3.2", "4.1", "4.2"]'
 
 
 def get_git_branches(path):
