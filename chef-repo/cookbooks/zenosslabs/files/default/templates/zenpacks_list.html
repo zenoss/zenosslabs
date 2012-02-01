@@ -1,0 +1,33 @@
+<html>
+<head>
+    <title>{{ title }}</title>
+    <style type="text/css">
+        ul {
+            list-style: none;
+            margin: 1em 0;
+            padding: 0; 
+        }
+
+        ul li {
+            font-weight: bold;
+            margin: 0;
+            padding: 3px 10px 5px 20px;
+            border-bottom: 1px solid #ccc;
+            color: #666; 
+        }
+
+        ul li:hover {
+            color: #000;
+            background-color: #ddd; 
+        }
+    </style>
+</head>
+<body>
+<h1>{{ title }}</h1>
+<ul>
+{% for item in items -%}
+<li>{{ item|safe }}</li>
+{% endfor -%}
+</ul>
+</body>
+</html>

@@ -5,15 +5,21 @@
 
     WSGIDaemonProcess zenpacks.zenosslabs.com processes=2 threads=15 display-name=%{GROUP}
     WSGIProcessGroup zenpacks.zenosslabs.com
-    WSGIScriptAlias /api /srv/zenpacks/wsgi-scripts/zenpacks_api.wsgi
-
-    Alias /icons/ "/usr/share/apache2/icons/"
+    WSGIScriptAlias / /srv/zenpacks/wsgi-scripts/zenpacks_server.wsgi
 
     <Directory <%= @params[:docroot] %>>
         Options +Indexes
         AllowOverride None
         Order allow,deny
         Allow from all
+    </Directory>
+  
+    <Directory <%= @params[:docroot] %>/private_eggs>
+        Options +Indexes
+        AllowOverride None
+        Order deny,allow
+        Deny from all
+        Allow from 127.0.0.1
     </Directory>
   
     <Location /server-status>

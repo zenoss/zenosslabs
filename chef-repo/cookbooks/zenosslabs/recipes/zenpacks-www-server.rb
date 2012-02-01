@@ -12,7 +12,7 @@ user "zenpacks" do
     # password "$1$m/1RGn/l$p01/HA0h04t2xLWW0Ayes/"
 end
 
-%w{files wsgi-scripts}.each do |dir|
+%w{files wsgi-scripts/templates}.each do |dir|
     directory "/srv/zenpacks/#{dir}" do
         owner "zenpacks"
         group "zenpacks"
@@ -22,16 +22,22 @@ end
     end
 end
 
-# Using bottle as the Python web micro-framework.
-execute "pip install bottle" do
-    creates "/usr/local/bin/bottle.py"
+# Using Flask as the Python web micro-framework.
+execute "pip install flask" do
+    creates "/usr/local/lib/python2.6/dist-packages/flask/__init__.py"
 end
 
-cookbook_file "/srv/zenpacks/wsgi-scripts/zenpacks_api.wsgi" do
-    source "zenpacks_api.wsgi"
-    owner "zenpacks"
-    group "zenpacks"
-    mode 0755
+execute "pip install Flask-XML-RPC" do
+    creates "/usr/local/lib/python2.6/dist-packages/flaskext/xmlrpc.py"
+end
+
+%w{zenpacks_server.wsgi templates/zenpacks_list.html}.each do |wsgi|
+    cookbook_file "/srv/zenpacks/wsgi-scripts/#{wsgi}" do
+        source wsgi
+        owner "zenpacks"
+        group "zenpacks"
+        mode 0755
+    end
 end
 
 %w{apache2 apache2::mod_autoindex apache2::mod_wsgi}.each do |recipe|
