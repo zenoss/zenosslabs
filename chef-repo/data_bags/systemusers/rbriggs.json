@@ -1,0 +1,5 @@
+{
+"id": "rbriggs",
+"ssh_keys":"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDgXjK8ji9FF9DXzMkOvLmADqlhkg1FSSX1jIH99mzRCLyiMxtRgbbU79Lz+MqYZy4+4L6FW+ELhETqj3eAx0wELZ3uMNMJQNVpd6j0wGhbcyJsllTlBtgLIt6Xe8dgThSsRpqsbnMhqIHKqO2t+SfagduwEmfcmEFsowYrMKAT0ATi0/fvOpdSg9YJiF+0BPFOkEB5h9PElKTuSOhFod6bnwqyXGDYrIsTi+XVY+a+wsPGIvDE3V8j1F86TvyL/9ZeOGQ10NE+9ypW6gZiNPOnWORUZuSmoJFZo5T52timL5jWAyJwrCV+WSRG8tEHXas5zSrTes3w4njVWZo9O8JF russb@russb",
+"nova_project": "services"
+}
