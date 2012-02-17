@@ -119,7 +119,15 @@ def matching_distributions(
             # next loop finds this to not be the case.
             z_compatible = True
 
-            zenpack_info = distribution.get_metadata('zenpack_info')
+            # get_metadata can raise exceptions for improperly-formatted or
+            # corrupt eggs.
+            zenpack_info = None
+
+            try:
+                zenpack_info = distribution.get_metadata('zenpack_info')
+            except Exception:
+                continue
+
             for line in pkg_resources.yield_lines(zenpack_info):
                 key, value = map(str.strip, line.split(':', 1))
                 if key == 'compatZenossVers':
