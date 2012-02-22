@@ -127,8 +127,8 @@ default[:zenoss] = {
                     :packages => [
                         {
                             :name => "zenoss",
-                            :rpm_prefix => "zenoss-4.1.70-1421",
-                            :url_prefix => "http://artifacts.zenoss.loc/1421/"
+                            :rpm_prefix => "zenoss-4.1.70-1443",
+                            :url_prefix => "http://artifacts.zenoss.loc/1443/"
                         }
                     ]
                 },{
@@ -136,12 +136,12 @@ default[:zenoss] = {
                     :packages => [
                         {
                             :name => "zenoss",
-                            :rpm_prefix => "zenoss-4.1.70-1421",
-                            :url_prefix => "http://artifacts.zenoss.loc/1421/"
+                            :rpm_prefix => "zenoss-4.1.70-1443",
+                            :url_prefix => "http://artifacts.zenoss.loc/1443/"
                         },{
                             :name => "zenoss-core-zenpacks",
-                            :rpm_prefix => "zenoss-core-zenpacks-4.1.70-1421",
-                            :url_prefix => "http://artifacts.zenoss.loc/1421/"
+                            :rpm_prefix => "zenoss-core-zenpacks-4.1.70-1443",
+                            :url_prefix => "http://artifacts.zenoss.loc/1443/"
                         }
                     ]
                 },{
@@ -150,16 +150,16 @@ default[:zenoss] = {
                     :packages => [
                         {
                             :name => "zenoss",
-                            :rpm_prefix => "zenoss-4.1.70-1421",
-                            :url_prefix => "http://artifacts.zenoss.loc/1421/"
+                            :rpm_prefix => "zenoss-4.1.70-1443",
+                            :url_prefix => "http://artifacts.zenoss.loc/1443/"
                         },{
                             :name => "zenoss-core-zenpacks",
-                            :rpm_prefix => "zenoss-core-zenpacks-4.1.70-1421",
-                            :url_prefix => "http://artifacts.zenoss.loc/1421/"
+                            :rpm_prefix => "zenoss-core-zenpacks-4.1.70-1443",
+                            :url_prefix => "http://artifacts.zenoss.loc/1443/"
                         },{
                             :name => "zenoss-enterprise-zenpacks",
-                            :rpm_prefix => "zenoss-enterprise-zenpacks-4.1.70-1421",
-                            :url_prefix => "http://artifacts.zenoss.loc/1421/"
+                            :rpm_prefix => "zenoss-enterprise-zenpacks-4.1.70-1443",
+                            :url_prefix => "http://artifacts.zenoss.loc/1443/"
                         }
                     ]
                 }
