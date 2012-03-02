@@ -162,7 +162,7 @@ def html_releases_list(key, zenoss_version, releases):
     """PyPI-compatible HTML listing of releases for a project."""
 
     links = []
-    for project, version in sorted(releases):
+    for project, version in sorted(releases, reverse=True):
         links.append('<a href="/pypi/%s/%s/%s/%s">%s %s</a>' % (
             key, zenoss_version, project, version, project, version))
 
