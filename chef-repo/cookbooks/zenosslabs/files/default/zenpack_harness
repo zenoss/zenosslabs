@@ -177,7 +177,7 @@ class ZenPackHarness(object):
         platform = pkg_resources.get_supported_platform()
         python = pkg_resources.PY_MAJOR
 
-        url_prefix = "http://192.168.4.4/api/download/"
+        url_prefix = "http://zenpacks.zenoss.com/api/download/"
         url_suffix = "?zenoss_version=%s&platform=%s&python=%s" % (
             self.zenoss_version, platform, python)
 

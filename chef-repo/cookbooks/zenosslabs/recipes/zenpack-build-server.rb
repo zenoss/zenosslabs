@@ -34,7 +34,7 @@ include_recipe "sudo"
 
 
 # Resources
-%w{lsof python-devel openldap-devel pcre-devel}.each do |pkg_name|
+%w{lsof python-devel openldap-devel pcre-devel autoconf}.each do |pkg_name|
     package pkg_name
 end
 
