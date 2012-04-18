@@ -13,6 +13,10 @@ from flaskext.xmlrpc import XMLRPCHandler
 # Create Flask application.
 app = Flask(__name__)
 
+# These IP addresses are allowed to download private ZenPacks.
+IP_WHITELIST = [
+    '204.12.99.193',  # ZenPack Build Farm & artifacts.zenoss.loc
+    ]
 
 # Set defaults for Python version if Zenoss version is known.
 PYTHON_VERSION_MAP = {
@@ -84,8 +88,13 @@ def matching_distributions(
         z_major = '.'.join(zenoss_version.split('.')[:2])
         python = PYTHON_VERSION_MAP.get(z_major, None)
 
+    search_path = [PUBLIC_EGGS_PATH]
+
+    if request.remote_addr in IP_WHITELIST:
+        search_path.append(PRIVATE_EGGS_PATH)
+
     environment = pkg_resources.Environment(
-        search_path=[PUBLIC_EGGS_PATH],
+        search_path=search_path,
         platform=platform,
         python=python)
 
@@ -255,6 +264,11 @@ def search(spec=None, operator=None):
 def api_download(zenpack=None):
     """Custom API download for ZenPack build system."""
 
+    search_path = [PUBLIC_EGGS_PATH]
+
+    if request.remote_addr in IP_WHITELIST:
+        search_path.append(PRIVATE_EGGS_PATH)
+
     zenoss_version = request.args.get('zenoss_version', None)
     platform = request.args.get('platform', None)
     python = request.args.get('python', None)
@@ -263,7 +277,7 @@ def api_download(zenpack=None):
         abort(400)
 
     environment = pkg_resources.Environment(
-        search_path=[PUBLIC_EGGS_PATH, PRIVATE_EGGS_PATH],
+        search_path=search_path,
         platform=platform,
         python=python)
 
