@@ -1,0 +1,5 @@
+{
+"id": "dlacaille",
+"ssh_keys":"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDK2RqXnsH3evzqwzWki+dyDPGw2dkaFPGXQVt2CJYeAVJwEmymUoIpu6A2+zpQCjQv45yAl8q5q7NGLezn6UkFMxSkEeTR7qkLe9aGGlLkjc0lKditWnmz50yZ3FVBHZCZ2EHwzQndyV2bRxTN39Sa9t/UCtSFGQ0wU0ZAaXJDbEtiuGVGN2bo1vODEtx2DF1OOXnNNSFdyuykBLGDdu29NO/09p/UKslN2TVIBj9kmZ83bYUuKX8ekq93qWMwaCFN04zGt0CUkONZB+M49h71eesSXxBeOY1xZOqQjpbk0MYvlae4r88u8SFMw//C0thDRh0L7hzOFefRy7AbIP1B damon@lacailles.com",
+"nova_project": "services"
+}
