@@ -79,3 +79,27 @@ activeJobs = Hudson.instance.items.findAll{job -> job.isBuildable()}
 failedRuns = activeJobs.findAll{job -> job.lastBuild != null && job.lastBuild.result == Result.FAILURE}
 cause = new Cause.RemoteCause("damsel", "rebuild broken builds")
 failedRuns.each{run -> run.scheduleBuild(cause)}
+
+/*
+** Setup "Discard Old Builds" on all projects. Then cause them to be discarded.
+*/
+
+import hudson.model.*
+import hudson.tasks.*
+
+for(item in Hudson.instance.items) {
+    item.logRotator = new LogRotator(30, 10, 30, 10)
+    if (item.logRotator != null) {
+        logRotator = item.logRotator
+        println("JOB : " + item.name
+            + ", logRotator: "
+            + logRotator.daysToKeep
+            + ", " + logRotator.numToKeep
+            + ", " + logRotator.artifactDaysToKeep
+            + ", " + logRotator.artifactNumToKeep)
+
+        item.save()
+    }
+
+    item.logRotate()
+}
