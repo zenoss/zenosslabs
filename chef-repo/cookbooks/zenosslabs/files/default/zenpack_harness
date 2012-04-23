@@ -361,7 +361,7 @@ def main():
         build_tag = os.environ.get('BUILD_TAG', None)
         if build_tag:
             build_labels = dict(
-                x.split('=') for x in build_tag.split('-')[1].split(','))
+                x.split('=') for x in build_tag.split('-')[2].split(','))
 
         zenoss_version = build_labels.get('zenoss_version', None)
         if not zenoss_version:

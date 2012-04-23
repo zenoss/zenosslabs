@@ -179,7 +179,7 @@ def main():
         build_labels = {}
         if build_tag:
             build_labels = dict(
-                x.split('=') for x in build_tag.split('-')[1].split(','))
+                x.split('=') for x in build_tag.split('-')[2].split(','))
 
         if options.version:
             zenoss_version = options.version
