@@ -197,6 +197,21 @@ def html_eggs_list(key, filenames):
     return render_template('zenpacks_list.html', title='Eggs', items=links)
 
 
+### Site Indexes ##############################################################
+
+@app.route('/')
+@app.route('/pypi/')
+@app.route('/pypi/<key>/')
+def index(key='browsing'):
+    """Main index page for browsing purposes."""
+
+    return render_template('zenpacks_list.html', title='ZenPacks', items=[
+        '<a href="/pypi/%s/4.2/">Zenoss 4.2</a>' % key,
+        '<a href="/pypi/%s/4.1/">Zenoss 4.1</a>' % key,
+        '<a href="/pypi/%s/3.2/">Zenoss 3.2</a>' % key,
+        ])
+
+
 ### PyPI Indexes ##############################################################
 
 @app.route('/pypi/<key>/<zenoss_version>/')
