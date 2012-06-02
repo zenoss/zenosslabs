@@ -4,8 +4,6 @@
 #
 # Copyright 2011, Zenoss, Inc.
 #
-# All rights reserved - Do Not Redistribute
-#
 
 maven_tarball = "apache-maven-3.0.4-bin.tar.gz"
 maven_url = "http://mirrors.axint.net/apache/maven/binaries/#{maven_tarball}"

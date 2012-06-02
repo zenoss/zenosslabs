@@ -4,8 +4,6 @@
 #
 # Copyright 2011, Zenoss, Inc.
 #
-# All rights reserved - Do Not Redistribute
-#
 
 ant_tarball = "apache-ant-1.8.2-bin.tar.gz"
 ant_url = "http://mirrors.axint.net/apache/ant/binaries/#{ant_tarball}"

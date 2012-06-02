@@ -4,8 +4,6 @@
 #
 # Copyright 2011, Zenoss, Inc.
 #
-# All rights reserved - Do Not Redistribute
-#
 
 %w{git java jenkins}.each do |recipe|
     include_recipe recipe

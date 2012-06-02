@@ -4,8 +4,6 @@
 #
 # Copyright 2011, Zenoss, Inc.
 #
-# All rights reserved - Do Not Redistribute
-#
 
 require 'chef/mixin/shell_out'
 include Chef::Mixin::ShellOut

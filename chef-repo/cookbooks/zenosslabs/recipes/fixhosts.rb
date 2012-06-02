@@ -4,8 +4,6 @@
 #
 # Copyright 2011, Zenoss, Inc.
 #
-# All rights reserved - Do Not Redistribute
-#
 
 # RabbitMQ won't work without a resolvable hostname.
 ruby_block "edit etc hosts" do

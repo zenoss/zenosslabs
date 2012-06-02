@@ -2,8 +2,6 @@
 #
 # Copyright 2011, Zenoss, Inc.
 #
-# All rights reserved - Do Not Redistribute
-#
 
 flex = "flex_sdk_4.5.1.21328A"
 flex_zip = "#{flex}.zip"
