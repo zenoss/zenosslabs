@@ -896,11 +896,6 @@ def push_gspreadsheet_denormalized():
             }, spreadsheet_key, worksheet_id)
 
 
-def jenkins():
-    for row in denormalized_generator():
-        
-
-
 if __name__ == '__main__':
     import sqlite3
     import sys
@@ -922,8 +917,6 @@ if __name__ == '__main__':
         'print_csv_denormalized',
         'print_gviz_json_denormalized',
         'push_gspreadsheet_denormalized',
-
-        'jenkins',
         )
 
     commands = []
@@ -969,7 +962,3 @@ if __name__ == '__main__':
             print_gviz_json_denormalized()
         elif command == 'push_gspreadsheet_denormalized':
             push_gspreadsheet_denormalized()
-
-        elif command == 'jenkins':
-            jenkins()
-
