@@ -752,6 +752,9 @@ def denormalized_generator():
                     commits = [(None, None)]
 
                 for feature, date in commits:
+                    if feature is None or date is None:
+                        continue
+
                     yield {
                         'zenpack': zenpack,
                         'license': license,

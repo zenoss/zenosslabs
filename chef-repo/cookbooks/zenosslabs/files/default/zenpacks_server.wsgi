@@ -15,6 +15,7 @@ app = Flask(__name__)
 
 # These IP addresses are allowed to download private ZenPacks.
 IP_WHITELIST = [
+    '66.194.163.210',  # Zenoss Intranet
     '204.12.99.193',  # ZenPack Build Farm & artifacts.zenoss.loc
     ]
 

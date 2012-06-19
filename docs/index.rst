@@ -12,7 +12,6 @@ Contents:
 
    zenpack_taxonomy
    zenpack_documentation
-   zenpack_pipeline
 
 
 Documentation Formats
