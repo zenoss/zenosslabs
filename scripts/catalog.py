@@ -563,80 +563,81 @@ def create_database(config):
 def print_csv_normalized(config):
     import csv
 
-    zenpacks_writer = csv.writer(open('zenpacks.csv', 'wb'))
-    zenpacks_writer.writerow([
-        'Name', 'License', 'Copyright', 'Version', 'Compatible Zenoss Version',
-        'URL'])
-
-    zenpack_authors_writer = csv.writer(open('zenpack_authors.csv', 'wb'))
-    zenpack_authors_writer.writerow(['ZenPack', 'Author'])
-
-    zenpack_codelines_writer = csv.writer(open('zenpack_codelines.csv', 'wb'))
-    zenpack_codelines_writer.writerow([
-        'ZenPack', 'XML', 'Python', 'JavaScript', 'PT', 'RPT', 'ZCML'])
-
-    zenpack_commits_writer = csv.writer(open('zenpacks_commits.csv', 'wb'))
-    zenpack_commits_writer.writerow(['ZenPack', 'Feature', 'Date'])
-
-    zenpack_dependencies_writer = csv.writer(
-        open('zenpack_dependencies.csv', 'wb'))
-
-    zenpack_dependencies_writer.writerow(['ZenPack', 'Dependency', 'Version'])
-
-    for zenpack in discover_zenpacks(config):
+    with open('zenpacks.csv', 'wb') as f:
+        zenpacks_writer = csv.writer(f)
         zenpacks_writer.writerow([
-            zenpack['NAME'],
-            zenpack['LICENSE'] is None and '' or zenpack['LICENSE'],
-            zenpack['COPYRIGHT'],
-            zenpack['VERSION'],
-            zenpack['COMPAT_ZENOSS_VERS'],
-            url_from_path(zenpack['PATH']),
-            ])
+            'Name', 'License', 'Copyright', 'Version', 'Compatible Zenoss Version',
+            'URL'])
 
-        for author in set(expand_author(zenpack['AUTHOR'])):
-            zenpack_authors_writer.writerow([
-                zenpack['NAME'],
-                author,
-                ])
+        zenpack_authors_writer = csv.writer(open('zenpack_authors.csv', 'wb'))
+        zenpack_authors_writer.writerow(['ZenPack', 'Author'])
 
-        for dependency in zenpack['INSTALL_REQUIRES']:
-            parts = re.split(r'([><=]+)', dependency, maxsplit=1)
-
-            version = None
-            if len(parts) == 1:
-                version = ""
-            else:
-                version = ''.join(parts[1:])
-
-            zenpack_dependencies_writer.writerow([
-                zenpack['NAME'],
-                parts[0],
-                version,
-                ])
-
+        zenpack_codelines_writer = csv.writer(open('zenpack_codelines.csv', 'wb'))
         zenpack_codelines_writer.writerow([
-            zenpack['NAME'],
-            count_code_lines(zenpack['PATH'], 'xml'),
-            count_code_lines(zenpack['PATH'], 'py'),
-            count_code_lines(zenpack['PATH'], 'js'),
-            count_code_lines(zenpack['PATH'], 'pt'),
-            count_code_lines(zenpack['PATH'], 'rpt'),
-            count_code_lines(zenpack['PATH'], 'zcml'),
-            ])
+            'ZenPack', 'XML', 'Python', 'JavaScript', 'PT', 'RPT', 'ZCML'])
 
-        commits = commits_from_path(zenpack['PATH'])
-        for i, commit in enumerate(commits):
-            feature = None
-            if i == 0:
-                feature = 'first'
-            elif i == len(commits) - 1:
-                feature = 'last'
+        zenpack_commits_writer = csv.writer(open('zenpacks_commits.csv', 'wb'))
+        zenpack_commits_writer.writerow(['ZenPack', 'Feature', 'Date'])
 
-            zenpack_commits_writer.writerow([
+        zenpack_dependencies_writer = csv.writer(
+            open('zenpack_dependencies.csv', 'wb'))
+
+        zenpack_dependencies_writer.writerow(['ZenPack', 'Dependency', 'Version'])
+
+        for zenpack in discover_zenpacks(config):
+            zenpacks_writer.writerow([
                 zenpack['NAME'],
-                feature,
-                commit,
+                zenpack['LICENSE'] is None and '' or zenpack['LICENSE'],
+                zenpack['COPYRIGHT'],
+                zenpack['VERSION'],
+                zenpack['COMPAT_ZENOSS_VERS'],
+                url_from_path(zenpack['PATH']),
                 ])
+
+            for author in set(expand_author(zenpack['AUTHOR'])):
+                zenpack_authors_writer.writerow([
+                    zenpack['NAME'],
+                    author,
+                    ])
+
+            for dependency in zenpack['INSTALL_REQUIRES']:
+                parts = re.split(r'([><=]+)', dependency, maxsplit=1)
+
+                version = None
+                if len(parts) == 1:
+                    version = ""
+                else:
+                    version = ''.join(parts[1:])
+
+                zenpack_dependencies_writer.writerow([
+                    zenpack['NAME'],
+                    parts[0],
+                    version,
+                    ])
+
+            zenpack_codelines_writer.writerow([
+                zenpack['NAME'],
+                count_code_lines(zenpack['PATH'], 'xml'),
+                count_code_lines(zenpack['PATH'], 'py'),
+                count_code_lines(zenpack['PATH'], 'js'),
+                count_code_lines(zenpack['PATH'], 'pt'),
+                count_code_lines(zenpack['PATH'], 'rpt'),
+                count_code_lines(zenpack['PATH'], 'zcml'),
+                ])
+
+            commits = commits_from_path(zenpack['PATH'])
+            for i, commit in enumerate(commits):
+                feature = None
+                if i == 0:
+                    feature = 'first'
+                elif i == len(commits) - 1:
+                    feature = 'last'
+
+                zenpack_commits_writer.writerow([
+                    zenpack['NAME'],
+                    feature,
+                    commit,
+                    ])
 
 
 def render(template_name):
@@ -707,6 +708,16 @@ def denormalized_generator():
         )
 
     for zenpack, license, copyright, version, compat_zenoss_vers, url in c.fetchall():
+        hosting = None
+        if 'dev.zenoss.org' in url:
+            hosting = 'hosted-subversion'
+        elif 'github.com:zenoss' in url or 'github.com/zenoss' in url:
+            hosting = 'hosted-github'
+        elif 'github.com/' in url:
+            hosting = 'linked-github'
+        else:
+            hosting = 'other'
+
         c.execute(
             "SELECT py, xml, zcml, rpt, pt, js "
             "  FROM zenpack_codelines "
@@ -762,6 +773,7 @@ def denormalized_generator():
                         'version': version,
                         'compat_zenoss_vers': compat_zenoss_vers,
                         'url': url,
+                        'hosting': hosting,
                         'lines_xml': lines_xml,
                         'lines_py': lines_py,
                         'lines_js': lines_js,
@@ -780,35 +792,52 @@ def denormalized_generator():
 def print_csv_denormalized():
     import csv
 
-    writer = csv.writer(open('zenpacks_denormalized.csv', 'wb'))
-    writer.writerow([
-        'zenpack', 'license', 'copyright', 'version', 'compat_zenoss_vers',
-        'url', 'lines_xml', 'lines_py', 'lines_js', 'lines_pt', 'lines_rpt',
-        'lines_zcml', 'author', 'dependency', 'dependency_version',
-        'commit_type', 'commit_year', 'commit_timestamp',
-        ])
-
-    for row in denormalized_generator():
+    with open('zenpacks_denormalized.csv', 'wb') as f:
+        writer = csv.writer(f)
         writer.writerow([
-            row['zenpack'],
-            row['license'],
-            row['copyright'],
-            row['version'],
-            row['compat_zenoss_vers'],
-            row['url'],
-            row['lines_xml'],
-            row['lines_py'],
-            row['lines_js'],
-            row['lines_pt'],
-            row['lines_rpt'],
-            row['lines_zcml'],
-            row['author'],
-            row['dependency'],
-            row['dependency_version'],
-            row['commit_type'],
-            row['commit_year'],
-            row['commit_timestamp'],
+            'zenpack',
+            'license',
+            'copyright',
+            'version',
+            'compat_zenoss_vers',
+            'url',
+            'hosting',
+            'lines_xml',
+            'lines_py',
+            'lines_js',
+            'lines_pt',
+            'lines_rpt',
+            'lines_zcml',
+            'author',
+            'dependency',
+            'dependency_version',
+            'commit_type',
+            'commit_year',
+            'commit_timestamp',
             ])
+
+        for row in denormalized_generator():
+            writer.writerow([
+                row['zenpack'],
+                row['license'],
+                row['copyright'],
+                row['version'],
+                row['compat_zenoss_vers'],
+                row['url'],
+                row['hosting'],
+                row['lines_xml'],
+                row['lines_py'],
+                row['lines_js'],
+                row['lines_pt'],
+                row['lines_rpt'],
+                row['lines_zcml'],
+                row['author'],
+                row['dependency'],
+                row['dependency_version'],
+                row['commit_type'],
+                row['commit_year'],
+                row['commit_timestamp'],
+                ])
 
 
 def print_gviz_json_denormalized():
@@ -843,6 +872,7 @@ def print_gviz_json_denormalized():
             'version': row['version'],
             'compat_zenoss_vers': row['compat_zenoss_vers'],
             'url': row['url'],
+            'hosting': row['hosting'],
             'lines_xml': row['lines_xml'],
             'lines_py': row['lines_py'],
             'lines_js': row['lines_js'],
