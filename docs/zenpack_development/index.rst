@@ -16,5 +16,5 @@ Contents:
   prerequisites
   development_environment
   creating_a_zenpack
-  monitoring_snmp_device
+  monitoring_snmp_device/index
   troubleshooting
