@@ -15,4 +15,5 @@ Exercises:
 .. toctree::
   :maxdepth: 2
 
+  snmp_tools
   device_monitoring
