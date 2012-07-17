@@ -1,5 +1,5 @@
 ==============================================================================
-Device Monitoring
+SNMP Device Monitoring
 ==============================================================================
 
 This section will cover monitoring device-level metrics using SNMP. This
@@ -8,54 +8,7 @@ Zenoss documentation. However, there are some extra considerations and steps
 required to package your configuration in a ZenPack.
 
 
-What Does "Device-Level" Mean?
-==============================================================================
-
-Understanding the difference between working at the *device-level* and
-*component-level* can make working with, and developing for, Zenoss much easier
-to understand. The Zenoss object model has two primary types of objects that
-can be modeled and monitored.
-
-- *Device*
-
-  Devices are what you see on the Zenoss Infrastructure view in the web
-  interface. If you see it in the Infrastructure view, it's a *Device*. If you
-  don't, it's not. A *Device* has an *id* attribute that makes it unique in the
-  system. It will have configuration properties associated with it either
-  directly, or acquired from the device class within which it is contained. It
-  will also have a *manageIp* attribute that Zenoss uses for modeling and
-  monitoring.
-
-  For purposes of this exercise, one of the most important configuration
-  properties is zDeviceTemplates. This property controls which monitoring
-  templates are bound to a device. Monitoring templates control what datapoints
-  are collected, and monitoring templates bound to a device can only collect
-  datapoints that only have a single instance per device. Memory utilization
-  and load average are good examples. Other examples would be datapoints that
-  have been aggregated to a single instance per device such as average CPU
-  utilization across all CPU cores.
-
-- *DeviceComponent*
-
-  Device components are what you see if you drill-down into a device in the web
-  interface, then choose one of the component types from the left navigation
-  pane. Each row in the grid in the top-right pane is a component. Examples
-  include things like network interface, file systems, disks and processes.
-  These are things that have many instances per device.
-
-  Device components, commonly just called "components", don't have their own
-  configuration properties. They only acquire configuration properties through
-  the device that contains them. They do not have a *manageIp* because they're
-  typically managed through the same IP address and protocol(s) as the device
-  that contains them.
-
-  We'll cover how monitoring templates are bound to components in a later
-  exercise. Monitoring templates bound to components are used to collect
-  datapoints that have many instances per device. Examples include throughput
-  on a specific network interface or utilization of a specific file system.
-
-
-Creating a New Device Class
+Create a Device Class
 ==============================================================================
 
 To support our new NetBotz environmental sensor device we will want to create a
@@ -64,12 +17,19 @@ devices are modeled and monitored. Use the following steps to add a new device
 class.
 
 #. Navigate to the *Infrastructure* view.
+
 #. Select the root of the *DEVICES* tree.
+
 #. Click the *+* button at the bottom of the list to add a new organizer.
+
 #. Set the *Name* to ``NetBotz`` then click *SUBMIT*.
 
    The new *NetBotz* device will now be selected. We'll want to check on some
    important configuration properties using the following steps.
+
+
+Set Device Class Properties
+------------------------------------------------------------------------------
 
 #. Click the *DETAILS* button at the top of the list.
 #. Select *Modeler Plugins*.
@@ -83,9 +43,13 @@ class.
    - zenoss.snmp.InterfaceMap
    - zenoss.snmp.RouteMap
 
-   This is a good basic list that uses standard MIB-2 support that works with most SNMP-enabled devices. However, it's unlikely that we care about the routing table on our environmental sensors, so there's no reason to model it.
+   This is a good basic list that uses standard MIB-2 support that works with
+   most SNMP-enabled devices. However, it's unlikely that we care about the
+   routing table on our environmental sensors, so there's no reason to model
+   it.
 
 #. Remove *zenoss.snmp.RouteMap* from the list.
+
 #. Click *Save*.
 
    Now you can see the *Path* at which our modeler plugin configuration is set
@@ -112,10 +76,14 @@ class.
    default from affecting the operation of our ZenPack.
 
 
+Add Device Class to ZenPack
+------------------------------------------------------------------------------
+
 Now that we've setup the NetBotz device class, it's time to add it to our
 ZenPack using the following steps. Adding a device class to your ZenPack causes
 all settings in that device class to be added to the ZenPack. This includes
-modeler plugin configuration, configuration property values.
+modeler plugin configuration, configuration property values and monitoring
+templates.
 
 #. Make sure you've already created the ZenPack.
 
@@ -127,31 +95,181 @@ modeler plugin configuration, configuration property values.
 #. Select your NetBotz ZenPack then click *SUBMIT*.
 
 
-Exporting the ZenPack
+Configure Monitoring Templates
 ==============================================================================
 
-Now that we've added our first object to the NetBotz ZenPack, we'll export it
-to see how this gets packaged. Follow these steps to export the ZenPack.
-
-#. Navigate to *Advanced* -> *ZenPacks* -> *NetBotz ZenPack* in the web
-   interface.
-
-#. Scroll to the bottom of the page to see what objects the ZenPack provides.
-
-#. Choose *Export ZenPack* from the gear menu in the bottom-left of the screen.
-
-#. Choose to only export and not download then click *OK*.
+Before adding a monitoring template we should look to see what monitoring
+templates are already being used in our new device class.
 
 
-This will export everything under *ZenPack Provides* to a file within your
-ZenPack's source called *objects.xml*. You can find this file in the following
-path::
+Validate Existing Monitoring Templates
+------------------------------------------------------------------------------
 
-    $ZENHOME/ZenPacks/ZenPacks.yourname.NetBotz/ZenPacks/yourname/NetBotz/objects/objects.xml
+We created the NetBotz device class directly within the root (or /) device
+class. This means that we'll be inheriting the system default monitoring
+templates and binding. Use the following steps to validate this.
+
+#. Select the *NetBotz* device class in the *Infrastructure* view.
+
+#. Choose *Bind Templates* from the gear menu in the bottom-left.
+
+   You should only see ``Device (/Devices)`` in the *Selected* box. Depending
+   on what other ZenPacks you have installed in the system you may see zero or
+   more other templates listed in the *Available* box.
 
 
-Each time you add a new object to you ZenPack within the web interface, or
-modify an object that's already contained within your ZenPack, you should
-export the ZenPack again to update objects.xml. If you're using version control
-on your ZenPack's source directory this would be a good time to commit the
-resulting change to objects.xml.
+Now we investigate what this system default *Device* monitoring template does.
+
+#. Click *CANCEL* on the *Bind Templates* dialog.
+
+#. Click the *DETAILS* button at the top of the device class tree.
+
+#. Select ``Device (/Devices)`` under *Monitoring Templates*.
+
+   You'll see that there's a single SNMP datasource named sysUpTime. If you
+   expand this datasource you will see that it contains a single datapoint
+   which is also named sysUpTime. This single datapoint named the same as its
+   containing datasource is always what you'll see for SNMP datasources. The
+   reason for having the conceptual separation between datasources and
+   datapoints is that other types of datasources such as COMMAND are capable of
+   returning multiple datapoints.
+
+   You'll note that this monitoring template has no threshold or graphs
+   defined. This is unusual. Typically there'd be no reason to collect data
+   that you weren't going to either threshold against or show in a graph. The
+   *sysUpTime* datapoint is an exception because it is shown on a device's
+   *Overview* page in the *Uptime* field and therefore doesn't need to be
+   graphed.
+
+
+Let's use ``snmpwalk`` to check if our NetBotz device supports *sysUpTime*. The
+OID listed for the *sysUpTime* datasource is ``1.3.6.1.2.1.1.3.0`` so we run
+the following command::
+
+    # snmpwalk 127.0.1.113 1.3.6.1.2.1.1.3.0
+    DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (7275488) 20:12:34.88
+
+
+This response indicates that the NetBotz device does support the *sysUpTime*
+OID. This is a mandatory field for SNMP devices to support so you will be able
+to get it in almost all cases.
+
+
+Add a Monitoring Template
+------------------------------------------------------------------------------
+
+Now that we've validated that the existing *Device* monitoring template will
+work on our NetBotz device, we'll add another monitoring template to collect
+additional information.
+
+.. note::
+   We could create a local copy of the *Device* monitoring template in the
+   NetBotz device class and add new datasources, thresholds and graphs to it.
+   However, this prevents us from taking advantage of changes made to the
+   system default *Device* template in the future.
+
+
+Follow these steps to create and bind a new template to the NetBotz device
+class.
+
+#. Navigate to *Advanced* -> *Monitoring Templates*.
+
+#. Click the *+* button in the bottom-left to add a template.
+
+  #. Set the *Name* field to ``NetBotzDevice``.
+  #. Set the *Template Path* field to */NetBotz*.
+
+#. Click *SUBMIT*.
+
+#. Bind this template to the *NetBotz* device class.
+
+  #. Navigate to *Infrastructure*.
+  #. Select the *NetBotz* device class.
+  #. Choose *Bind Templates* from the gear menu in the bottom-left.
+  #. Move *NetBotzDevice* from available to selected.
+  #. Click *SAVE*.
+
+
+Build the Monitoring Template
+------------------------------------------------------------------------------
+
+Now that we've created the *NetBotzDevice* monitoring template and bound it to
+the *NetBotz* device class, we need to add datasources, thresholds and graphs.
+We don't already know what might be interesting to graph for each NetBotz
+device, so let's go exploring with ``snmpwalk``::
+
+    # snmpwalk 127.0.1.113
+    SNMPv2-MIB::sysDescr.0 = STRING: Linux Netbotz01 2.4.26 #1 Wed Oct 31 18:09:53 CDT 2007 ppc
+    SNMPv2-MIB::sysObjectID.0 = OID: NETBOTZV2-MIB::netBotz420ERack
+    ... lots of lines removed ...
+    SNMPv2-MIB::snmpInTotalReqVars.0 = Counter32: 4406
+    ... and more removed ...
+
+There isn't much of interest to collect at the device level. By "device-level"
+I mean values that only have a single instance for the device. Typical examples
+of these kinds of metrics would be memory utilization or the previous sysUpTime
+example. With SNMP it can be easy to find these kinds of single-instance values
+because their OID ends in ``.0`` as in ``SNMPv2-MIB::snmpInTotalReqVars.0``.
+
+.. note::
+   We'll get into monitoring multi-instance values in the component monitoring
+   section.
+
+Since there aren't any extremely interesting single-instance values to collect,
+we'll collect that snmpInTotalReqVars for illustrative purposes. We'll need to
+know the numeric OID for this value. Use snmptranslate to find it::
+
+    # snmptranslate -On SNMPv2-MIB::snmpInTotalReqVars.0
+    .1.3.6.1.2.1.11.13.0
+
+
+Add an SNMP Datasource
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the steps below to add an SNMP datasource for snmpInTotalReqVars.
+
+#. Navigate to *Advanced* -> *Monitoring Templates*.
+
+#. Expand *NetBotzDevice* then select */NetBotz*.
+
+#. Click *+* on the *Data Sources* pane.
+
+  #. Set *Name* to ``snmpInTotalReqVars``
+  #. Set *Type* to ``SNMP``
+  #. Click *SUBMIT*.
+
+#. Double-click to edit the *snmpInTotalReqVars* datasource.
+
+  #. Set *OID* to ``1.3.6.1.2.1.11.13.0``
+  #. Click *SAVE*.
+
+
+We now have a choice about how we want to handle the value that comes back from
+polling that OID. As you can see above in the snmpwalk output, it is a
+*Counter32* type. This means that it starts at 0 and, in this case, increments
+each time an SNMP variable is requested. The most common way to handle counters
+like these is as a delta. It's not very interesting to know how many variables
+have been requested since the device last rebooted, but it might be interesting
+to know how many variables are requested per second.
+
+The default type for a datapoint is *GAUGE* which would record the actual value
+you see in the snmpwalk output. If we'd rather monitor the rate of requests,
+we'd change the datapoint type to *DERIVE* using the following steps.
+
+#. Double-click on the *snmpInTotalReqVars.snmpInTotalReqVars* datapoint.
+
+  You may need to expand the *snmpInTotalReqVars* datasource first.
+
+  #. Set *RRD Type* to *DERIVE*
+  #. Set *RRD Minimum* to ``0``
+  #. Click *SAVE*.
+
+.. warning::
+  It is very important to always set the *RRD Minimum* to ``0`` for *DERIVE*
+  type datapoints. If you fail to do this, you will get large negative spikes
+  in your data anytime the device reboots or the counter resets for any other
+  reason.
+
+  The only time you wouldn't set a minimum of 0 is when the value you're
+  monitoring can increase and decrease and you're interested in tracking rates
+  of negative change as well as rates of positive change.
