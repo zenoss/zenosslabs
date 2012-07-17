@@ -16,13 +16,13 @@ new device class. This will give us full control over how these types of
 devices are modeled and monitored. Use the following steps to add a new device
 class.
 
-#. Navigate to the *Infrastructure* view.
+1. Navigate to the *Infrastructure* view.
 
-#. Select the root of the *DEVICES* tree.
+2. Select the root of the *DEVICES* tree.
 
-#. Click the *+* button at the bottom of the list to add a new organizer.
+3. Click the *+* button at the bottom of the list to add a new organizer.
 
-#. Set the *Name* to ``NetBotz`` then click *SUBMIT*.
+4. Set the *Name* to ``NetBotz`` then click *SUBMIT*.
 
    The new *NetBotz* device will now be selected. We'll want to check on some
    important configuration properties using the following steps.
@@ -31,8 +31,9 @@ class.
 Set Device Class Properties
 ------------------------------------------------------------------------------
 
-#. Click the *DETAILS* button at the top of the list.
-#. Select *Modeler Plugins*.
+1. Click the *DETAILS* button at the top of the list.
+
+2. Select *Modeler Plugins*.
 
    The modeler plugins are what model information about the device. We should
    see a list something like the following. This list is being acquired from
@@ -48,9 +49,9 @@ Set Device Class Properties
    routing table on our environmental sensors, so there's no reason to model
    it.
 
-#. Remove *zenoss.snmp.RouteMap* from the list.
+3. Remove *zenoss.snmp.RouteMap* from the list.
 
-#. Click *Save*.
+4. Click *Save*.
 
    Now you can see the *Path* at which our modeler plugin configuration is set
    has changed from */* to */NetBotz*. This allows us to know that regardless
@@ -58,15 +59,16 @@ Set Device Class Properties
    NetBotz appliances will be collected using the set of modeler plugins we
    configure here.
 
-#. Select *Configuration Properties* from the left navigation pane.
+5. Select *Configuration Properties* from the left navigation pane.
 
    There are a lot of configuration properties. You don't have to worry about
    understanding all of them. However, some will be critical to monitoring
    NetBotz appliances. We know that we're going to be using SNMP so let's make
    sure that it's enabled.
 
-#. Find the *zSnmpMonitorIgnore* property and set its value to true.
-#. Now set the value for *zSnmpMonitorIgnore* to false.
+6. Find the *zSnmpMonitorIgnore* property and set its value to true.
+
+7. Now set the value for *zSnmpMonitorIgnore* to false.
 
    The reason for flipping the value back to it's original value is the same as
    saving the list of modeler plugins. While the system default is to have SNMP
@@ -85,14 +87,14 @@ all settings in that device class to be added to the ZenPack. This includes
 modeler plugin configuration, configuration property values and monitoring
 templates.
 
-#. Make sure you've already created the ZenPack.
+1. Make sure you've already created the ZenPack.
 
-#. Make sure that you have the NetBotz device class selected in the
+2. Make sure that you have the NetBotz device class selected in the
    *Infrastructure* view.
 
-#. Choose *Add to ZenPack* from the gear menu in the bottom-left.
+3. Choose *Add to ZenPack* from the gear menu in the bottom-left.
 
-#. Select your NetBotz ZenPack then click *SUBMIT*.
+4. Select your NetBotz ZenPack then click *SUBMIT*.
 
 
 Configure Monitoring Templates
@@ -109,9 +111,9 @@ We created the NetBotz device class directly within the root (or /) device
 class. This means that we'll be inheriting the system default monitoring
 templates and binding. Use the following steps to validate this.
 
-#. Select the *NetBotz* device class in the *Infrastructure* view.
+1. Select the *NetBotz* device class in the *Infrastructure* view.
 
-#. Choose *Bind Templates* from the gear menu in the bottom-left.
+2. Choose *Bind Templates* from the gear menu in the bottom-left.
 
    You should only see ``Device (/Devices)`` in the *Selected* box. Depending
    on what other ZenPacks you have installed in the system you may see zero or
@@ -120,11 +122,11 @@ templates and binding. Use the following steps to validate this.
 
 Now we investigate what this system default *Device* monitoring template does.
 
-#. Click *CANCEL* on the *Bind Templates* dialog.
+3. Click *CANCEL* on the *Bind Templates* dialog.
 
-#. Click the *DETAILS* button at the top of the device class tree.
+4. Click the *DETAILS* button at the top of the device class tree.
 
-#. Select ``Device (/Devices)`` under *Monitoring Templates*.
+5. Select ``Device (/Devices)`` under *Monitoring Templates*.
 
    You'll see that there's a single SNMP datasource named sysUpTime. If you
    expand this datasource you will see that it contains a single datapoint
@@ -163,6 +165,7 @@ work on our NetBotz device, we'll add another monitoring template to collect
 additional information.
 
 .. note::
+
    We could create a local copy of the *Device* monitoring template in the
    NetBotz device class and add new datasources, thresholds and graphs to it.
    However, this prevents us from taking advantage of changes made to the
@@ -172,22 +175,22 @@ additional information.
 Follow these steps to create and bind a new template to the NetBotz device
 class.
 
-#. Navigate to *Advanced* -> *Monitoring Templates*.
+1. Navigate to *Advanced* -> *Monitoring Templates*.
 
-#. Click the *+* button in the bottom-left to add a template.
+2. Click the *+* button in the bottom-left to add a template.
 
-  #. Set the *Name* field to ``NetBotzDevice``.
-  #. Set the *Template Path* field to */NetBotz*.
+  1. Set the *Name* field to ``NetBotzDevice``.
+  2. Set the *Template Path* field to */NetBotz*.
 
-#. Click *SUBMIT*.
+3. Click *SUBMIT*.
 
-#. Bind this template to the *NetBotz* device class.
+4. Bind this template to the *NetBotz* device class.
 
-  #. Navigate to *Infrastructure*.
-  #. Select the *NetBotz* device class.
-  #. Choose *Bind Templates* from the gear menu in the bottom-left.
-  #. Move *NetBotzDevice* from available to selected.
-  #. Click *SAVE*.
+  1. Navigate to *Infrastructure*.
+  2. Select the *NetBotz* device class.
+  3. Choose *Bind Templates* from the gear menu in the bottom-left.
+  4. Move *NetBotzDevice* from available to selected.
+  5. Click *SAVE*.
 
 
 Build the Monitoring Template
@@ -212,6 +215,7 @@ example. With SNMP it can be easy to find these kinds of single-instance values
 because their OID ends in ``.0`` as in ``SNMPv2-MIB::snmpInTotalReqVars.0``.
 
 .. note::
+
    We'll get into monitoring multi-instance values in the component monitoring
    section.
 
@@ -228,20 +232,24 @@ Add an SNMP Datasource
 
 Use the steps below to add an SNMP datasource for snmpInTotalReqVars.
 
-#. Navigate to *Advanced* -> *Monitoring Templates*.
+1. Navigate to *Advanced* -> *Monitoring Templates*.
 
-#. Expand *NetBotzDevice* then select */NetBotz*.
+2. Expand *NetBotzDevice* then select */NetBotz*.
 
-#. Click *+* on the *Data Sources* pane.
+3. Click *+* on the *Data Sources* pane.
 
-  #. Set *Name* to ``snmpInTotalReqVars``
-  #. Set *Type* to ``SNMP``
-  #. Click *SUBMIT*.
+  1. Set *Name* to ``snmpInTotalReqVars``
+  2. Set *Type* to ``SNMP``
+  3. Click *SUBMIT*.
 
-#. Double-click to edit the *snmpInTotalReqVars* datasource.
+4. Double-click to edit the *snmpInTotalReqVars* datasource.
 
-  #. Set *OID* to ``1.3.6.1.2.1.11.13.0``
-  #. Click *SAVE*.
+  1. Set *OID* to ``1.3.6.1.2.1.11.13.0``
+  2. Click *SAVE*.
+
+.. note::
+   Best practice is to name SNMP datasources according to the name of the OID
+   that's being polled from the MIB.
 
 
 We now have a choice about how we want to handle the value that comes back from
@@ -256,15 +264,16 @@ The default type for a datapoint is *GAUGE* which would record the actual value
 you see in the snmpwalk output. If we'd rather monitor the rate of requests,
 we'd change the datapoint type to *DERIVE* using the following steps.
 
-#. Double-click on the *snmpInTotalReqVars.snmpInTotalReqVars* datapoint.
+1. Double-click on the *snmpInTotalReqVars.snmpInTotalReqVars* datapoint.
 
   You may need to expand the *snmpInTotalReqVars* datasource first.
 
-  #. Set *RRD Type* to *DERIVE*
-  #. Set *RRD Minimum* to ``0``
-  #. Click *SAVE*.
+  1. Set *RRD Type* to *DERIVE*
+  2. Set *RRD Minimum* to ``0``
+  3. Click *SAVE*.
 
 .. warning::
+
   It is very important to always set the *RRD Minimum* to ``0`` for *DERIVE*
   type datapoints. If you fail to do this, you will get large negative spikes
   in your data anytime the device reboots or the counter resets for any other
@@ -273,3 +282,86 @@ we'd change the datapoint type to *DERIVE* using the following steps.
   The only time you wouldn't set a minimum of 0 is when the value you're
   monitoring can increase and decrease and you're interested in tracking rates
   of negative change as well as rates of positive change.
+
+
+Add a Threshold
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Now we can add a threshold to our monitoring template. Let's say we want to
+raise a warning event anytime the rate of SNMP variable requests exceeds 10 per
+second. This can be done with the following steps.
+
+1. Click *+* on the *Thresholds* pane.
+
+  1. Set *Name* to ``high SNMP variable request rate``
+  2. Set *Type* to *MinMaxThreshold*
+  3. Click *ADD*.
+
+2. Double-click to edit the *high SNMP variable request rate* threshold.
+
+  1. Drag the *snmpInTotalReqVars* datapoint to the left box.
+  2. Set *Severity* to *Warning*
+  3. Set *Maximum Value* to ``10``
+  4. Set *Event Class* to */Perf/Snmp*
+  5. Click *SAVE*.
+
+.. note::
+
+   A *MinMaxThreshold* can be used to handle a variety of conditions including
+   over a maximum value, under a minimum value, outside a defined range or
+   within a defined range. See the regular Zenoss documentation for how to use
+   each of these options.
+
+
+Add a Graph Definition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Now we'll add a graph so the user will be able to see the trend of SNMP
+variable requests per second over time. This can be done with the following
+steps.
+
+1. Click *+* on the *Graph Definitions* pane.
+
+  1. Set *Name* to ``SNMP Rates``
+  2. Click *SUBMIT*.
+
+2. Double-click to edit the *SNMP Rates* graph definition.
+
+  1. Set *Units* to ``requests/sec``
+  2. Set *Min Y* to ``0``
+  3. Click *SUBMIT*.
+
+  .. note::
+
+     Always set the units for your graph. Also set the minimum Y axis and
+     maximum Y axis values if you know what the possible limits are for the
+     data. This results in graphs that are easier to read.
+
+     The format field should also be tweaked to best present the kind of data
+     that is to be graphed. You can find more information on what can be used
+     in the format field in the *RRDtool rrdgraph_graph* documentation under
+     the *PRINT* section.
+
+3. Select the *SNMP Rates* graph definition.
+
+4. Choose *Manage Graph Points* from the gear menu.
+
+  1. Choose *Data Point* from the *+* menu.
+  2. Set *Data Point* to *snmpInTotalReqVars*
+  3. Check *Include Related Thresholds*
+  4. Click *SUBMIT*
+
+5. Double-click to edit the *snmpInTotalReqVars* graph point.
+
+  1. Set *Name* to ``Variables``
+  2. Click *SAVE*.
+
+  .. note::
+
+     The name of a graph point is what is displayed for it in the graph legend.
+     You should always choose something short that describes the data and makes
+     sense in context of the units chosen above.
+
+
+You can find many more notes about how to create monitoring templates along
+with best practices on graph styling in the *ZenPack Standards Guide*.
