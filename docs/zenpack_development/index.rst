@@ -11,12 +11,12 @@ capabilities of a ZenPack.
 Contents:
 
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 2
 
-  prerequisites
-  development_environment
-  background
-  creating_a_zenpack
-  monitoring_snmp_device/index
-  exporting_a_zenpack
-  troubleshooting
+   prerequisites
+   development_environment
+   background
+   creating_a_zenpack
+   monitoring_snmp_device/index
+   exporting_a_zenpack
+   troubleshooting

@@ -13,7 +13,8 @@ temperature, humidity, dew point, audio levels and air flow.
 Exercises:
 
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 2
 
-  snmp_tools
-  device_monitoring
+   snmp_tools
+   device_monitoring
+   device_modeling
