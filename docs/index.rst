@@ -12,9 +12,9 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   zenpack_taxonomy
-   zenpack_documentation
    zenpack_development/index
+   zenpack_documentation
+   zenpack_taxonomy
 
 
 Documentation Formats
