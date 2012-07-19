@@ -116,7 +116,7 @@ using zendisc as follows::
    daemon must be running to add jobs from the web interface. The *zenjobs*
    daemon is not required to be running when adding devices using *zendisc*
    from the command line because it immediately adds the device instead of
-   putting scheduling a job to do it.
+   scheduling a job to do it.
 
 
 You should now see that Zenoss was able to model some information about the
