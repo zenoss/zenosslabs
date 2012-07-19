@@ -97,6 +97,47 @@ templates.
 4. Select your NetBotz ZenPack then click *SUBMIT*.
 
 
+Add a NetBotz Device
+------------------------------------------------------------------------------
+
+This would be a great time to add a NetBotz device to our new */NetBotz* device
+class. We haven't done anything in the way of customer monitoring. It can often
+be helpful to see what Zenoss' default settings will return for a device before
+we start adding features.
+
+You can add a the device through the web interface, or on the command line
+using zendisc as follows::
+
+    zendisc run --deviceclass=/NetBotz --device=127.0.1.113
+
+.. note::
+
+   I'll often use *zendisc* from the command line only because the *zenjobs*
+   daemon must be running to add jobs from the web interface. The *zenjobs*
+   daemon is not required to be running when adding devices using *zendisc*
+   from the command line because it immediately adds the device instead of
+   putting scheduling a job to do it.
+
+
+You should now see that Zenoss was able to model some information about the
+device even though we haven't added any custom monitoring. For example, you
+should see the following on the device in the web interface.
+
+- Overview
+
+  - Hardware Manufacturer: NetBotz
+  - Hardware Model: .1.3.6.1.4.1.5528.100.20.10.2006
+  - OS Manufacturer: Unknown
+  - OS Model: Linux 2.4.26
+
+- Components
+  - Interfaces: 2 - eth0 and lo
+
+
+If we were running the *zenperfsnmp* daemon, we'd start to see that Zenoss was
+monitoring the uptime and interface metrics after about 10 minutes.
+
+
 Configure Monitoring Templates
 ==============================================================================
 
@@ -242,14 +283,27 @@ Use the steps below to add an SNMP datasource for snmpInTotalReqVars.
   2. Set *Type* to ``SNMP``
   3. Click *SUBMIT*.
 
+  .. note::
+
+     Best practice is to name SNMP datasources according to the name of the OID
+     that's being polled from the MIB.
+
 4. Double-click to edit the *snmpInTotalReqVars* datasource.
 
   1. Set *OID* to ``1.3.6.1.2.1.11.13.0``
   2. Click *SAVE*.
 
-.. note::
-   Best practice is to name SNMP datasources according to the name of the OID
-   that's being polled from the MIB.
+  .. warning::
+
+     A common mistake to make when setting the OID in a device-level template
+     is to omit the trailing ``.0``. The reason this is common is that if you
+     were using the MIB as reference instead of the snmpwalk above, you'd see
+     that the OID for SNMPv2-MIB::snmpInTotalReqVars was 1.3.6.1.2.1.11.13
+     instead of 1.3.6.1.2.1.11.13.0. Due to this, I always recommend using
+     snmpwalk to verify exactly what OID you should be polling.
+
+     While Zenoss will accept the OID with the leading ``.``, I recommend
+     omitting it. It isn't necessary.
 
 
 We now have a choice about how we want to handle the value that comes back from
@@ -365,3 +419,31 @@ steps.
 
 You can find many more notes about how to create monitoring templates along
 with best practices on graph styling in the *ZenPack Standards Guide*.
+
+
+Test Monitoring Template
+==============================================================================
+
+The quick way to check if we've been successful in creating and binding our
+monitoring template is to navigate to the NetBotz device we added to the system
+and verify that we see our *NetBotzDevice (/NetBotz)* monitoring template
+listed at the bottom of the device's left navigation pane.
+
+Now we can test that our datasource will be collected by running the following
+command to do a single collection of the NetBotz device::
+
+    zenperfsnmp run -v10 --device=Netbotz01
+
+
+We can look through the output to see what zenperfsnmp does. Personally I look
+for any lines that contain *zen.RRDUtil*. These lines will show the collected
+data being written to RRD files. If data isn't collected, these lines won't be
+present. Because of this you might run the following command instead to only
+see lines that contain this pattern::
+
+    zenperfsnmp run -v10 --device=Netbotz01 2>&1 | grep "zen.RRDUtil"
+
+
+We should see about 16 datapoints being written into RRD files. You'll see
+*sysUpTime*, 14 interface datapoints and our custom *snmpInTotalReqVars* in
+there somewhere.
