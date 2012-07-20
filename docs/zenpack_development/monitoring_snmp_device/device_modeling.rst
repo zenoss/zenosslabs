@@ -221,6 +221,7 @@ Use the following steps to create our modeler plugin.
           SnmpPlugin, GetTableMap,
           )
 
+
       class NetBotz(SnmpPlugin):
           snmpGetTableMaps = (
               GetTableMap(

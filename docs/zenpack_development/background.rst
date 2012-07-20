@@ -81,3 +81,9 @@ appropriate to be bound directly to devices.
    Using the *Bind Templates* dialog is really just setting the
    *zDeviceTemplates* configuration property in a more friendly way. You can
    directly modify *zDeviceTemplates* to achieve the same result.
+
+
+Relationship Types
+==============================================================================
+
+.. todo:: Write this section. ToOne(Cont), ToMany(Cont), etc..

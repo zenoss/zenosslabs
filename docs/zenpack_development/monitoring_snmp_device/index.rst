@@ -18,3 +18,4 @@ Exercises:
    snmp_tools
    device_monitoring
    device_modeling
+   component_modeling
