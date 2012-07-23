@@ -315,7 +315,23 @@ to only capture the temperature sensor components, but we'll update the
 
               return rm
 
-   .. todo:: Detail changes from last iteration of modeler plugin.
+   Let's take a closer look at how we changed the modeler plugin.
+
+   1. We added `relname` and `modname` as class attributes.
+
+      These two settings control the meta-data that will automatically be set
+      when the `self.relMap` and `self.objectMap` methods are called in the
+      `process` method.
+
+   2. We're now requesting the *tempSensorEncId* and *tempSensorPortId* columns
+      be returned in the SNMP table request results. We'll use these to
+      populate their corresponding fields on the `TemperatureSensor` class.
+
+   3. Most of the `process` method has been changed.
+
+      We're now creating a `RelationshipMap` and appending an `ObjectMap` to it
+      for each temperature sensor in the results. We use the `self.relMap` and
+      `self.objectMap` utility methods to make this easier.
 
 2. Restart *zopectl* and *zenhub* to load the changed module.
 
@@ -453,8 +469,6 @@ making changes to interfaces.py, info.py, or configure.zcml.
 
 Add Component Display JavaScript
 ==============================================================================
-
-.. todo:: Write this section.
 
 Typically when a new type of component like `TemperatureSensor` is added, you
 will want to add two JavaScript elements to provide for a more attractive
