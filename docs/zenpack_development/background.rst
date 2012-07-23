@@ -83,7 +83,92 @@ appropriate to be bound directly to devices.
    directly modify *zDeviceTemplates* to achieve the same result.
 
 
+.. _relationship-types:
+
 Relationship Types
 ==============================================================================
 
-.. todo:: Write this section. ToOne(Cont), ToMany(Cont), etc..
+The Zenoss model uses relationships between objects in the database in much the
+same way that a relational database does. Here are examples of some of the
+relationships working behind the scenes in a standard Zenoss installation.
+
+- `DeviceClass` **has many** `Device`
+- `Device` **has one** `OperatingSystem`
+- `OperatingSystem` **has one** `ProductClass`
+- `OperatingSystem` **has many** `FileSystem`
+- `OperatingSystem` **has many** `IpInterface`
+- `IpInterface` **has many** `IpAddress`
+- `IpNetwork` **has many** `IpAddress`
+
+ZenPacks can contribute new types of objects and new relationships to the
+system. For example, `ZenPacks.zenoss.RabbitMQ` adds the following object
+types and relationships.
+
+- `Device` **has many** `RabbitMQNode`
+- `RabbitMQNode` **has many** `RabitMQVHost`
+- `RabbitMQVHost` **has many** `RabbitMQExchange`
+- `RabbitMQVHost` **has many** `RabbitMQueue`
+
+There are some important details you must understand to create new
+relationships.
+
+- There are *containing* and *non-containing* relationships.
+
+  The idea of containment comes from Zenoss' database being a tree of objects.
+  Every object in the database must be attached in some way to another
+  persistent object, and only one other persistent object.
+
+  In the case of a *containing* relationship you're saying that this is the
+  relationship that attaches the member objects to the object model and
+  therefore is how they get persisted. Removing an object from its *containing*
+  relationship is the same thing as deleting the object from the database
+  entirely. Any *non-containing* relationships it might have will be cleaned
+  up.
+
+  Of the above example standard relationships, the following are implemented as
+  *containing* relationships.
+
+  - `DeviceClass` **has many** `Device`
+  - `Device` **has one** `OperatingSystem`
+  - `OperatingSystem` **has many** `FileSystem`
+  - `OperatingSystem` **has many** `IpInterface`
+  - `IpNetwork` **has many** `IpAddress`
+
+  On the other hand, a *non-containing* relationship has nothing to do with
+  persistence. *Non-containing* relationships are used to create logical
+  linkages from one object to another.
+
+  Of the above example standard relationships, the following are implemented as
+  *non-containing* relationships.
+
+  - `OperatingSystem` **has one** `ProductClass`
+  - `IpInterface` **has many** `IpAddress`
+
+- All relationships must be bi-directional and explicitly defined on both sides
+  of the relationship.
+
+  In the `RabbitMQNode` **has many** `RabitMQVHost` example above this means
+  that `RabbitMQNode` must declare that it has a `ToManyCont` relationship to
+  `RabbitMQVHost`, and `RabbitMQVHost` must declare that it has a `ToOne`
+  relationship to `RabbitMQNode`.
+
+
+Relationship Classes
+------------------------------------------------------------------------------
+
+Relationships between object types (Python classes) are objects themselves. You
+use the following classes from the `Products.ZenRelations.RelSchema` module to
+define them.
+
+- `ToMany`
+- `ToManyCont`
+- `ToOne`
+- `ToOneCont`
+
+Only the following pairs of relationships are valid because of the requirement
+that relationships be defined bi-directionally.
+
+- `ToMany` <-> `ToOne` (non-containing many-to-one)
+- `ToMany` <-> `ToMany` (non-containing many-to-many)
+- `ToManyCont` <-> `ToOne` (containing many-to-one)
+- `ToOneCont` <-> `ToOne` (containing one-to-one)
