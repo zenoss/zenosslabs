@@ -19,3 +19,4 @@ Exercises:
    device_monitoring
    device_modeling
    component_modeling
+   component_monitoring

@@ -137,6 +137,9 @@ attributes discovered above.
           def device(self):
               return self.sensor_device()
 
+          def getRRDTemplateName(self):
+              return 'TemperatureSensor'
+
    1. Start by importing the symbols we'll need.
 
    2. Define the `TemperatureSensor` class. This name must match the filename.
@@ -186,9 +189,13 @@ attributes discovered above.
       used for any component types to which you will bind monitoring
       templates.
 
-   8. Finally we must define the `device` method for our component. Every
-      component must provide this method. We can find our device by calling
-      the `sensor_device` relation.
+   8. We must define the `device` method for our component. Every component
+      must provide this method. We can find our device by calling the
+      `sensor_device` relation.
+
+   9. Finally we override the `getRRDTemplateName` method. This method allows
+      us to control the name of the monitoring template that will be
+      automatically bound to each temperature sensor.
 
 2. Edit ``$ZP_DIR/NetBotzDevice.py`` to add the following to the bottom.
 
@@ -301,7 +308,7 @@ to only capture the temperature sensor components, but we'll update the
                   rm.append(self.objectMap({
                       'id': self.prepId(name),
                       'title': name,
-                      'snmpindex': snmpindex,
+                      'snmpindex': snmpindex.strip('.'),
                       'enclosure': row.get('tempSensorEncId'),
                       'port': row.get('tempSensorPortId'),
                       }))
