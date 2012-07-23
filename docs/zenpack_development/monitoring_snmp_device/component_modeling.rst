@@ -323,6 +323,15 @@ to only capture the temperature sensor components, but we'll update the
       when the `self.relMap` and `self.objectMap` methods are called in the
       `process` method.
 
+      Setting `relname` to ``temperature_sensors`` will cause the `self.relMap`
+      call to create a `RelationshipMap` that will be applied to the
+      `temperature_sensors` relationship defined on the `NetBotzDevice` object.
+
+      Setting `modname` to ``ZenPacks.training.NetBotz.TemperatureSensor`` will
+      cause the `self.objectMap` calls in the `process` method to create
+      `ObjectMap` instances that will be turned into instances of our
+      `TemperatureSensor` class.
+
    2. We're now requesting the *tempSensorEncId* and *tempSensorPortId* columns
       be returned in the SNMP table request results. We'll use these to
       populate their corresponding fields on the `TemperatureSensor` class.
