@@ -20,3 +20,4 @@ Exercises:
    device_modeling
    component_modeling
    component_monitoring
+   snmp_traps
