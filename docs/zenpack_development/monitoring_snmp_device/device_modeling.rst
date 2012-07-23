@@ -1,5 +1,5 @@
 ==============================================================================
-SNMP Device Modeling
+Device Modeling
 ==============================================================================
 
 This section will cover creation of a custom *Device* subclass and modeling of

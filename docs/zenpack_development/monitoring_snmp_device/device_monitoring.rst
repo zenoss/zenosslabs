@@ -1,5 +1,5 @@
 ==============================================================================
-SNMP Device Monitoring
+Device Monitoring
 ==============================================================================
 
 This section will cover monitoring device-level metrics using SNMP. This

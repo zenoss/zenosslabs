@@ -1,12 +1,12 @@
 ==============================================================================
-SNMP Component Modeling
+Component Modeling
 ==============================================================================
 
 This section will cover creation of a custom *DeviceComponent* subclass,
 creation of a relationship to our *NetBotDevice* class, and modeling of the
 components to fill the relationship.
 
-In the *SNMP Device Modeling* section we added a *temp_sensor_count* attribute
+In the *Device Modeling* section we added a *temp_sensor_count* attribute
 to our NetBotz devices. This isn't very useful. It would be more useful to
 monitor the temperature being reported by each of these sensors. So that's what
 we'll do. Modeling each sensor as a component allows Zenoss to automatically
@@ -16,7 +16,7 @@ discover and monitor sensors regardless of how many a particular device has.
 Find Temperature Sensor Attributes
 ==============================================================================
 
-In the *SNMP Device Modeling* section we used `smidump` to extract temperature
+In the *Device Modeling* section we used `smidump` to extract temperature
 sensor information from `NETBOTZV2-MIB`. This will be even more applicable
 as we decide what attributes and metrics are available on each sensor. Let's
 use `smidump` and `snmpwalk` for a refresher on what's available.
@@ -108,7 +108,7 @@ attributes discovered above.
 
 
       class TemperatureSensor(DeviceComponent, ManagedEntity):
-          meta_type = portal_type = 'TemperatureSensor'
+          meta_type = portal_type = 'NetBotzTemperatureSensor'
 
           enclosure = None
           port = None
@@ -152,10 +152,10 @@ attributes discovered above.
       `monitor` and `productionState`.
 
    4. Next we set both the `meta_type` and `portal_type` of the class to
-      ``TemperatureSensor``. This is used as the friendly name for the type
-      of our object in various places in the web interface such as the global
-      search. `meta_type` and `portal_type` should always be the same. They
-      both exist for backwards compatibility reasons.
+      ``NetBotzTemperatureSensor``. This is used as the friendly name for the
+      type of our object in various places in the web interface such as the
+      global search. `meta_type` and `portal_type` should always be the same.
+      They both exist for backwards compatibility reasons.
 
    5. Next we add the `enclosure` and `port` attributes in the same way as we
       did for our `NetBotzDevice` class.
@@ -349,13 +349,99 @@ test the temperature sensor modeling updates.
 Create the API
 ==============================================================================
 
-.. todo:: Write this section.
+We must now create and test the API for our new `TemperatureSensor` class much
+like we did for the `NetBotzDevice` API. There's a slight difference in the
+base interfaces and classes that we use because `TemperatureSensor` is a
+`DeviceComponent` subclass instead of a `Device` subclass.
+
+1. Create the `IInfo` interface.
+
+   To create the public interface for the `TemperatureSensor` class we add the
+   following class to the end of ``$ZP_DIR/interfaces.py``.
+
+   .. sourcecode:: python
+
+      class ITemperatureSensorInfo(IComponentInfo):
+          enclosure = schema.TextLine(title=_t('Sensor Enclosure ID'))
+          port = schema.TextLine(title=_t('Sensor Port ID'))
+
+   We must also add an import for our base interface, `IComponentInfo`.
+
+   .. sourcecode:: python
+
+      from Products.Zuul.interfaces.component import IComponentInfo
+
+   .. note::
+
+      The attributes you add to your `IComponentInfo` interface control the
+      fields that will be displayed when the *Details* for a component are
+      viewed in the web interface.
+
+2. Create the `Info` adapter.
+
+   To create the `Info` adapter for the `TemperatureSensor` class we add the
+   following class to the end of ``$ZP_DIR/info.py``.
+
+   .. sourcecode:: python
+
+      class TemperatureSensorInfo(ComponentInfo):
+          implements(ITemperatureSensorInfo)
+
+          enclosure = ProxyProperty('enclosure')
+          port = ProxyProperty('port')
+
+   We must also add an import for our base class, `ComponentInfo`.
+
+   .. sourcecode:: python
+
+      from Products.Zuul.infos.component import ComponentInfo
+
+   Additionally, we need to add an import of `ITemperatureSensorInfo` from our
+   own `interfaces` module. This will require an update to the existing line.
+
+   .. sourcecode:: python
+
+      from ZenPacks.training.NetBotz.interfaces import (
+          INetBotzDeviceInfo,
+          ITemperatureSensorInfo,
+          )
+
+3. Register the `Info` adapter.
+
+   To register the `Info` adapter for `TemperatureSensor` we add the following
+   before the browser include in ``$ZP_DIR/configure.zcml``.
+
+   .. sourcecode:: xml
+
+      <adapter
+          provides=".interfaces.ITemperatureSensorInfo"
+          for=".TemperatureSensor.TemperatureSensor"
+          factory=".info.TemperatureSensorInfo"
+          />
 
 
 Test the API
 ------------------------------------------------------------------------------
 
-.. todo:: Write this section.
+We can now test the API using *zendmd*. Be sure to restart *zendmd* after
+making changes to interfaces.py, info.py, or configure.zcml.
+
+1. Execute the following snippet in *zendmd*.
+
+   .. sourcecode:: python
+
+      from Products.Zuul.interfaces import IInfo
+
+      device = find("Netbotz01")
+      sensor = device.temperature_sensors._getOb('nbHawkEnc_1_TEMP1')
+      sensor_info = IInfo(sensor)
+
+      print "id: %s, enclosure: %s, port: %s" % (
+          sensor_info.id, sensor_info.enclosure, sensor_info.port)
+
+   You should see the following line printed::
+
+       id: nbHawkEnc_1_TEMP1, enclosure: nbHawkEnc_1, port: nbHawkEnc_1_DIN1
 
 
 Add Component Display JavaScript
@@ -363,8 +449,239 @@ Add Component Display JavaScript
 
 .. todo:: Write this section.
 
+Typically when a new type of component like `TemperatureSensor` is added, you
+will want to add two JavaScript elements to provide for a more attractive
+display in the web interface.
+
+1. `registerName` to change *TemperatureSensor* to *Temperature Sensors* in the
+   device's left navigation pane under *Components.*
+
+   Add the following to ``$ZP_DIR/browser/resources/js/NetBotzDevice.js``.
+
+   .. sourcecode:: javascript
+
+      (function(){
+
+      var ZC = Ext.ns('Zenoss.component');
+
+      ZC.registerName(
+          'NetBotzTemperatureSensor',
+          _t('Temperature Sensor'),
+          _t('Temperature Sensors'));
+
+      })();
+
+   1. The JavaScript code is wrapped in an anonymous function to keep it out
+      of the global namespace. Ideally all ZenPack JavaScript code should be
+      wrapped in this way.
+
+      The wrapping is done using the first and last lines of the JavaScript
+      snippet above.
+
+   2. Next we get a handle to the `Zenoss.component` ExtJS namespace and store
+      it in the `ZA` variable.
+
+   3. Finally we actually register the name. The parameters to `registerName`
+      are:
+
+      1. `meta_type` of the class we're registering names for.
+      2. Singular form of the human-friendly name of the class.
+      3. Plural form of the human-friendly name of the class.
+
+2. Create a `ComponentGridPanel`.
+
+   A custom `ComponentGridPanel` allows us to customize the grid that will
+   display in the top-right panel when we select *Temperature Sensors* from our
+   device's component tree. Typically we customize what columns we want to
+   appear, how we want those columns to appear, and how they should be sorted.
+
+   Add the following to ``$ZP_DIR/browser/resources/js/NetBotzDevice.js``
+   beneath the *ZC.registerName* but before the ``})();`` that ends the
+   anonymous function.
+
+   .. sourcecode:: javascript
+
+      ZC.NetBotzTemperatureSensorPanel = Ext.extend(ZC.ComponentGridPanel, {
+          constructor: function(config) {
+              config = Ext.applyIf(config||{}, {
+                  componentType: 'NetBotzTemperatureSensor',
+                  autoExpandColumn: 'name',
+                  sortInfo: {
+                      field: 'name',
+                      direction: 'ASC'
+                  },
+                  fields: [
+                      {name: 'uid'},
+                      {name: 'name'},
+                      {name: 'status'},
+                      {name: 'severity'},
+                      {name: 'usesMonitorAttribute'},
+                      {name: 'monitor'},
+                      {name: 'monitored'},
+                      {name: 'locking'},
+                      {name: 'enclosure'},
+                      {name: 'port'}
+                  ],
+                  columns: [{
+                      id: 'severity',
+                      dataIndex: 'severity',
+                      header: _t('Events'),
+                      renderer: Zenoss.render.severity,
+                      sortable: true,
+                      width: 50
+                  },{
+                      id: 'name',
+                      dataIndex: 'name',
+                      header: _t('Name'),
+                      sortable: true
+                  },{
+                      id: 'enclosure',
+                      dataIndex: 'enclosure',
+                      header: _t('Enclosure ID'),
+                      sortable: true,
+                      width: 120
+                  },{
+                      id: 'port',
+                      dataIndex: 'port',
+                      header: _t('Port ID'),
+                      sortable: true,
+                      width: 120
+                  },{
+                      id: 'monitored',
+                      dataIndex: 'monitored',
+                      header: _t('Monitored'),
+                      renderer: Zenoss.render.checkbox,
+                      sortable: true,
+                      width: 70
+                  },{
+                      id: 'locking',
+                      dataIndex: 'locking',
+                      header: _t('Locking'),
+                      renderer: Zenoss.render.locking_icons,
+                      width: 65
+                  }]
+              });
+
+              ZC.NetBotzTemperatureSensorPanel.superclass.constructor.call(
+                  this, config);
+          }
+      });
+
+      Ext.reg('NetBotzTemperatureSensorPanel', ZC.NetBotzTemperatureSensorPanel);
+
+   This is a length snippet of JavaScript. Let's go through it section by
+   section.
+
+   1. Define a new ExtJS class named `NetBotzTemperatureSensorPanel`.
+
+      We define this class within the *Zenoss.component* namespace by using the
+      `ZC` variable we created in the previous step. Just like we've been
+      defining our Python classes by extending existing Zenoss Python classes,
+      we do the same with JavaScript classes within the ExtJS framework. In
+      this case we're extending the `ComponentGridPanel` class.
+
+   2. Create the `NetBotzTemperatureSensorPanel` constructor.
+
+      Our constructor method only does two things. First we override the
+      `config` variable. Then we close by calling our superclass' constructor.
+      Our superclass is the `ComponentGridPanel` we extended.
+
+   3. Override `config` variable.
+
+      This is where all of the interesting stuff happens, and where we'll be
+      making changes. Let's look at each of the fields we're changing within
+      `config`.
+
+      1. `componentType`
+
+         Must match the `meta_type` on our `TemperatureSensor` Python class.
+
+      2. `autoExpandColumn`
+
+         One of the following columns can be picked to automatically expand to
+         use the remaining space within the user's web browser. Typically this
+         is set to the `name` field, but it can be useful to choose a
+         different field if the name is a well-known length and another field
+         is more variable.
+
+      3. `sortInfo`
+
+         Controls which field and direction that the grid will be sorted by
+         when it initially appears. This is an optional field and defaults to
+         sort by name in ascending order if not set. So in this example the
+         sortInfo field could have been left out.
+
+      4. `fields`
+
+         Controls which fields will be requested from the
+         `TemperatureSensorInfo` API adapter on the server to display a column.
+         You can request any attribute that you made available on the `Info`
+         adapter. This even includes fields that are not present in the `IInfo`
+         interface.
+
+         You must be sure to include fields needed to display all of the
+         `columns` specified below. For consistency I recommend having the
+         following minimum set plus any that are specific to your component
+         type.
+
+         - uid
+         - name
+         - status
+         - severity
+         - usesMonitorAttribute
+         - monitor
+         - monitored
+         - locking
+
+      5. `columns`
+
+         Controls the visual display of columns in the grid. Each column can
+         specify the following fields.
+
+         - `id`
+
+           A unique identifier for the field. Typically this is set to the
+           same value as `dataIndex`.
+
+         - `dataIndex`
+
+           Reference to one of the items from `fields` above.
+
+         - `header`
+
+           Text that will appear in the column's header.
+
+         - `renderer`
+
+           JavaScript function that will be used to render the column's data.
+           This is an optional field and will default to displaying the data's
+           natural string representation.
+
+           You can find the standard renderer choices in the following file::
+
+               $ZENHOME/Products/ZenUI3/browser/resources/js/zenoss/Renderers.js
+
+         - `sortable`
+
+           Whether or not the user can choose to sort the grid by this column.
+
+         - `width`
+
+           The width in pixels of the column. This is an optional field, but
+           I highly recommend setting in on all columns except for the column
+           that's referenced in `autoExpandColumn`.
+
 
 Test the Component Display
 ------------------------------------------------------------------------------
 
-.. todo:: Write this section.
+We test our component display JavaScript by looking at it in the web interface.
+
+If you're running *zopectl* in the foreground, it is not necessary to restart
+it after making changes to existing files within our `resourceDirectory`.
+However, you will have to force your browser to do a full refresh to make sure
+your browser cache isn't interfering. This can typically be done by holding the
+SHIFT key while clicking the refresh button or typing the refresh shortcut.
+
+I recommend having the browser's JavaScript console open while testing so you
+don't miss any errors.
