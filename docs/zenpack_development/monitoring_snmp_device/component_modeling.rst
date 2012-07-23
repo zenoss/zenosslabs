@@ -106,6 +106,7 @@ attributes discovered above.
       from Products.ZenModel.ZenossSecurity import ZEN_CHANGE_DEVICE
       from Products.ZenRelations.RelSchema import ToManyCont, ToOne
 
+
       class TemperatureSensor(DeviceComponent, ManagedEntity):
           meta_type = portal_type = 'TemperatureSensor'
 
@@ -193,19 +194,25 @@ attributes discovered above.
 
    .. sourcecode:: python
 
-      _relations = ManagedEntity._relations + (
+      _relations = Device._relations + (
           ('temperature_sensors', ToManyCont(ToOne,
               'ZenPacks.training.NetBotz.TemperatureSensor',
               'sensor_device',
               )),
           )
 
+   You'll also need to add the following imports to the top of the file.
+
+   .. sourcecode:: python
+
+      from Products.ZenRelations.RelSchema import ToManyCont, ToOne
+
    It is mandatory that this relationship definition exist, and be an exact
    mirror of the definition on the other side.
 
 .. note::
 
-   See the :ref:`Relationship Types` section for more information on
+   See the :ref:`relationship-types` section for more information on
    relationships.
 
 
@@ -218,17 +225,35 @@ to make sure we didn't make any mistakes. Execute the following snippet in
 
 .. sourcecode:: python
 
-   from ZenPacks.training.TemperatureSensor import TemperatureSensor
+   from ZenPacks.training.NetBotz.TemperatureSensor import TemperatureSensor
 
-   device = find("Netbotz01")
    sensor = TemperatureSensor('test_sensor_01')
+   device = find("Netbotz01")
    device.temperature_sensors._setObject(sensor.id, sensor)
    sensor = device.temperature_sensors._getOb(sensor.id)
    print sensor
    print sensor.device()
 
-You should see the name of the sensor and device objects printed if everything
-worked as planned.
+You'll most likely get the following error when executing the above snippet::
+
+    Traceback (most recent call last):
+      File "<console>", line 1, in <module>
+    AttributeError: temperature_sensors
+
+This error is indicating that we have no `temperature_sensors` relationship on
+the device object. This would seemingly make no sense because we just added it
+to *NetBotzDevice.py* above. The key here is that existing objects like the
+*Netbotz01* device don't automatically get new relationships. We have to either
+delete the device and add it again, or execute the following in *zendmd* to
+create the newly-defined relationship.
+
+.. sourcecode: python
+
+   device.buildRelations()
+   commit()
+
+Now you can go back and run the original snippet again. You should see the name
+of the sensor and device objects printed if everything worked as planned.
 
 
 Update the Modeler Plugin
@@ -291,7 +316,34 @@ to only capture the temperature sensor components, but we'll update the
 Test the Modeler Plugin
 ------------------------------------------------------------------------------
 
-.. todo:: Write this section.
+We already added the *training.snmp.NetBotz* modeler plugin the the */NetBotz*
+device class in an earlier exercise. So we only need to run *zenmodeler* to
+test the temperature sensor modeling updates.
+
+1. Run ``zenmodeler run --device=Netbotz01``
+
+   We should see *Changes in configuration applied* near the end of
+   zenmodeler's output. The changes referred to should be 14 temperature sensor
+   objects being created and added to the device's temperature_sensors
+   relationship.
+
+2. Execute the following snipped in *zendmd*.
+
+   .. sourcecode:: python
+
+      device = find("Netbotz01")
+      pprint(device.temperature_sensors())
+
+   You should see a list of all 14 temperature sensors printed. We can test in
+   more depth by validating that all of our modeled attributes were set
+   properly.
+
+   .. sourcecode:: python
+
+      for sensor in device.temperature_sensors():
+          print "%17s: %-17s %-11s %-11s %-11s" % (
+            sensor.id, sensor.title, sensor.snmpindex, sensor.enclosure,
+            sensor.port)
 
 
 Create the API
