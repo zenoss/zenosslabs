@@ -247,7 +247,12 @@ def pypi_project_version(key=None, zenoss_version=None, project=None, version=No
 
 @app.route('/pypi/eggs/<key>/<filename>')
 def download(key=None, filename=None):
-    return send_from_directory(PUBLIC_EGGS_PATH, filename, as_attachment=True)
+    if request.remote_addr not in IP_WHITELIST:
+        return send_from_directory(PUBLIC_EGGS_PATH, filename, as_attachment=True)
+
+    for root in (PRIVATE_EGGS_PATH, PUBLIC_EGGS_PATH):
+        if os.path.isfile(os.path.join(root, filename)):
+            return send_from_directory(root, filename, as_attachment=True)
 
 
 ### PyPI XML-RPC API ##########################################################
