@@ -11,6 +11,65 @@ The ``netsnmp-utils`` package is a prerequisite to installing Zenoss so you
 already have the SNMP tools you need installed on your Zenoss server.
 
 
+Using SNMPoster
+=============================================================================
+
+When developing a ZenPack to monitor an SNMP-enabled device it can often be
+useful to simulate the device's SNMP agent. There are many tools out there that
+can be used to do this. Some commercial and some free. Out of the free tools I
+recommend SNMPoster_ mainly because it can easily be run on your Zenoss
+development system, and uses `snmpwalk` output as its input format. This makes
+it easy to grab and use data from real devices.
+
+Use the following instructions to setup SNMPoster to simulate the NetBotz
+device used throughout this guide. These steps should all be run as the root
+user.
+
+1. Install SNMPoster_ according to the instructions on its site.
+
+2. Download and configure the NetBotz agent.
+
+   .. sourcecode:: bash
+
+      mkdir -p /etc/snmposter/agents
+      cd /etc/snmposter/agents
+      wget https://github.com/cluther/snmposter/raw/master/agents/NetBotz.snmpwalk
+      cat > /etc/snmposter/agents.csv << EOF
+      /etc/snmposter/agents/NetBotz.snmpwalk,127.0.1.113
+      EOF
+
+2. Configure `snmpd` to only listen on 127.0.0.1.
+
+   1. Add the following line to the top of ``/etc/snmp/snmpd.conf``::
+
+      agentaddress 127.0.0.1
+
+   2. Restart `snmpd`:
+
+      .. sourcecode:: bash
+
+         service snmpd restart
+
+3. Start SNMPoster.
+
+   .. sourcecode:: bash
+
+      snmposter -f /etc/snmposter/agents.csv
+
+4. Test.
+
+   .. sourcecode:: bash
+
+      snmpwalk -v2c -c public 127.0.1.113 sysDescr
+
+   You should see the following output::
+
+       SNMPv2-MIB::sysDescr.0 = STRING: Linux Netbotz01 2.4.26 #1 Wed Oct 31 18:09:53 CDT 2007 ppc
+
+
+.. _SNMPoster: https://github.com/cluther/snmposter#readme
+
+
 Using snmpwalk
 ==============================================================================
 
