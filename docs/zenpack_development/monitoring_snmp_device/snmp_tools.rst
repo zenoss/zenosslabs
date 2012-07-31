@@ -54,6 +54,7 @@ user.
 
    .. sourcecode:: bash
 
+      source /snmposter/bin/activate
       snmposter -f /etc/snmposter/agents.csv
 
 4. Test.
