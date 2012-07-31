@@ -33,7 +33,7 @@ user.
 
       mkdir -p /etc/snmposter/agents
       cd /etc/snmposter/agents
-      wget https://github.com/cluther/snmposter/raw/master/agents/NetBotz.snmpwalk
+      wget --no-check-certificate https://github.com/cluther/snmposter/raw/master/agents/NetBotz.snmpwalk
       cat > /etc/snmposter/agents.csv << EOF
       /etc/snmposter/agents/NetBotz.snmpwalk,127.0.1.113
       EOF
