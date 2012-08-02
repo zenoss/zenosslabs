@@ -242,7 +242,7 @@ the *NetBotz* device class, we need to add datasources, thresholds and graphs.
 We don't already know what might be interesting to graph for each NetBotz
 device, so let's go exploring with ``snmpwalk``::
 
-    # snmpwalk 127.0.1.113
+    # snmpwalk 127.0.1.113 .1.3
     SNMPv2-MIB::sysDescr.0 = STRING: Linux Netbotz01 2.4.26 #1 Wed Oct 31 18:09:53 CDT 2007 ppc
     SNMPv2-MIB::sysObjectID.0 = OID: NETBOTZV2-MIB::netBotz420ERack
     ... lots of lines removed ...
