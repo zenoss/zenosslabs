@@ -258,10 +258,11 @@ def pypi_project_version(key=None, zenoss_version=None, project=None, version=No
 
 @app.route('/pypi/eggs/<key>/<filename>')
 def download(key=None, filename=None):
+    download_paths = [PUBLIC_EGGS_PATH]
     if in_whitelist(request.remote_addr):
-        return send_from_directory(PUBLIC_EGGS_PATH, filename, as_attachment=True)
+        download_paths.insert(0, PRIVATE_EGGS_PATH)
 
-    for root in (PRIVATE_EGGS_PATH, PUBLIC_EGGS_PATH):
+    for root in download_paths:
         if os.path.isfile(os.path.join(root, filename)):
             return send_from_directory(root, filename, as_attachment=True)
 
