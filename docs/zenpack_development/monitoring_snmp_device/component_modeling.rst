@@ -254,7 +254,7 @@ to *NetBotzDevice.py* above. The key here is that existing objects like the
 delete the device and add it again, or execute the following in *zendmd* to
 create the newly-defined relationship.
 
-.. sourcecode: python
+.. sourcecode:: python
 
    device.buildRelations()
    commit()
