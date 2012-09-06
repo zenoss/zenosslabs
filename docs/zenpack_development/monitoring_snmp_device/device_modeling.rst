@@ -243,7 +243,7 @@ Use the following steps to create our modeler plugin.
       a format we can easily work with. GetTableMap will be used here because
       we need to request an SNMP table rather than specific OIDs.
 
-   2. Out NetBotz class extends SnmpPlugin. Note that the NetBotz class name
+   2. Our NetBotz class extends SnmpPlugin. Note that the NetBotz class name
       must match the filename (module name) of the modeler plugin.
 
    3. By defining snmpGetTableMaps as a tuple or list on our class we can add
@@ -293,7 +293,7 @@ Use the following steps to create our modeler plugin.
       - None (makes no changes to the model)
       - ObjectMap (to apply directly to the device that's being modeled)
       - RelationshipMap (to apply to a relationship within the device)
-      - A list containing 0 or more ObjectMap and/or RelationShipMap objects.
+      - A list containing zero or more ObjectMap and/or RelationShipMap objects.
 
       An *ObjectMap* is simply a `dict` wrapped with some meta-data. A
       *RelationshipMap* is a `list` wrapped with some meta-data and containing
