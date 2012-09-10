@@ -92,7 +92,7 @@ See the following notes for more information on what these commands are doing.
 #. The ``zenoss stop`` command stops all Zenoss processes.
 
 #. The ``cat > ...`` that ends with ``EOF`` on a blank line writes those
-   specific daemon names into the ``$ZENHOME/etc/DAEMONS_TXT_ONLY`` file. This
+   specific daemon names into the ``$ZENHOME/etc/daemons.txt`` file. This
    file contains the names of any daemons *in addition to the default* that
    should be started, stopped and otherwise managed by the ``zenoss`` master
    control script.

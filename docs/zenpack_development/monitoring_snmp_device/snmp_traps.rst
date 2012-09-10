@@ -6,7 +6,7 @@ This section covers how to handle SNMP traps.
 
 Zenoss will accept SNMP traps from your devices as soon as you configure those
 devices to send traps to your Zenoss server. The `zentrap` daemon will listen
-to the standard SNMP trap port of `161/udp` and create an event for every trap
+to the standard SNMP trap port of `162/udp` and create an event for every trap
 that it receives.
 
 However, without you giving Zenoss more information about the contents of those
