@@ -113,7 +113,7 @@ decode OIDs::
 While this data is mostly less valuable than the decoded version above, it's
 more useful for a single reason. We can take that
 ``.1.3.6.1.4.1.5528.100.20.10.2006`` value and search the Internet for it. It's
-best to remove the leading ``.``. and search for
+best to remove the leading ``.`` and search for
 ``1.3.6.1.4.1.5528.100.20.10.2006`` instead.
 
 This should lead you to the ``NETBOTZV2-MIB`` which will contain the decoding

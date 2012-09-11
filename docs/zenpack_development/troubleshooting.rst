@@ -16,5 +16,5 @@ To set a breakpoint in your code you add the following line::
     import pdb; pdb.set_trace()
 
 
-As wish any code change, you must restart the Zenoss process that executes the
+As with any code change, you must restart the Zenoss process that executes the
 code in question.
