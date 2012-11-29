@@ -258,7 +258,7 @@ Use the following steps to create our modeler plugin.
       contain a dictionary of the table results. In this case *results[1]*
       would look like the following.
 
-      .. sourcecode: python
+      .. sourcecode:: python
 
          {
              'tempSensorTable': {
