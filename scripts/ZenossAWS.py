@@ -7,7 +7,14 @@
 # Description:
 # The purpose of this script is to offer basic AWS interaction for users.
 #
+# Version: 0.2
+# 5 - Stop/Start fail when no instances
+# 10 - Filter out Terminated instances
+# 6 - Error when trying to start/stop with terminated instances
+# 3 - Can't cancel out of destroy screen
+#
 # Version: 0.1
+# Initial Release
 ##############################################################################
 
 import os
@@ -58,28 +65,42 @@ instanceList = {
     }
 
 envList = {
-    1: ('Lab', 'Turn off every night at 8pm CST. No Weekend'),
-    2: ('Production', 'Never turn off'),
-    3: ('Temp', 'Destory at 8pm CST. *WARNING* Data will be lost'),
-    4: ('Daily', 'Turn off every night at 8pm CST. Startup on Weekends')
+    1: ('Production', 'Never turn off'),
+    2: ('Daily', 'Turn off every night at 8pm CST. Startup on Weekends'),
+    3: ('Lab', 'Turn off every night at 8pm CST. No Weekend'),
+    4: ('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
+    5: ('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost')
     }
 
 # List of jobs user can execute
 jobsList = {
     1: 'List my instances',
-    2: 'Stop my %s instances now' % (envList[1][0]),
-    3: 'Start my %s instances now' % (envList[1][0]),
-    4: 'Create new instance',
-    5: 'Destroy instance',
-    6: 'Exit',
+    2: 'Start all of my %s instances now' % (envList[3][0]),
+    3: 'Stop all of my %s instances now' % (envList[3][0]),
+    4: 'Start instance',
+    5: 'Stop instance',
+    6: 'Destroy instance',
+    7: 'Create new instance',
+    8: 'Exit',
     }
 
 ec2conn = ec2(awsAccessKey, awsSecretKey)
 vpcconn = vpc(awsAccessKey, awsSecretKey)
 
 
-def listAll():
+def listAll(state=None, status=None):
+
+    #state = State of machine pending | running | shutting-down | terminated | stopping | stopped
+    #status = Environment Tag value instance deployed to
+
     filters = {'tag:Owner': username}
+
+    if status:
+        filters.update({'tag:Environment': envList[status][0]})
+
+    if state:
+        filters.update({'instance-state-name': state})
+
     getList = ec2conn.get_all_instances(filters=filters)
 
     print "*" * 60
@@ -89,12 +110,14 @@ def listAll():
     print ""
     instanceList = []
     intLineNumber = 1
+
     for i in getList:
-        instanceList.append(i)
-        print "%s -- %s -- %s -- %s -- %s" % (intLineNumber, i.instances[0].__dict__['tags']['Name'],
+        if i.instances[0].state != 'terminated':
+            instanceList.append(i)
+            print "%s -- %s -- %s -- %s -- %s" % (intLineNumber, i.instances[0].__dict__['tags']['Name'],
                                 i.instances[0].state, i.instances[0].private_ip_address,
                                 i.instances[0].__dict__['tags']['Environment'])
-        intLineNumber += 1
+            intLineNumber += 1
 
     print "\n" * 3
     return instanceList
@@ -103,9 +126,16 @@ def listAll():
 def destroy():
 
     instanceList = listAll()
+    print "Or Type \"EXIT\" to quit"
+
     valid = False
     while valid == False:
         getDestroy = raw_input("What instance would you like to destroy? ")
+
+        if getDestroy.lower() == 'exit':
+            valid = True
+            pass
+
         try:
             getDestroy = int(getDestroy)
             getDestroy = getDestroy - 1
@@ -119,21 +149,78 @@ def destroy():
             pass
 
 
-def changeRunningState(state, status):
+def changeRunningState(targetstate, fromstate=None, status=None, instanceID=None):
 
-    filters = {'tag:Environment': envList[status][0], 'tag:Owner': username}
-    getList = ec2conn.get_all_instances(filters=filters)
+    #state = State of machine pending | running | shutting-down | terminated | stopping | stopped
+    #status = Environment Tag value instance deployed to
+    #instanceID = List of instance id
+
+    filters = {'tag:Owner': username}
+
+    if status:
+        filters.update({'tag:Environment': envList[status][0]})
+
+    if fromstate:
+        filters.update({'instance-state-name': fromstate})
+
+    if instanceID:
+        getList = ec2conn.get_all_instances(instance_ids=instanceID, filters=filters)
+    else:
+        getList = ec2conn.get_all_instances(filters=filters)
 
     idList = []
 
     for i in getList:
         idList.append(i.instances[0].id)
 
-    if state == "start":
-        getList = ec2conn.start_instances(idList)
-    elif state == "stop":
-        getList = ec2conn.stop_instances(idList)
+    if idList:
+        if targetstate == "start":
+            getList = ec2conn.start_instances(idList)
+        elif targetstate == "stop":
+            getList = ec2conn.stop_instances(idList)
     listAll()
+
+
+def selectInstances(targetstate, fromstate=None, status=None):
+
+    #state = State of machine pending | running | shutting-down | terminated | stopping | stopped
+    #status = Environment Tag value instance deployed to
+
+    if fromstate:
+        instanceList = listAll(state=fromstate)
+    elif fromstate and status:
+        instanceList = listAll(state=fromstate, status=status)
+    elif status:
+        instanceList = listAll(status=status)
+    else:
+        instanceList = listAll()
+
+    print "Or Type \"EXIT\" to quit"
+
+    valid = False
+    while valid == False:
+        getSelected = raw_input("Which instances would you like to %s? " % (targetstate))
+
+        if getSelected.lower() == 'exit':
+            valid = True
+            pass
+
+        try:
+            getSelected = map(int, getSelected.split(','))
+            valid = True
+            selectedList = []
+            for i in getSelected:
+                selectedList.append(instanceList[i - 1].instances[0].id)
+
+            if selectedList:
+                if status:
+                    changeRunningState(targetstate=targetstate, status=status, instanceID=selectedList)
+                else:
+                    changeRunningState(targetstate=targetstate, instanceID=selectedList)
+
+                listAll()
+        except:
+            pass
 
 
 def deploy():
@@ -304,35 +391,43 @@ def jobList():
     print "\n" * 2
     valid = False
     while valid == False:
-        strJob = raw_input("What would you like to do? ")
+        getJob = raw_input("What would you like to do? ")
         try:
-            strJob = int(strJob)
-            if strJob < intLineNumber:
+            getJob = int(getJob)
+            if getJob < intLineNumber:
                 valid = True
         except:
             pass
 
-    if strJob == 1:
+    if getJob == 1:
         #List my instances
         listAll()
 
-    elif strJob == 2:
-        #Shutdown all my instances
-        changeRunningState("stop", 1)
+    elif getJob == 2:
+        #Start all my instances
+        changeRunningState(targetstate="start", fromstate="stopped", status=3)
 
-    elif strJob == 3:
-        #Start my Lab instances
-        changeRunningState("start", 1)
+    elif getJob == 3:
+        #Stop my Lab instances
+        changeRunningState(targetstate="stop", fromstate="running", status=3)
 
-    elif strJob == 4:
-        #Deploy New Instance
-        deploy()
+    elif getJob == 4:
+        #Start 1 or more instances
+        selectInstances(targetstate="start", fromstate="stopped")
 
-    elif strJob == 5:
+    elif getJob == 5:
+        #Stop 1 or more instances
+        selectInstances(targetstate="stop", fromstate="running")
+
+    elif getJob == 6:
         #Destory Instance
         destroy()
 
-    elif strJob == 6:
+    elif getJob == 7:
+        #Deploy New Instance
+        deploy()
+
+    elif getJob == 8:
         #Exit Script
         sys.exit()
     jobList()
