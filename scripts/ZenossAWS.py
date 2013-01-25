@@ -7,11 +7,19 @@
 # Description:
 # The purpose of this script is to offer basic AWS interaction for users.
 #
+# Version: 0.3
+# Added Create AMI Image of instance.
+# Added command line arguments
+#   list = Will list all instances then exit
+#
+#
+#
 # Version: 0.2
 # 5 - Stop/Start fail when no instances
 # 10 - Filter out Terminated instances
 # 6 - Error when trying to start/stop with terminated instances
 # 3 - Can't cancel out of destroy screen
+# 7 - Need to allow single instance start/stop
 #
 # Version: 0.1
 # Initial Release
@@ -81,7 +89,8 @@ jobsList = {
     5: 'Stop instance',
     6: 'Destroy instance',
     7: 'Create new instance',
-    8: 'Exit',
+    8: 'Create AMI from instance',
+    9: 'Exit',
     }
 
 ec2conn = ec2(awsAccessKey, awsSecretKey)
@@ -223,6 +232,37 @@ def selectInstances(targetstate, fromstate=None, status=None):
             pass
 
 
+def createAMIInstance(status=None, state=None):
+
+    instanceList = listAll()
+
+    print "Or Type \"EXIT\" to quit"
+    valid = False
+    while valid == False:
+        getCloneID = raw_input("What instance would you like to create AMI Image? ")
+
+        if getCloneID.lower() == 'exit':
+            valid = True
+            pass
+
+        try:
+            getCloneID = int(getCloneID) - 1
+            valid = True
+            valid2 = False
+
+            while valid2 == False:
+                getName = raw_input("What name would you like to set for the new AMI name? ")
+
+                if len(getName) > 0:
+                    valid2 = True
+                    instance_id = instanceList[getCloneID].instances[0].id
+                    newID = ec2conn.create_image(instance_id=instance_id, name=getName, no_reboot=True)
+                    print "New ID=" + newID
+                    listAll()
+        except:
+            pass
+
+
 def deploy():
     awsSecGroups = ec2conn.get_all_security_groups()
 
@@ -320,7 +360,13 @@ def deploy():
     for i in awsSubnets:
         if i.available_ip_address_count > 0:
             subnetList.append(i)
-            print "%s - %s \"%s\"" % (str(intLineNumber), i.id, i.cidr_block)
+            netname = ''
+            try:
+                netname = i.__dict__['tags']['Name']
+            except:
+                pass
+
+            print "%s - %s \"%s\" -- %s" % (str(intLineNumber), i.id, i.cidr_block, netname)
             intLineNumber += 1
     print "\n" * 2
     valid = False
@@ -428,9 +474,21 @@ def jobList():
         deploy()
 
     elif getJob == 8:
+        #Clone instance
+        createAMIInstance()
+
+    elif getJob == 9:
         #Exit Script
         sys.exit()
     jobList()
+
+if len(sys.argv) > 1:
+    for i in sys.argv:
+        argT = i.split("=")
+
+        if argT[0] == "list":
+            listAll()
+            sys.exit()
 
 
 jobList()
