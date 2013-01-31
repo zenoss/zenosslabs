@@ -1,2 +1,7 @@
 *.pyc
 .vagrant
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+atlassian-ide-plugin.xml
