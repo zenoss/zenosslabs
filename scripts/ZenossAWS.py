@@ -28,55 +28,38 @@
 import os
 import sys
 import time
+import optparse
+from collections import namedtuple
 
 from boto.ec2.connection import EC2Connection as ec2
 from boto.vpc import VPCConnection as vpc
 
 
-# Check to confirm critical information is set in environment
-try:
-    awsAccessKey = os.environ['AWS_ACCESS_KEY']
-    awsSecretKey = os.environ['AWS_SECRET_KEY']
-    username = os.environ['USER']
-    customer = os.environ['DEPARTMENT']
-    awsKeyName = os.environ['AWS_KEY_NAME']
-except KeyError as envNotSet:
-    print "\n" * 3
-    print "******* ERROR *********"
-    print "The following environment variables MUST be set"
-    print ""
-    print "AWS_ACCESS_KEY"
-    print "AWS_SECRET_KEY"
-    print "USER"
-    print "DEPARTMENT"
-    print "AWS_KEY_NAME"
-    print ""
-    print "Error Results:"
-    print str(envNotSet)
-    print "Not Set"
-    sys.exit(1)
-
 # List of AMI offered to user.
 # Feel free to add more AMIs here
+AWS_AMI = namedtuple('AMI', ['description', 'id'])
 AMI_LIST = (
-    ('Ubuntu Server 12.04.1 LTS', 'ami-3d4ff254'),
-    ('Red Hat Enterprise Linux 6.3', 'ami-cc5af9a5'),
+    AWS_AMI('Ubuntu Server 12.04.1 LTS', 'ami-3d4ff254'),
+    AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-cc5af9a5'),
+    AWS_AMI('Centos 6.3 x86_64', 'ami-a6e15bcf'),
 )
 
 # Limited list of instance types available. Many more exists but haven't been added here.
+AWS_INSTANCE = namedtuple('AWS_INSTANCE', ['description', 'id'])
 INSTANCE_LIST = (
-    ('Micro', 't1.micro'),
-    ('Small', 'm1.small'),
-    ('Medium', 'm1.medium'),
-    ('Large', 'm1.large'),
+    AWS_INSTANCE('Micro', 't1.micro'),
+    AWS_INSTANCE('Small', 'm1.small'),
+    AWS_INSTANCE('Medium', 'm1.medium'),
+    AWS_INSTANCE('Large', 'm1.large'),
 )
 
+ENVIRONMENT = namedtuple('ENVIRONMENT', ['name','description'])
 ENV_LIST = (
-    ('Production', 'Never turn off'),
-    ('Daily', 'Turn off every night at 8pm CST. Startup on Weekends'),
-    ('Lab', 'Turn off every night at 8pm CST. No Weekend'),
-    ('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
-    ('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost')
+    ENVIRONMENT('Production', 'Never turn off'),
+    ENVIRONMENT('Daily', 'Turn off every night at 8pm CST. Startup on Weekends'),
+    ENVIRONMENT('Lab', 'Turn off every night at 8pm CST. No Weekend'),
+    ENVIRONMENT('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
+    ENVIRONMENT('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost'),
 )
 
 class Job(object):
@@ -91,19 +74,23 @@ class Job(object):
     def execute(self):
         return self.fn(*self.fn_args, **self.fn_kwargs)
 
-ec2conn = ec2(awsAccessKey, awsSecretKey)
-vpcconn = vpc(awsAccessKey, awsSecretKey)
+    def __str__(self):
+        return self.description
 
-def promptVal(prompt, convert_fn=None, valid_fn=None, exit_values=()):
+    __repr__ = __str__
+
+EXIT_VALUES = ('exit',)
+
+def promptVal(prompt, convert_fn=None, valid_fn=None, allow_exit=False):
     """
     Prompts for a value from stdin. Uses convert_fn to convert
     the value to another format. If valid_fn is specified, it
     is passed the converted value to determine if the value is
     valid. If the value is invalid, it is discarded and the user
-    is prompted again. If exit_values is specified, it contains
-    a list of (lowercase) values which can short-circuit the loop
-    and cause promptVal to return None. Returns the converted value
-    from stdin, or None if the input matched exit_values.
+    is prompted again. If allow_exit is specified, it allows the
+    loop to be short-circuited and return None if the input from the
+    user is 'exit'. Returns the converted value from stdin, or None
+    if allow_exit is True and the user chose to exit.
     """
     if not valid_fn:
         valid_fn = lambda x: True
@@ -111,11 +98,17 @@ def promptVal(prompt, convert_fn=None, valid_fn=None, exit_values=()):
         convert_fn = lambda x: x
     while True:
         input = raw_input(prompt)
-        if input.lower() in exit_values:
-            return None
-        value = convert_fn(input)
-        if valid_fn(value):
-            return value
+        if input:
+            if allow_exit and input.lower() in EXIT_VALUES:
+                return None
+            try:
+                value = convert_fn(input)
+                if valid_fn(value):
+                    return value
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception:
+                print >> sys.stderr, "Invalid value: %s" % input
 
 def promptInt(prompt, min_val=None, max_val=None, **kwargs):
     """
@@ -179,7 +172,7 @@ def listAll(state=None, status=None):
     #state = State of machine pending | running | shutting-down | terminated | stopping | stopped
     #status = Environment Tag value instance deployed to
 
-    filters = {'tag:Owner': username}
+    filters = {'tag:Owner': options.aws_username}
     if status:
         filters.update({'tag:Environment': ENV_LIST[status][0]})
     if state:
@@ -188,7 +181,7 @@ def listAll(state=None, status=None):
     instanceList = ec2conn.get_all_instances(filters=filters)
 
     print "*" * 60
-    print "All instances that belong to %s" % username
+    print "All instances that belong to %s" % options.aws_username
     print "\n" * 3
     print "LINE -- NAME -- RUNNING STATE -- PRIVATE IP -- ENVIRONMENT"
     print ""
@@ -207,7 +200,7 @@ def destroy():
     print "Or Type \"EXIT\" to quit"
 
     instance = promptList("What instance would you like to destroy? ",
-                          instanceList, exit_values=('exit',))
+                          instanceList, allow_exit=True)
     if instance is None:
         return
 
@@ -223,7 +216,7 @@ def changeRunningState(targetstate, fromstate=None, status=None, instanceID=None
     #status = Environment Tag value instance deployed to
     #instanceID = List of instance id
 
-    filters = {'tag:Owner': username}
+    filters = {'tag:Owner': options.aws_username}
     if status:
         filters['tag:Environment'] = ENV_LIST[status][0]
     if fromstate:
@@ -247,19 +240,12 @@ def selectInstances(targetstate, fromstate=None, status=None):
     #state = State of machine pending | running | shutting-down | terminated | stopping | stopped
     #status = Environment Tag value instance deployed to
 
-    if fromstate:
-        instanceList = listAll(state=fromstate)
-    elif fromstate and status:
-        instanceList = listAll(state=fromstate, status=status)
-    elif status:
-        instanceList = listAll(status=status)
-    else:
-        instanceList = listAll()
+    instanceList = listAll(state=fromstate, status=status)
 
     print "Or Type \"EXIT\" to quit"
 
     selectedInstances = promptListMultiple("Which instances would you like to %s? " % targetstate,
-                                           instanceList)
+                                           instanceList, allow_exit=True)
     if selectedInstances:
         instance_ids = [instance.instances[0].id for instance in selectedInstances]
         if status:
@@ -275,7 +261,7 @@ def createAMIInstance():
 
     print "Or Type \"EXIT\" to quit"
     instance = promptList("What instance would you like to create AMI Image? ",
-                          instanceList, exit_values=('exit',))
+                          instanceList, allow_exit=True)
     if instance is None:
         return
     getName = promptVal("What name would you like to set for the new AMI name? ",
@@ -297,7 +283,7 @@ def deploy():
 
     #Environment
     for i, env in enumerate_with_offset(ENV_LIST):
-        print "%s - %s - %s" % (i, env[0], env[1])
+        print "%s - %s - %s" % (i, env.name, env.description)
 
     print "\n" * 2
     selectedEnv = promptList("How do you classify this machine? ", ENV_LIST)
@@ -306,7 +292,7 @@ def deploy():
 
     #AMI
     for i, ami in enumerate_with_offset(AMI_LIST):
-        print "%s - %s" % (i, AMI_LIST[i][0])
+        print "%s - %s" % (i, ami.description)
 
     print "\n" * 2
     selectedAMI = promptList("What image would you like to deploy? ", AMI_LIST)
@@ -315,7 +301,7 @@ def deploy():
 
     #Instance Type
     for i, instance in enumerate_with_offset(INSTANCE_LIST):
-        print "%s - %s" % (i, instance[0])
+        print "%s - %s" % (i, instance.description)
     print "\n" * 2
     selectedInstance = promptList("What size instance would you like to deploy? ",
                                   INSTANCE_LIST)
@@ -344,11 +330,11 @@ def deploy():
     print "\n" * 5
 
     #Deploy new instance
-    print awsKeyName
+    print options.aws_key_name
     sendSecGroupID = str(selectedSecGroup.id)
-    sendInstanceID = str(selectedInstance[1])
+    sendInstanceID = selectedInstance.id
     sendSubnet = str(selectedSubnet.id)
-    sendAMI = selectedAMI[1]
+    sendAMI = selectedAMI.id
 
     print sendAMI
     print sendSecGroupID
@@ -356,7 +342,7 @@ def deploy():
     print sendSubnet
 
     newInstance = ec2conn.run_instances(image_id=sendAMI,
-            key_name=awsKeyName,
+            key_name=options.aws_key_name,
             instance_initiated_shutdown_behavior='stop',
             security_group_ids=[sendSecGroupID],
             instance_type=sendInstanceID,
@@ -367,10 +353,10 @@ def deploy():
 
     newTags = {
         'Name': getName,
-        'Environment': selectedEnv[0],
-        'Customer': customer,
-        'Owner': username
-        }
+        'Environment': selectedEnv.name,
+        'Customer': options.department,
+        'Owner': options.aws_username,
+    }
 
     newInstanceID = newInstance.instances[0].id
     #ec2conn.modify_instance_attribute(newInstanceID, attribute='groupSet', value=['sg-8b6c9de4'])
@@ -391,13 +377,13 @@ def jobList():
     # List of jobs user can execute
     jobsList = [
         Job('List my instances', listAll),
-        Job('Start all of my %s instances now' % (ENV_LIST[3][0]),
+        Job('Start all of my %s instances now' % ENV_LIST[3].name,
             changeRunningState,
             targetstate="start",
             fromstate="stopped",
             status=3
         ),
-        Job('Stop all of my %s instances now' % (ENV_LIST[3][0]),
+        Job('Stop all of my %s instances now' % ENV_LIST[3].name,
             changeRunningState,
             targetstate="stop",
             fromstate="running",
@@ -427,15 +413,81 @@ def jobList():
             print "%s - %s" % (i, job)
 
         print "\n" * 2
-        job = promptList("What would you like to do? ", jobsList)
+        job = promptList("What would you like to do? ", jobsList, allow_exit=True)
         job.execute()
 
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        for i in sys.argv:
-            argT = i.split("=")
+def get_defaults():
+    from ConfigParser import SafeConfigParser, DEFAULTSECT
+    cfg = SafeConfigParser()
+    cfg_file = os.path.expanduser("~/.zenoss_aws.cfg")
+    if os.path.exists(cfg_file):
+        # Fake out SafeConfigParser by writing a default section
+        cfg_contents = "[%s]\n" % DEFAULTSECT
+        with open(cfg_file) as f:
+            cfg_contents += f.read()
+        from cStringIO import StringIO
+        cfg.readfp(StringIO(cfg_contents))
 
-            if argT[0] == "list":
-                listAll()
-                sys.exit()
-    jobList()
+    def cfg_get(key, default=None):
+        if cfg.has_option(DEFAULTSECT, key):
+            return cfg.get(DEFAULTSECT, key)
+        return default
+
+    #
+    # Option precedence:
+    #
+    #   Config File -> Environment -> Command-line Options
+    #
+    # in all cases except for the 'USER' env var, which will always be set so
+    # we prefer the config file setting before looking at the USER env var.
+    #
+    env_get = os.environ.get
+    return {
+        'access_key': env_get('AWS_ACCESS_KEY', cfg_get('access_key')),
+        'secret_key': env_get('AWS_SECRET_KEY', cfg_get('secret_key')),
+        'username': env_get('AWS_USERNAME', cfg_get('username', env_get('USER'))),
+        'department': env_get('DEPARTMENT', cfg_get('department')),
+        'key_name': env_get('AWS_KEY_NAME', cfg_get('key_name')),
+    }
+
+def parse_options():
+    usage = """\
+ZenossAWS.py [options...]
+
+This utility is used to manage EC2 instances in the Zenoss AWS environment."""
+    parser = optparse.OptionParser(usage=usage)
+    defaults = get_defaults()
+    parser.add_option("-a", "--aws-access-key", dest='aws_access_key',
+                      default=defaults['access_key'],
+                      help="AWS Access Key (environment variable: AWS_ACCESS_KEY)")
+    parser.add_option("-s", "--aws-secret-key", dest='aws_secret_key',
+                      default=defaults['secret_key'],
+                      help="AWS Secret Key (environment variable: AWS_SECRET_KEY)")
+    parser.add_option("-u", "--aws-username", dest='aws_username',
+                      default=defaults['username'],
+                      help="AWS Username (environment variable: AWS_USERNAME/USER)")
+    parser.add_option("-d", "--department", dest='department',
+                      default=defaults['department'],
+                      help="Department Name (environment variable: DEPARTMENT)")
+    parser.add_option("-k", "--aws-key-name", dest='aws_key_name',
+                      default=defaults['key_name'],
+                      help="AWS Key Name (environment variable: AWS_KEY_NAME)")
+    options, _ = parser.parse_args()
+    # All options are required
+    for option in parser.option_list:
+        if not option.dest:
+            continue
+        if not getattr(options, option.dest, None):
+            parser.print_help()
+            print >> sys.stderr, "\nRequired option %s not specified" % option
+            sys.exit(2)
+    return options
+
+if __name__ == '__main__':
+    options = parse_options()
+    ec2conn = ec2(options.aws_access_key, options.aws_secret_key)
+    vpcconn = vpc(options.aws_access_key, options.aws_secret_key)
+    try:
+        jobList()
+    except (KeyboardInterrupt, EOFError):
+        print
