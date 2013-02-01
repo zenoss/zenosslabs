@@ -185,11 +185,12 @@ def listAll(state=None, status=None):
     print "\n" * 3
     print "LINE -- NAME -- RUNNING STATE -- PRIVATE IP -- ENVIRONMENT"
     print ""
-    for i, instance in enumerate_with_offset(instanceList):
-        if instance.instances[0].state != 'terminated':
-            print "%s -- %s -- %s -- %s -- %s" % (i, instance[0].tags['Name'],
-                                instance[0].state, instance[0].private_ip_address,
-                                instance[0].tags['Environment'])
+    for i, reservation in enumerate_with_offset(instanceList):
+        instance = reservation.instances[0]
+        if instance.state != 'terminated':
+            print "%s -- %s -- %s -- %s -- %s" % (i, instance.tags['Name'],
+                                instance.state, instance.private_ip_address,
+                                instance.tags['Environment'])
 
     print "\n" * 3
     return instanceList
