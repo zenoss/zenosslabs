@@ -273,9 +273,6 @@ def createAMIInstance():
 
 
 def deploy():
-    awsSecGroups = filter(lambda x: x != 'default',
-                          ec2conn.get_all_security_groups())
-
     #Instance Name
     getName = promptVal("What name would you like to assign to this instance? ",
                         valid_fn=lambda x: len(x) > 1)
@@ -309,6 +306,8 @@ def deploy():
     print "\n" * 5
 
     #Security Groups
+    awsSecGroups = filter(lambda x: x.name != 'default',
+                          ec2conn.get_all_security_groups())
     for i, secgroup in enumerate_with_offset(awsSecGroups):
         print "%s - %s \"%s\"" % (i, secgroup.name, secgroup.description)
     print "\n" * 2
