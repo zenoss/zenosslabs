@@ -53,7 +53,7 @@ INSTANCE_LIST = (
     AWS_INSTANCE('Large', 'm1.large'),
 )
 
-ENVIRONMENT = namedtuple('ENVIRONMENT', ['name','description'])
+ENVIRONMENT = namedtuple('ENVIRONMENT', ['name', 'description'])
 ENV_LIST = (
     ENVIRONMENT('Production', 'Never turn off'),
     ENVIRONMENT('Daily', 'Turn off every night at 8pm CST. Startup on Weekends'),
@@ -61,6 +61,7 @@ ENV_LIST = (
     ENVIRONMENT('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
     ENVIRONMENT('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost'),
 )
+
 
 class Job(object):
     def __init__(self, description, fn, *args, **kwargs):
@@ -80,6 +81,7 @@ class Job(object):
     __repr__ = __str__
 
 EXIT_VALUES = ('exit',)
+
 
 def promptVal(prompt, convert_fn=None, valid_fn=None, allow_exit=False):
     """
@@ -110,6 +112,7 @@ def promptVal(prompt, convert_fn=None, valid_fn=None, allow_exit=False):
             except Exception:
                 print >> sys.stderr, "Invalid value: %s" % input
 
+
 def promptInt(prompt, min_val=None, max_val=None, **kwargs):
     """
     Prompts for an integer value from stdin. If min_val is
@@ -124,6 +127,7 @@ def promptInt(prompt, min_val=None, max_val=None, **kwargs):
     kwargs['convert_fn'] = int
     kwargs['valid_fn'] = valid_int_range
     return promptVal(prompt, **kwargs)
+
 
 def promptList(prompt, list_val, **kwargs):
     """
@@ -142,6 +146,7 @@ def promptList(prompt, list_val, **kwargs):
     if index_val is not None:
         return list_val[index_val - index_offset]
 
+
 def promptListMultiple(prompt, list_val, **kwargs):
     """
     Prompts for multiple selections in a list. Returns the list items at
@@ -153,6 +158,7 @@ def promptListMultiple(prompt, list_val, **kwargs):
     :return: A list of selected values or None.
     """
     index_offset = 1
+
     def valid_indexes(val):
         for idx in val:
             if idx < index_offset or idx >= len(list_val) + index_offset:
@@ -164,9 +170,11 @@ def promptListMultiple(prompt, list_val, **kwargs):
     if selected_idxs is not None:
         return [list_val[idx - index_offset] for idx in selected_idxs]
 
+
 def enumerate_with_offset(iterable, offset=1):
     for i, val in enumerate(iterable):
-        yield i+offset, val
+        yield i + offset, val
+
 
 def listAll(state=None, status=None):
     #state = State of machine pending | running | shutting-down | terminated | stopping | stopped
@@ -416,6 +424,7 @@ def jobList():
         job = promptList("What would you like to do? ", jobsList, allow_exit=True)
         job.execute()
 
+
 def get_defaults():
     from ConfigParser import SafeConfigParser, DEFAULTSECT
     cfg = SafeConfigParser()
@@ -449,6 +458,7 @@ def get_defaults():
         'department': env_get('DEPARTMENT', cfg_get('department')),
         'key_name': env_get('AWS_KEY_NAME', cfg_get('key_name')),
     }
+
 
 def parse_options():
     usage = """\
