@@ -245,6 +245,41 @@ def changeRunningState(targetstate, fromstate=None, status=None, instanceID=None
     listAll()
 
 
+def changeTag(tagName='ExtraTime'):
+    instanceList = listAll()
+
+    print "Or Type \"EXIT\" to quit"
+
+    if tagName == 'ExtraTime':
+        selectedInstances = promptListMultiple("Which instances would you like to extend the usage on? ",
+                                           instanceList, allow_exit=True)
+
+    if tagName == 'Environment':
+        selectedInstances = promptListMultiple("Which instances would you like to change the Environment on? ",
+                                           instanceList, allow_exit=True)
+    else:
+        exit
+
+    if selectInstances:
+        instance_ids = [instance.instances[0].id for instance in selectedInstances]
+
+        if tagName == 'ExtraTime':
+            selectedVal = promptInt("How many hours would you like to add? ", min_val=1, max_val=24)
+
+        if tagName == 'Environment':
+            print "\n" * 5
+            for i, env in enumerate_with_offset(ENV_LIST):
+                print "%s - %s - %s" % (i, env.name, env.description)
+            print "\n" * 2
+            selectedVal = promptList("How do you classify this machine? ", ENV_LIST)
+            selectedVal = selectedVal[0]
+
+        else:
+            exit
+
+        ec2conn.create_tags(instance_ids, {tagName: selectedVal})
+
+
 def selectInstances(targetstate, fromstate=None, status=None):
     #state = State of machine pending | running | shutting-down | terminated | stopping | stopped
     #status = Environment Tag value instance deployed to
@@ -364,6 +399,7 @@ def deploy():
         'Environment': selectedEnv.name,
         'Customer': options.department,
         'Owner': options.aws_username,
+        'ExtraTime': 0,
     }
 
     newInstanceID = newInstance.instances[0].id
@@ -406,6 +442,13 @@ def jobList():
             selectInstances,
             targetstate="stop",
             fromstate="running"
+        ),
+        Job('Extend Time of instance',
+            changeTag
+        ),
+        Job('Change Environment',
+            changeTag,
+            tagName="Environment"
         ),
         Job('Destroy instance', destroy),
         Job('Create new instance', deploy),
