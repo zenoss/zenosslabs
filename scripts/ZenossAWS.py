@@ -385,13 +385,13 @@ def jobList():
     # List of jobs user can execute
     jobsList = [
         Job('List my instances', listAll),
-        Job('Start all of my %s instances now' % ENV_LIST[3].name,
+        Job('Start all of my %s instances now' % ENV_LIST[2].name,
             changeRunningState,
             targetstate="start",
             fromstate="stopped",
             status=3
         ),
-        Job('Stop all of my %s instances now' % ENV_LIST[3].name,
+        Job('Stop all of my %s instances now' % ENV_LIST[2].name,
             changeRunningState,
             targetstate="stop",
             fromstate="running",
