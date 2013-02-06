@@ -69,13 +69,14 @@ def changeState(targetstate='stop', fromstate=None,  envTag='lab'):
             newTime = extraTime - 1
             ec2conn.create_tags([i.instances[0].id], {'ExtraTime': newTime})
 
-    if targetstate == 'start':
-        ec2conn.start_instances(instanceList)
-    elif targetstate == 'stop':
-        ec2conn.stop_instances(instanceList)
-    elif targetstate == 'destroy':
-        ec2conn.stop_instances(instanceList)
-        #ec2conn.terminate_instances(i.instances[0].id)
+    if instanceList:
+        if targetstate == 'start':
+            ec2conn.start_instances(instanceList)
+        elif targetstate == 'stop':
+            ec2conn.stop_instances(instanceList)
+        elif targetstate == 'destroy':
+            ec2conn.stop_instances(instanceList)
+            #ec2conn.terminate_instances(i.instances[0].id)
 
 
 def autoJob():
