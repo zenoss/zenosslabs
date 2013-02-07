@@ -60,6 +60,7 @@ ENV_LIST = (
     ENVIRONMENT('Lab', 'Turn off every night at 8pm CST. No Weekend'),
     ENVIRONMENT('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
     ENVIRONMENT('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost'),
+    ENVIRONMENT('Keep Temporary', 'Shutdown but don\'t destroy at 8pm CST.'),
 )
 
 
@@ -257,10 +258,8 @@ def changeTag(tagName='ExtraTime'):
     if tagName == 'Environment':
         selectedInstances = promptListMultiple("Which instances would you like to change the Environment on? ",
                                            instanceList, allow_exit=True)
-    else:
-        exit
 
-    if selectInstances:
+    if selectedInstances:
         instance_ids = [instance.instances[0].id for instance in selectedInstances]
 
         if tagName == 'ExtraTime':
@@ -273,9 +272,6 @@ def changeTag(tagName='ExtraTime'):
             print "\n" * 2
             selectedVal = promptList("How do you classify this machine? ", ENV_LIST)
             selectedVal = selectedVal[0]
-
-        else:
-            exit
 
         ec2conn.create_tags(instance_ids, {tagName: selectedVal})
 

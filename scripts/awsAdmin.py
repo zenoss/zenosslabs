@@ -40,6 +40,8 @@ class Job(object):
 
     __repr__ = __str__
 
+EXIT_VALUES = ('exit',)
+
 
 def changeState(targetstate='stop', fromstate=None,  envTag='lab'):
 
@@ -86,6 +88,7 @@ def autoJob():
     weekdayEnv = ['Lab', 'Daily']
     weekendEnv = 'Daily'
     tempEnv = 'Temporary'
+    tempKeepEnv = 'Keep Temporary'
     shortuseEnv = 'Short Use'
 
     jobsList = [
@@ -113,6 +116,11 @@ def autoJob():
             changeState,
             targetstate='destroy',
             envTag=tempEnv),
+         Job('Temporary Stop Job',
+            changeState,
+            targetstate='stop',
+            fromstate='running',
+            envTag=tempKeepEnv),
          Job('Short Use Destroy Job',
             changeState,
             targetstate='destroy',
@@ -131,13 +139,14 @@ def autoJob():
             jobsList[2].execute()
 
         jobsList[4].execute()
+        jobsList[5].execute()
 
     elif int(time.strftime("%H", time.gmtime())) == 14:
         if weekday:
             jobsList[1].execute()
         else:
             jobsList[3].execute()
-    jobsList[5].execute()
+    jobsList[6].execute()
 
 
 def get_defaults():
