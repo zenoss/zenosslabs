@@ -7,22 +7,6 @@
 # Description:
 # The purpose of this script is to offer basic AWS interaction for users.
 #
-# Version: 0.3
-# Added Create AMI Image of instance.
-# Added command line arguments
-#   list = Will list all instances then exit
-#
-#
-#
-# Version: 0.2
-# 5 - Stop/Start fail when no instances
-# 10 - Filter out Terminated instances
-# 6 - Error when trying to start/stop with terminated instances
-# 3 - Can't cancel out of destroy screen
-# 7 - Need to allow single instance start/stop
-#
-# Version: 0.1
-# Initial Release
 ##############################################################################
 
 import os
@@ -56,11 +40,10 @@ INSTANCE_LIST = (
 ENVIRONMENT = namedtuple('ENVIRONMENT', ['name', 'description'])
 ENV_LIST = (
     ENVIRONMENT('Production', 'Never turn off'),
-    ENVIRONMENT('Daily', 'Turn off every night at 8pm CST. Startup on Weekends'),
-    ENVIRONMENT('Lab', 'Turn off every night at 8pm CST. No Weekend'),
+    ENVIRONMENT('Lab', 'Turn off every night at 8pm CST M-F.'),
+    ENVIRONMENT('Lab (Auto-start)', 'Turn off every night at 8pm CST. Restart at 8am CST. M-F'),
     ENVIRONMENT('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
     ENVIRONMENT('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost'),
-    ENVIRONMENT('Keep Temporary', 'Shutdown but don\'t destroy at 8pm CST.'),
 )
 
 
@@ -306,8 +289,25 @@ def createAMIInstance():
         return
     getName = promptVal("What name would you like to set for the new AMI name? ",
                         valid_fn=bool)
+
+    getDescription = promptVal("What description would you like to provide? ",
+                        valid_fn=bool)
+
     instance_id = instance.instances[0].id
-    newID = ec2conn.create_image(instance_id=instance_id, name=getName, no_reboot=True)
+    newID = ec2conn.create_image(instance_id=instance_id, name=getName, description=getDescription, no_reboot=True)
+
+    #Need to assign tag information
+    print "Working... Please wait"
+    time.sleep(4)
+
+    newTags = {
+        'Name': getName,
+        'Customer': options.department,
+        'Owner': options.aws_username,
+        'Description': getDescription,
+        }
+    ec2conn.create_tags(newID, newTags)
+
     print "New ID=" + newID
     listAll()
 
@@ -327,6 +327,24 @@ def deploy():
 
     print "\n" * 5
 
+    """
+    #Get users list of AMI Images
+    print "Working on retrieving list of AMI Images... Please wait"
+
+    USER_AMI_LIST = ec2conn.get_all_images(filters={'tag:Owner': options.aws_username})
+
+    NEW_AMI_LIST = namedtuple('AMI', ['description', 'id'])
+
+    for i in USER_AMI_LIST:
+        NEW_USER_LIST = (
+            NEW_AMI_LIST(i.description, i.id),
+            )
+
+    #NEW_USER_LIST += AMI_LIST
+
+    #import pdb; pdb.set_trace()
+    """
+
     #AMI
     for i, ami in enumerate_with_offset(AMI_LIST):
         print "%s - %s" % (i, ami.description)
@@ -339,6 +357,7 @@ def deploy():
     #Instance Type
     for i, instance in enumerate_with_offset(INSTANCE_LIST):
         print "%s - %s" % (i, instance.description)
+
     print "\n" * 2
     selectedInstance = promptList("What size instance would you like to deploy? ",
                                   INSTANCE_LIST)
