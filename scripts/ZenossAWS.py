@@ -327,30 +327,31 @@ def deploy():
 
     print "\n" * 5
 
-    """
     #Get users list of AMI Images
     print "Working on retrieving list of AMI Images... Please wait"
 
     USER_AMI_LIST = ec2conn.get_all_images(filters={'tag:Owner': options.aws_username})
+    print "\n" * 5
 
-    NEW_AMI_LIST = namedtuple('AMI', ['description', 'id'])
+    COMB_AMI_LIST = []
 
+    amiListStart = 1
     for i in USER_AMI_LIST:
-        NEW_USER_LIST = (
-            NEW_AMI_LIST(i.description, i.id),
-            )
-
-    #NEW_USER_LIST += AMI_LIST
-
-    #import pdb; pdb.set_trace()
-    """
+        COMB_AMI_LIST.append(
+            {'description': i.description,
+             'id': i.id})
+        print "%s - %s" % (amiListStart, i.description)
+        amiListStart += 1
 
     #AMI
-    for i, ami in enumerate_with_offset(AMI_LIST):
+    for i, ami in enumerate_with_offset(AMI_LIST, offset=amiListStart):
+        COMB_AMI_LIST.append(
+            {'description': ami.description,
+             'id': ami.id})
         print "%s - %s" % (i, ami.description)
 
     print "\n" * 2
-    selectedAMI = promptList("What image would you like to deploy? ", AMI_LIST)
+    selectedAMI = promptList("What image would you like to deploy? ", COMB_AMI_LIST)
 
     print "\n" * 5
 
@@ -392,7 +393,7 @@ def deploy():
     sendSecGroupID = str(selectedSecGroup.id)
     sendInstanceID = selectedInstance.id
     sendSubnet = str(selectedSubnet.id)
-    sendAMI = selectedAMI.id
+    sendAMI = selectedAMI['id']
 
     print sendAMI
     print sendSecGroupID
@@ -440,13 +441,13 @@ def jobList():
             changeRunningState,
             targetstate="start",
             fromstate="stopped",
-            status=3
+            status=2
         ),
         Job('Stop all of my %s instances now' % ENV_LIST[2].name,
             changeRunningState,
             targetstate="stop",
             fromstate="running",
-            status=3
+            status=2
         ),
         Job('Start instance',
             selectInstances,
