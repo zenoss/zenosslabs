@@ -47,7 +47,7 @@ def changeState(targetstate='stop', fromstate=None,  envTag='lab'):
 
     """
     targetstate = stop, start, destroy
-    envTag = Lab, Daily, Temporary, Short Use
+    envTag = Lab, Lab (Auto-start), Temporary, Short Use
     """
     amazonTimeFormat = '%Y-%m-%dT%H:%M:%S.000z'
 
@@ -77,76 +77,40 @@ def changeState(targetstate='stop', fromstate=None,  envTag='lab'):
         elif targetstate == 'stop':
             ec2conn.stop_instances(instanceList)
         elif targetstate == 'destroy':
-            ec2conn.stop_instances(instanceList)
-            #ec2conn.terminate_instances(i.instances[0].id)
+            #ec2conn.stop_instances(instanceList)
+            ec2conn.terminate_instances(i.instances[0].id)
 
 
 def autoJob():
 
-    #Environment Lables
-
-    weekdayEnv = ['Lab', 'Daily']
-    weekendEnv = 'Daily'
-    tempEnv = 'Temporary'
-    tempKeepEnv = 'Keep Temporary'
-    shortuseEnv = 'Short Use'
-
     jobsList = [
-         Job('Weekday Night Job',
+         Job('Night Job',
             changeState,
             targetstate='stop',
             fromstate='running',
-            envTag=weekdayEnv),
-         Job('Weekday Morning Job',
+            envTag=['Lab', 'Lab (Auto-start)']),
+         Job('Morning Job',
             changeState,
             targetstate='start',
             fromstate='stopped',
-            envTag=weekdayEnv),
-         Job('Weekend Night Job',
-            changeState,
-            targetstate='stop',
-            fromstate='running',
-            envTag=weekendEnv),
-         Job('Weekend Morning Job',
-            changeState,
-            targetstate='start',
-            fromstate='stopped',
-            envTag=weekendEnv),
-         Job('Temporary Destroy Job',
+            envTag=['Lab (Auto-start)']),
+         Job('Destroy Job',
             changeState,
             targetstate='destroy',
-            envTag=tempEnv),
-         Job('Temporary Stop Job',
-            changeState,
-            targetstate='stop',
-            fromstate='running',
-            envTag=tempKeepEnv),
+            envTag=['Temporary']),
          Job('Short Use Destroy Job',
             changeState,
             targetstate='destroy',
-            envTag=shortuseEnv),
+            envTag=['Short Use']),
          ]
 
-    weekday = False
-
-    if time.strftime("%a").lower() in ['mon', 'tue', 'wed', 'thu', 'fri']:
-        weekday = True
-
-    if int(time.strftime("%H", time.gmtime())) == 4:
-        if weekday:
-            jobsList[0].execute()
-        else:
-            jobsList[2].execute()
-
-        jobsList[4].execute()
-        jobsList[5].execute()
+    if int(time.strftime("%H", time.gmtime())) == 3:
+        jobsList[0].execute()
+        jobsList[2].execute()
 
     elif int(time.strftime("%H", time.gmtime())) == 14:
-        if weekday:
-            jobsList[1].execute()
-        else:
-            jobsList[3].execute()
-    jobsList[6].execute()
+        jobsList[1]
+    jobsList[3].execute()
 
 
 def get_defaults():
