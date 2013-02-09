@@ -78,7 +78,7 @@ def changeState(targetstate='stop', fromstate=None,  envTag='lab'):
             ec2conn.stop_instances(instanceList)
         elif targetstate == 'destroy':
             #ec2conn.stop_instances(instanceList)
-            ec2conn.terminate_instances(i.instances[0].id)
+            ec2conn.terminate_instances(instanceList)
 
 
 def autoJob():
