@@ -33,9 +33,10 @@ Functionality
 
 Functionality classifies the high-level type of feature(s) provided.
 Specifically its type of interaction with the environment outside of the Zenoss
-platform. While the large majority of ZenPacks can be categorized with a single
-functionality element, the elements are not mutually exclusive.
-
+platform. It is highly recommended that these categories be treated as mutually
+exclusive. While it is possible for a ZenPack to build a ZenPack that delivers
+functionality in more than one of the following categories, this can lead to
+less modularity and confusion about what a ZenPack does.
 
 .. _zp_class_functionality_monitoring:
 
@@ -80,41 +81,6 @@ ZenPacks.
 -------------------------------------------------------------------------------
 
 
-.. _zp_class_supportability:
-
-Supportability
------------------------------------------------------------------------------
-
-Supportability defines what organization provides usage, troubleshooting, and
-defect and enhancement resolution for a ZenPack. These elements are mutually
-exclusive.
-
-
-.. _zp_class_supportability_byzenoss:
-
-Supported by Zenoss
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-ZenPacks are supported by Zenoss, Inc.
-
-
-  :Example: :ref:`zp_class_example_databasemonitor`
-
-
-.. _zp_class_supportability_unsupported:
-
-Not Supported
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-ZenPacks are not supported by Zenoss, Inc. Support may be available through
-partners, other organizations or the Zenoss community.
-
-  :Example: :ref:`zp_class_example_zenodbc`
-
-
--------------------------------------------------------------------------------
-
-
 .. _zp_class_maintainer:
 
 Maintainer
@@ -122,27 +88,19 @@ Maintainer
 
 The maintainer of a ZenPack is the organization or individual that controls the
 code repository for a ZenPack and is the gate for all changes including defect
-and enhancement resolution. A ZenPack can have multiple maintainers, so the
-following elements are not mutually exclusive.
+and enhancement resolution. The following categories are mutually exclusive.
+
 
 .. _zp_class_maintainer_engineering:
 
 Zenoss Engineering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Maintained by the product engineering organization at Zenoss, Inc.
+Maintained by the product engineering organization at Zenoss, Inc. Ongoing
+support is provided by Zenoss, Inc. at the same level as the Zenoss platform
+software for customers with an active subscription.
 
   :Example: :ref:`zp_class_example_impact`
-
-
-.. _zp_class_maintainer_labs:
-
-Zenoss Labs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Maintained by the labs organization at Zenoss, Inc.
-
-  :Example: :ref:`zp_class_example_openstack`
 
 
 .. _zp_class_maintainer_services:
@@ -150,19 +108,10 @@ Maintained by the labs organization at Zenoss, Inc.
 Zenoss Services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Maintained by the services organization at Zenoss, Inc.
+Maintained by the services organization at Zenoss, Inc. Ongoing support is
+provided under a statement of work.
 
   :Example: :ref:`zp_class_example_servicenowintegrator`
-
-
-.. _zp_class_maintainer_partner:
-
-Zenoss Partner
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Maintained by a Zenoss, Inc. partner organizations.
-
-  :Example: None
 
 
 .. _zp_class_maintainer_community:
@@ -170,7 +119,9 @@ Maintained by a Zenoss, Inc. partner organizations.
 Zenoss Community
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Maintained by a member of the Zenoss community.
+Maintained by a member of the Zenoss community. Ongoing support is subject to
+the individual maintainers' control, and is typically provided in the community
+web forums, mailing lists and IRC channel.
 
   :Example: :ref:`zp_class_example_zenodbc`
 
@@ -199,19 +150,6 @@ installed.
   :Example: :ref:`zp_class_example_apachemonitor`
 
 
-.. _zp_class_availability_bundled:
-
-Bundled with Zenoss Subscription
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-ZenPack packages are available at no extra cost to anyone with a Zenoss
-subscription, and installed by default. May have dependencies on
-:ref:`zp_class_availability_opensource` ZenPacks or other ZenPacks that are
-:ref:`zp_class_availability_bundled`.
-
-  :Example: :ref:`zp_class_example_iismonitor`
-
-
 .. _zp_class_availability_available:
 
 Available with Zenoss Subscription
@@ -220,7 +158,7 @@ Available with Zenoss Subscription
 ZenPack packages are available at no extra cost to anyone with a Zenoss
 subscription, but are not installed by default. May have dependencies on
 :ref:`zp_class_availability_opensource` ZenPacks or other ZenPacks that are
-:ref:`zp_class_availability_bundled`.
+:ref:`zp_class_availability_available`.
 
   :Example: :ref:`zp_class_example_databasemonitor`
 
@@ -233,7 +171,7 @@ Additional Cost with Zenoss Subscription
 ZenPack packages are available at an additional cost on top of an existing
 Zenoss subscription. May have dependencies on
 :ref:`zp_class_availability_opensource` ZenPacks, ZenPacks that are
-:ref:`zp_class_availability_bundled`, or other ZenPacks that are
+:ref:`zp_class_availability_available`, or other ZenPacks that are
 :ref:`zp_class_availability_additionalcost`.
 
   :Example: :ref:`zp_class_example_impact`
@@ -247,9 +185,8 @@ Zenoss subscription. May have dependencies on
 Maturity
 -------------------------------------------------------------------------------
 
-The level of automated, manual and field testing A ZenPack has. The elements are
-not mutually exclusive. For instance, a ZenPack could theoretically be untested
-and deployed in multiple production environments.
+The level of automated, manual and field testing A ZenPack has. The elements
+are mutually exclusive with the highest level of maturity being selected.
 
 
 .. _zp_class_maturity_untested:
@@ -261,7 +198,7 @@ Insufficient automated testing to qualify as
 :ref:`zp_class_maturity_autotested`, and insufficient manual testing to qualify
 as :ref:`zp_class_maturity_qatested`.
 
-  :Example: :ref:`zp_class_example_zenodbc`
+  :Example: :ref:`zp_class_example_openstack`
 
 
 .. _zp_class_maturity_autotested:
@@ -272,8 +209,6 @@ Automatically Tested
 Standard automated testing passes plus a minimum of 90% unit test code coverage
 with all tests passing.
 
-  :Example: :ref:`zp_class_example_solarismonitor`
-
 
 .. _zp_class_maturity_qatested:
 
@@ -281,8 +216,6 @@ Q.A. Tested
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tested, and passed, by the quality assurance group of Zenoss, Inc.
-
-  :Example: :ref:`zp_class_example_solarismonitor`
 
 
 .. _zp_class_maturity_production:
@@ -600,11 +533,9 @@ ZenPacks.zenoss.ApacheMonitor
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_qatested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_dsplugins`
                                 | :ref:`zp_class_complexity_datasources`
@@ -620,12 +551,9 @@ ZenPacks.zenoss.IISMonitor
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
-:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
-                                | :ref:`zp_class_maturity_qatested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_available`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
 =============================== ===============================================
 
@@ -639,12 +567,9 @@ ZenPacks.zenoss.DistributedCollector
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_platform`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
-:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
-                                | :ref:`zp_class_maturity_qatested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_available`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_ui`
                                 | :ref:`zp_class_complexity_platform`
@@ -660,11 +585,9 @@ ZenPacks.zenoss.RANCIDIntegrator
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_integration`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
-:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_available`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_events`
                                 | :ref:`zp_class_complexity_scripts`
@@ -680,11 +603,9 @@ ZenPacks.zenoss.DatabaseMonitor
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_available`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_qatested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_dsplugins`
                                 | :ref:`zp_class_complexity_datasources`
@@ -700,11 +621,9 @@ ZenPacks.zenoss.ZenVMware
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
-:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_qatested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_available`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_events`
                                 | :ref:`zp_class_complexity_datasources`
@@ -725,12 +644,9 @@ ZenPacks.zenoss.SolarisMonitor
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
-:ref:`zp_class_availability`    :ref:`zp_class_availability_bundled`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
-                                | :ref:`zp_class_maturity_qatested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_availability`    :ref:`zp_class_availability_available`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_dsplugins`
                                 | :ref:`zp_class_complexity_dsparsers`
@@ -747,12 +663,9 @@ ZenPacks.zenoss.Impact
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_platform`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_additionalcost`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_autotested`
-                                | :ref:`zp_class_maturity_qatested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_ui`
                                 | :ref:`zp_class_complexity_impact`
@@ -770,10 +683,9 @@ ZenPacks.zenoss.OpenStack
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_monitoring`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
-:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_labs`
+:ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_engineering`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_untested`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_events`
                                 | :ref:`zp_class_complexity_dsplugins`
@@ -794,11 +706,9 @@ ZenPacks.zenoss.ServiceNowIntegrator
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_integration`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_byzenoss`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_services`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_available`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_configuration`
                                 | :ref:`zp_class_complexity_ui`
                                 | :ref:`zp_class_complexity_modelextensions`
@@ -815,11 +725,9 @@ ZenPacks.community.ZenODBC
 Classification                  Value
 =============================== ===============================================
 :ref:`zp_class_functionality`   :ref:`zp_class_functionality_platform`
-:ref:`zp_class_supportability`  :ref:`zp_class_supportability_unsupported`
 :ref:`zp_class_maintainer`      :ref:`zp_class_maintainer_community`
 :ref:`zp_class_availability`    :ref:`zp_class_availability_opensource`
-:ref:`zp_class_maturity`        | :ref:`zp_class_maturity_untested`
-                                | :ref:`zp_class_maturity_production`
+:ref:`zp_class_maturity`        :ref:`zp_class_maturity_production`
 :ref:`zp_class_complexity`      | :ref:`zp_class_complexity_datasources`
                                 | :ref:`zp_class_complexity_pythonmodelers`
 =============================== ===============================================
