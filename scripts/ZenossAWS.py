@@ -23,12 +23,13 @@ from boto.vpc import VPCConnection as vpc
 # Feel free to add more AMIs here
 AWS_AMI = namedtuple('AMI', ['description', 'id'])
 AMI_LIST = (
-    AWS_AMI('Ubuntu Server 12.04.1 LTS', 'ami-3d4ff254'),
-    AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-cc5af9a5'),
-    AWS_AMI('Centos 6.3 x86_64', 'ami-a6e15bcf'),
-    AWS_AMI('Windows 2003 Server', 'ami-a9bc3ec0'),
-    AWS_AMI('Windows 2008 Server', 'ami-2542c04c'),
-    AWS_AMI('Windows 2012 Server', 'ami-8172f0e8'),
+    AWS_AMI('Ubuntu Server 12.04.1 LTS', 'ami-a2049bcb'),
+    AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-d0049bb9'),
+    AWS_AMI('Centos 6.3 x86_64', ''),
+    AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
+    AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
+    AWS_AMI('Windows 2003 Server', 'ami-06019e6f'),
+    AWS_AMI('Windows 2008 Server', 'ami-98039cf1'),
 )
 
 # Limited list of instance types available. Many more exists but haven't been added here.
