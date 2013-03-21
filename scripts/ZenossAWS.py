@@ -25,7 +25,7 @@ AWS_AMI = namedtuple('AMI', ['description', 'id'])
 AMI_LIST = (
     AWS_AMI('Ubuntu Server 12.04.1 LTS', 'ami-a2049bcb'),
     AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-d0049bb9'),
-    AWS_AMI('Centos 6.3 x86_64', ''),
+    AWS_AMI('Centos 6.3 x86_64', 'ami-bcbf27d5'),
     AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
     AWS_AMI('Windows 2003 Server', 'ami-06019e6f'),
