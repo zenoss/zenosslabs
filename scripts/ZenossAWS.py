@@ -30,6 +30,7 @@ AMI_LIST = (
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
     AWS_AMI('Windows 2003 Server', 'ami-06019e6f'),
     AWS_AMI('Windows 2008 Server', 'ami-98039cf1'),
+    AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
 )
 
 # Limited list of instance types available. Many more exists but haven't been added here.
