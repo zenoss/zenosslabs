@@ -28,7 +28,6 @@ AMI_LIST = (
     AWS_AMI('Centos 6.3 x86_64', 'ami-bcbf27d5'),
     AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
-    AWS_AMI('Windows 2003 Server', 'ami-06019e6f'),
     AWS_AMI('Windows 2008 Server', 'ami-98039cf1'),
     AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
 )
@@ -46,7 +45,6 @@ ENVIRONMENT = namedtuple('ENVIRONMENT', ['name', 'description'])
 ENV_LIST = (
     ENVIRONMENT('Production', 'Never turn off'),
     ENVIRONMENT('Lab', 'Turn off every night at 8pm CST M-F.'),
-    ENVIRONMENT('Lab (Auto-start)', 'Turn off every night at 8pm CST. Restart at 8am CST. M-F'),
     ENVIRONMENT('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
     ENVIRONMENT('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost'),
 )
@@ -371,7 +369,7 @@ def deploy():
     print "\n" * 5
 
     #Security Groups
-    awsSecGroups = filter(lambda x: x.name != 'default',
+    awsSecGroups = filter(lambda x: x.name in ['LocalLabNetwork', 'LocalQANetwork'],
                           ec2conn.get_all_security_groups())
     for i, secgroup in enumerate_with_offset(awsSecGroups):
         print "%s - %s \"%s\"" % (i, secgroup.name, secgroup.description)
@@ -382,12 +380,27 @@ def deploy():
     print "\n" * 5
 
     #VPC Subnets
+
+    filters = {'tag:Owner': options.aws_key_name}
+    filters['vpcId'] = vpcID
+
     awsSubnets = filter(lambda x: x.available_ip_address_count > 0,
-                        vpcconn.get_all_subnets(filters=[('vpcId', vpcID)]))
+                        vpcconn.get_all_subnets(filters=filters))
+
+    if len(awsSubnets) == 0:
+        print "*" * 60
+        print "*" * 60
+        print "Well sorry about that but you don't have any subnets assigned to you"
+        print "in this VPC. Either select another VPC or ask the administrator"
+        print "for a subnet assignment."
+        print "*" * 60
+        print "*" * 60
+        return
+
     for i, subnet in enumerate_with_offset(awsSubnets):
         netname = subnet.tags.get('Name', '')
-
         print "%s - %s \"%s\" -- %s" % (i, subnet.id, subnet.cidr_block, netname)
+
     print "\n" * 2
     selectedSubnet = promptList("What Subnet would you like to assign this instance? ",
                                 awsSubnets)
