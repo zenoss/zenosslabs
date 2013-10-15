@@ -14,7 +14,11 @@ import os
 import sys
 import optparse
 
-from boto.ec2.connection import EC2Connection as ec2
+try:
+    from boto.ec2.connection import EC2Connection as ec2
+except ImportError:
+    print "The boto module is not installed. Please install it and try to execute this method again"
+    sys.exit(2)
 
 
 def parse_options():
@@ -45,17 +49,20 @@ if __name__ == '__main__':
         ec2conn = ec2(
                 aws_access_key_id=options.aws_access_key,
                 aws_secret_access_key=options.aws_secret_key,
-                is_secure=True,
-                debug=1)
+                is_secure=True)
+        print "A secure connection has been made to AWS"
     except:
-        import pdb; pdb.set_trace()
-        ec2conn = ec2(
+        print "Sorry a secure connection has failed"
+        try:
+            ec2conn = ec2(
                 aws_access_key_id=options.aws_access_key,
                 aws_secret_access_key=options.aws_secret_key,
                 is_secure=False)
-        import pdb; pdb.set_trace()
+            print "A non-secure connection has been made to AWS"
+        except:
+            print "Sorry no connection is possible to AWS"
+            sys.exit(2)
 
     instancelist = ec2conn.get_all_instances()
     print "You have {0} instances".format(len(instancelist))
-
     print "Script has completed"
