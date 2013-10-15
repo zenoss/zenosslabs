@@ -42,7 +42,11 @@ This utility is used to validate AWS environment connections."""
 if __name__ == '__main__':
     options = parse_options()
     try:
-        ec2conn = ec2(options.aws_access_key, options.aws_secret_key)
+        ec2conn = ec2(
+                aws_access_key_id=options.aws_access_key,
+                aws_secret_access_key=options.aws_secret_key,
+                is_secure=True,
+                debug=1)
     except:
         import pdb; pdb.set_trace()
         ec2conn = ec2(
@@ -52,7 +56,6 @@ if __name__ == '__main__':
         import pdb; pdb.set_trace()
 
     instancelist = ec2conn.get_all_instances()
-    for i in instancelist:
-        print i
+    print "You have {0} instances".format(len(instancelist))
 
     print "Script has completed"
