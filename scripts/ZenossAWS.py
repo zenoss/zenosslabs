@@ -26,10 +26,14 @@ AMI_LIST = (
     AWS_AMI('Ubuntu Server 12.04.1 LTS', 'ami-a2049bcb'),
     AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-d0049bb9'),
     AWS_AMI('Centos 6.3 x86_64', 'ami-bcbf27d5'),
+    AWS_AMI('Centos 5.7 x86_64', 'ami-2c235c45'),
     AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
     AWS_AMI('Windows 2008 Server', 'ami-98039cf1'),
     AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
+    AWS_AMI('Windows 2003 Server SQL2k5 Express', 'ami-03bdd36a'), 
+    AWS_AMI('Windows 2008 R2 Server SQL2k12 Standard', 'ami-01bdd368'),
+    AWS_AMI('Windows 2008 SP2 Server SQL2k8 Web', 'ami-01b9d768'),
 )
 
 # Limited list of instance types available. Many more exists but haven't been added here.
