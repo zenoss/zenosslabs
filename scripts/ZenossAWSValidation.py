@@ -16,11 +16,14 @@ import optparse
 import site
 
 try:
-    zenhome = os.environ['ZENHOME']
-    if zenhome:
-        # Try to import boto from AWS ZenPack
-        zenawspath = "{0}/ZenPacks/ZenPacks.zenoss.AWS-2.0.0.egg/ZenPacks/zenoss/AWS/lib".format(zenhome)
-        site.addsitedir(zenawspath)
+    try:
+        zenhome = os.environ['ZENHOME']
+        if zenhome:
+            # Try to import boto from AWS ZenPack
+            zenawspath = "{0}/ZenPacks/ZenPacks.zenoss.AWS-2.0.0.egg/ZenPacks/zenoss/AWS/lib".format(zenhome)
+            site.addsitedir(zenawspath)
+    except KeyError:
+        print "The ZENHOME environment variable does not exists"
     from boto.ec2.connection import EC2Connection as ec2
     from boto.exception import EC2ResponseError as ec2err
 except ImportError:
