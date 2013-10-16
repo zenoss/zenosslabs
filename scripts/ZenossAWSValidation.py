@@ -19,13 +19,13 @@ try:
     zenhome = os.environ['ZENHOME']
     if zenhome:
         # Try to import boto from AWS ZenPack
-        zenawspath = "{0}/ZenPacks/ZenPacks.zenoss.AWS/ZenPacks/zenoss/AWS/lib"
+        zenawspath = "{0}/ZenPacks/ZenPacks.zenoss.AWS-2.0.0.egg/ZenPacks/zenoss/AWS/lib".format(zenhome)
         site.addsitedir(zenawspath)
     from boto.ec2.connection import EC2Connection as ec2
     from boto.exception import EC2ResponseError as ec2err
 except ImportError:
     print "The boto module is not installed. Please install it and try to execute this method again"
-sys.exit(2)
+    sys.exit(2)
 
 
 def parse_options():
