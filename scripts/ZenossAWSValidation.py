@@ -13,12 +13,19 @@
 import os
 import sys
 import optparse
+import site
 
 try:
+    zenhome = os.environ['ZENHOME']
+    if zenhome:
+        # Try to import boto from AWS ZenPack
+        zenawspath = "{0}/ZenPacks/ZenPacks.zenoss.AWS/ZenPacks/zenoss/AWS/lib"
+        site.addsitedir(zenawspath)
     from boto.ec2.connection import EC2Connection as ec2
+    from boto.exception import EC2ResponseError as ec2err
 except ImportError:
     print "The boto module is not installed. Please install it and try to execute this method again"
-    sys.exit(2)
+sys.exit(2)
 
 
 def parse_options():
@@ -63,6 +70,9 @@ if __name__ == '__main__':
             print "Sorry no connection is possible to AWS"
             sys.exit(2)
 
-    instancelist = ec2conn.get_all_instances()
-    print "You have {0} instances".format(len(instancelist))
+    try:
+        instancelist = ec2conn.get_all_instances()
+        print "You have {0} instances".format(len(instancelist))
+    except ec2err as e:
+        print "You have the following error {0}".format(e)
     print "Script has completed"
