@@ -20,9 +20,8 @@ import urllib
 import site
 import datetime
 
-from twisted.web.client import getPage
-from twisted.internet import defer
-from twisted.internet.defer import inlineCallbacks
+from twisted.web import client
+
 
 try:
     try:
@@ -150,7 +149,6 @@ def getNonSSLBoto():
         print "Non-Secure boto connection has failed"
 
 
-@inlineCallbacks
 def getNonBoto():
     try:
         httpVerb = 'GET'
@@ -174,9 +172,7 @@ def getNonBoto():
 
         def listme(results):
             print results
-        result = yield getPage(getURL)
-        defer.returnValue(result)
-
+        return client.getPage(getURL)
     except:
         print "Non boto connection failed"
 
