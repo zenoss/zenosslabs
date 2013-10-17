@@ -171,11 +171,16 @@ def getNonBoto():
             (options.aws_access_key, options.aws_secret_key))
         getURL = 'http://%s' % getURL
 
-
         d = client.getPage(getURL)
         d.addCallback(printMe)
+        d.addErrback(closeMe)
     except:
         print "Non boto connection failed"
+
+
+def closeMe(results):
+    print results
+    reactor.stop()
 
 
 def printMe(results):
