@@ -164,12 +164,10 @@ if __name__ == '__main__':
                 getURL = 'http://%s' % getURL
 
                 def listme(results):
-                    print request
+                    print results
                 result = getPage(getURL)
                 result.addCallback(listme)
 
             except:
                 print "Sorry no connection is possible to AWS"
                 sys.exit(2)
-
-def listme(self, result)
