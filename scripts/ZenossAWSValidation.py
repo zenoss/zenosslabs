@@ -60,22 +60,21 @@ if __name__ == '__main__':
                 aws_access_key_id=options.aws_access_key,
                 aws_secret_access_key=options.aws_secret_key,
                 is_secure=True)
+        instancelist = ec2conn.get_all_instances()
+        print "You have {0} instances".format(len(instancelist))
         print "A secure connection has been made to AWS"
-    except:
+    except ec2err as e:
         print "Sorry a secure connection has failed"
+        print "You have the following error {0}".format(e)
         try:
             ec2conn = ec2(
                 aws_access_key_id=options.aws_access_key,
                 aws_secret_access_key=options.aws_secret_key,
                 is_secure=False)
+            instancelist = ec2conn.get_all_instances()
+            print "You have {0} instances".format(len(instancelist))
             print "A non-secure connection has been made to AWS"
-        except:
+        except ec2err as e:
+            print "You have the following error {0}".format(e)
             print "Sorry no connection is possible to AWS"
             sys.exit(2)
-
-    try:
-        instancelist = ec2conn.get_all_instances()
-        print "You have {0} instances".format(len(instancelist))
-    except ec2err as e:
-        print "You have the following error {0}".format(e)
-    print "Script has completed"
