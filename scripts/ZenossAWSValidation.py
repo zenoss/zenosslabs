@@ -153,7 +153,7 @@ if __name__ == '__main__':
                 baseRequest['Action'] = 'DescribeInstances'
                 baseRequest['Version'] = '2012-12-01'
 
-                hostHeader = 'ec2.us-eas-1.amazonaws.com'
+                hostHeader = 'ec2.us-east-1.amazonaws.com'
 
                 getURL = awsUrlSign(
                     httpVerb,
@@ -162,8 +162,14 @@ if __name__ == '__main__':
                     baseRequest,
                     (options.aws_access_key, options.aws_secret_key))
                 getURL = 'http://%s' % getURL
+
+                def listme(results):
+                    print request
                 result = getPage(getURL)
-                print result
+                result.addCallback(listme)
+
             except:
                 print "Sorry no connection is possible to AWS"
                 sys.exit(2)
+
+def listme(self, result)
