@@ -21,6 +21,8 @@ import site
 import datetime
 
 from twisted.web.client import getPage
+from twisted.internet import defer
+from twisted.internet.defer import inlineCallbacks
 
 try:
     try:
@@ -122,8 +124,7 @@ This utility is used to validate AWS environment connections."""
     return options
 
 
-if __name__ == '__main__':
-    options = parse_options()
+def getSecureBoto():
     try:
         ec2conn = ec2(
                 aws_access_key_id=options.aws_access_key,
@@ -133,41 +134,55 @@ if __name__ == '__main__':
         print "You have {0} instances".format(len(instancelist))
         print "A secure connection has been made to AWS"
     except:
-        print "Sorry a secure connection has failed"
-        try:
-            ec2conn = ec2(
-                aws_access_key_id=options.aws_access_key,
-                aws_secret_access_key=options.aws_secret_key,
-                is_secure=False)
-            instancelist = ec2conn.get_all_instances()
-            print "You have {0} instances".format(len(instancelist))
-            print "A non-secure connection has been made to AWS"
-        except:
-            try:
-                httpVerb = 'GET'
-                uriRequest = '/'
+        print "Secure boto connection has failed"
 
-                baseRequest = {}
-                baseRequest['SignatureMethod'] = 'HmacSHA256'
-                baseRequest['SignatureVersion'] = '2'
-                baseRequest['Action'] = 'DescribeInstances'
-                baseRequest['Version'] = '2012-12-01'
 
-                hostHeader = 'ec2.us-east-1.amazonaws.com'
+def getNonSSLBoto():
+    try:
+        ec2conn = ec2(
+            aws_access_key_id=options.aws_access_key,
+            aws_secret_access_key=options.aws_secret_key,
+            is_secure=False)
+        instancelist = ec2conn.get_all_instances()
+        print "You have {0} instances".format(len(instancelist))
+        print "A non-secure connection has been made to AWS"
+    except:
+        print "Non-Secure boto connection has failed"
 
-                getURL = awsUrlSign(
-                    httpVerb,
-                    hostHeader,
-                    uriRequest,
-                    baseRequest,
-                    (options.aws_access_key, options.aws_secret_key))
-                getURL = 'http://%s' % getURL
 
-                def listme(results):
-                    print results
-                result = getPage(getURL)
-                result.addCallback(listme)
+@inlineCallbacks
+def getNonBoto():
+    try:
+        httpVerb = 'GET'
+        uriRequest = '/'
 
-            except:
-                print "Sorry no connection is possible to AWS"
-                sys.exit(2)
+        baseRequest = {}
+        baseRequest['SignatureMethod'] = 'HmacSHA256'
+        baseRequest['SignatureVersion'] = '2'
+        baseRequest['Action'] = 'DescribeInstances'
+        baseRequest['Version'] = '2012-12-01'
+
+        hostHeader = 'ec2.us-east-1.amazonaws.com'
+
+        getURL = awsUrlSign(
+            httpVerb,
+            hostHeader,
+            uriRequest,
+            baseRequest,
+            (options.aws_access_key, options.aws_secret_key))
+        getURL = 'http://%s' % getURL
+
+        def listme(results):
+            print results
+        result = yield getPage(getURL)
+        defer.returnValue(result)
+
+    except:
+        print "Non boto connection failed"
+
+
+if __name__ == '__main__':
+    options = parse_options()
+    getSecureBoto()
+    getNonSSLBoto()
+    getNonBoto()
