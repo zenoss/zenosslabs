@@ -21,6 +21,7 @@ import site
 import datetime
 
 from twisted.web import client
+from twisted.internet import reactor
 
 
 try:
@@ -170,15 +171,20 @@ def getNonBoto():
             (options.aws_access_key, options.aws_secret_key))
         getURL = 'http://%s' % getURL
 
-        def listme(results):
-            print results
-        return client.getPage(getURL)
+
+        d = client.getPage(getURL)
+        d.addCallback(printMe)
     except:
         print "Non boto connection failed"
 
+
+def printMe(results):
+    print results
+    reactor.stop()
 
 if __name__ == '__main__':
     options = parse_options()
     getSecureBoto()
     getNonSSLBoto()
     getNonBoto()
+    reactor.run()
