@@ -36,7 +36,6 @@ try:
     from boto.ec2.connection import EC2Connection as ec2
 except ImportError:
     print "The boto module is not installed. Please install it and try to execute this method again"
-    sys.exit(2)
 
 
 def iso8601(seconds_ago=0):
