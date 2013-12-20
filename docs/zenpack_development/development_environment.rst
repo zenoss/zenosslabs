@@ -81,6 +81,12 @@ reduce your Zenoss deployment to the minimum typical processes::
     zenoss start
 
 
+.. note::
+
+   For the commercial version of Zenoss you will need to add
+   ``zencatalogservice`` to the top of daemons.txt.
+
+
 See the following notes for more information on what these commands are doing.
 
 #. The ``su - zenoss`` command is an important one that you'll be using very
