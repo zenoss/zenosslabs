@@ -135,4 +135,4 @@ you can reference the Python `Requirements Parsing`_
 documentation.
 
 
-.. _Requirements Parsing: http://packages.python.org/distribute/pkg_resources.html#requirements-parsing
+.. _Requirements Parsing: http://pythonhosted.org/setuptools/pkg_resources.html#requirements-parsing
