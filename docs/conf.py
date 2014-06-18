@@ -3,11 +3,11 @@
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-  'sphinx.ext.autodoc',
-  'sphinx.ext.doctest',
-  'sphinx.ext.viewcode',
-  'sphinx.ext.todo',
-  ]
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.todo',
+    ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -20,7 +20,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Zenoss Labs'
-copyright = u'2011, 2012 Zenoss, Inc.'
+copyright = u'2011-2014, Zenoss, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -79,8 +79,12 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'ZenossLabs.tex', u'Zenoss Labs Documentation',
-   u'Zenoss Labs', 'manual'),
+    (
+        'index', 'ZenossLabs.tex',
+        u'Zenoss Labs Documentation',
+        u'Zenoss Labs',
+        'manual'
+    ),
 ]
 
 
@@ -89,8 +93,13 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'zenosslabs', u'Zenoss Labs Documentation',
-     [u'Zenoss Labs'], 1)
+    (
+        'index',
+        'zenosslabs',
+        u'Zenoss Labs Documentation',
+        [u'Zenoss Labs'],
+        1
+    ),
 ]
 
 
@@ -100,9 +109,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ZenossLabs', u'Zenoss Labs Documentation',
-   u'Zenoss Labs', 'ZenossLabs', 'One line description of project.',
-   'Miscellaneous'),
+    (
+        'index',
+        'ZenossLabs',
+        u'Zenoss Labs Documentation',
+        u'Zenoss Labs',
+        'ZenossLabs',
+        'One line description of project.',
+        'Miscellaneous'
+    ),
 ]
 
 
@@ -111,5 +126,5 @@ texinfo_documents = [
 # Bibliographic Dublin Core info.
 epub_title = u'Zenoss Labs'
 epub_author = u'Zenoss Labs'
-epub_publisher = u'Zenoss Labs'
-epub_copyright = u'2011, Zenoss Labs'
+epub_publisher = u'Zenoss'
+epub_copyright = u'2011-2014, Zenoss Labs'
