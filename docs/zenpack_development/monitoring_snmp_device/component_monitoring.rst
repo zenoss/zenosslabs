@@ -60,6 +60,8 @@ This results in the following output::
 This OID (minus the leading .) is what we'll need.
 
 
+.. _add-snmp-component-monitoring-template:
+
 Add a Monitoring Template
 ==============================================================================
 

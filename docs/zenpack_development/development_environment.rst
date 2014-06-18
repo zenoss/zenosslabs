@@ -53,6 +53,8 @@ production system after they've been successfully tested in the development
 and staging systems.
 
 
+.. _running-a-minimal-zenoss:
+
 Running a Minimal Zenoss
 =============================================================================
 

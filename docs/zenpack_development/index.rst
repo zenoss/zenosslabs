@@ -18,5 +18,6 @@ Contents:
    background
    creating_a_zenpack
    monitoring_snmp_device/index
+   monitoring_http_api/index
    exporting_a_zenpack
    troubleshooting
