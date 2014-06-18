@@ -42,7 +42,7 @@ user.
 
    1. Add the following line to the top of ``/etc/snmp/snmpd.conf``::
 
-      agentaddress 127.0.0.1
+       agentaddress 127.0.0.1
 
    2. Restart `snmpd`:
 

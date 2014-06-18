@@ -344,9 +344,10 @@ Add the `wunderground.com` Device
 ------------------------------------------------------------------------------
 
 This would be a good time to add a device to the new device class. There are
-many ways to add devices to Zenoss, but if you're :ref:`running-a-minimal-
-zenoss` you may not be running zenjobs and some of them won't work. During
-ZenPack development it's often easiest to use `zendisc` to add devices.
+many ways to add devices to Zenoss, but if you're
+:ref:`running-a-minimal-zenoss` you may not be running zenjobs and some of them
+won't work. During ZenPack development it's often easiest to use `zendisc` to
+add devices.
 
 Run the following command to add a `wunderground.com` device.
 
