@@ -1,5 +1,5 @@
 ==============================================================================
-Wunderground API
+Weather Underground API
 ==============================================================================
 
 The Weather Underground provides an API that can be used to get all sorts of

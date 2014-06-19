@@ -79,8 +79,8 @@ Follow these steps to create this monitoring template:
       monitoring template in the `/WeatherUnderground` device class.
 
       .. note::
-         Because we're using `zenpacklib` the monitoring template must be
-         called ``Location`` because the is the `label` for the
+         Because we're using `zenpacklib`, the monitoring template must be
+         called ``Location`` because that is the `label` for the
          `WundergroundLocation` class to which we want the template bound.
 
    2. The `description` is for documentation purposes and should describe the
