@@ -20,6 +20,7 @@ from boto.vpc import VPCConnection as vpc
 
 import socket
 
+from getpass import getpass
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -509,7 +510,21 @@ def deploy():
     else:
         print "We had a problem creating your instance. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
 
+
+def getDockerUserPassEmail():
+    username = raw_input("Please enter your Docker Hub username: ")
+    password1, password2 = "a", "b"
+    while password1 != password2:
+        password1 = getpass("Please enter your Docker Hub password: ")
+        password2 = getpass("Please enter your Docker Hub password (again): ")
+        if password1 != password2:
+            print "Passwords do not match."
+    email = raw_input("Please enter the email address associated with your Docker Hub account: ")
+    return username, password1, email
+
+
 def deployEuropaSingleHostMaster():
+    username, password, email = getDockerUserPassEmail()
 
     #Instance Name
     getName = promptVal("What name would you like to assign to this instance? ",
@@ -578,6 +593,9 @@ def deployEuropaSingleHostMaster():
     print sendSubnet
 
     userdata = open(os.path.join(ROOT_PATH, "europa-singlehost-install.sh"), 'r').read()
+    userdata = userdata.replace("{{DOCKER_USERNAME}}", username)
+    userdata = userdata.replace("{{DOCKER_PASSWORD}}", password)
+    userdata = userdata.replace("{{DOCKER_EMAIL}}", email)
 
     newInstance = ec2conn.run_instances(image_id=sendAMI,
             key_name=options.aws_key_name,
@@ -608,6 +626,7 @@ def deployEuropaSingleHostMaster():
 
 
 def deployEuropaMultihost():
+    username, password, email = getDockerUserPassEmail()
 
     #Instance Name
     getName = promptVal("What name prefix would you like to assign to these instances? ",
@@ -675,6 +694,9 @@ def deployEuropaMultihost():
     print sendSubnet
 
     userdata = open(os.path.join(ROOT_PATH, "europa-multihost-master-install.sh"), 'r').read()
+    userdata = userdata.replace("{{DOCKER_USERNAME}}", username)
+    userdata = userdata.replace("{{DOCKER_PASSWORD}}", password)
+    userdata = userdata.replace("{{DOCKER_EMAIL}}", email)
 
     newInstance1 = ec2conn.run_instances(image_id=sendAMI,
             key_name=options.aws_key_name,
