@@ -9,11 +9,7 @@ echo "deb [ arch=amd64 ] http://unstable.zenoss.io/apt/ubuntu trusty universe" >
 apt-get update
 apt-get install -y ntp
 apt-get install -y zenoss-resmgr-service
-sed -i -e 's|^# *\(export HOME=/root\)|\1|' \
-  -e 's|^# *\(export SERVICED_REGISTRY=\).|\11|' \
-  -e 's|^# *\(export SERVICED_AGENT=\).|\11|' \
-  -e 's|^# *\(export SERVICED_MASTER=\).|\11|' \
-  /etc/default/serviced
+sed -i -e '/SERVICED_MASTER=1/a\    export SERVICED_REGISTRY=1' /etc/init/serviced.conf
 start serviced
 rm /var/lib/cloud/instance/user-data.txt
 rm /var/lib/cloud/instance/user-data.txt.i

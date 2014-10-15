@@ -35,6 +35,7 @@ AMI_LIST = (
     AWS_AMI('Ubuntu Server 14.04 LTS VNC', 'ami-1ef13276'),
     AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-deeb28b6'),
     AWS_AMI('Red Hat Enterprise Linux 6.5', 'ami-d0e427b8'),
+    AWS_AMI('Red Hat Enterprise Linux 7.0', 'ami-40df6928'),
     AWS_AMI('Centos 6.3 x86_64', 'ami-48da1920'),
     AWS_AMI('Centos 6.5 x86_64', 'ami-86e724ee'),
     AWS_AMI('Centos 6.5 x86_64 VNC', 'ami-10f33078'),
@@ -63,6 +64,7 @@ INSTANCE_LIST = (
     AWS_INSTANCE('XX-Large (4 CPU / 34GB / 2x850GB / Moderate Network) .49/hr - 11.76/day - 82.32/week - 356.72/month', 'm2.2xlarge'),
     AWS_INSTANCE('XXXX-Large (8 CPU / 68GB / 2x840GB / High Netork) .98/hr - 23.52/day - 164.64/week - 713.44/month', 'm2.4xlarge'),
     #AWS_INSTANCE('XX-Large SSD Mem Optimized (8 CPU / 61GB / 160GB / High Network) .70/hr - 8.40/day - 42.00/week - 182/month', 'r3.2xlarge'), 
+    AWS_INSTANCE('RHEL 2xLarge (8 CPU/ 61GB / 2x800 SSD / High Network) 1.84/hr - 44.16/day - 309.12/week - 1339.52/month', 'i2.2xlarge'),
 )
 
 
