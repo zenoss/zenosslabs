@@ -8,7 +8,13 @@ apt-get update
 apt-get install -y ntp
 apt-get install -y zenoss-resmgr-service
 MHOST={{in_MHOST}}
-sed -i -e '/SERVICED_MASTER=1/a\    export SERVICED_REGISTRY=1\n    export SERVICED_MASTER_IP='${MHOST}'\n    export SERVICED_ZK='${MHOST}':2181\n    export SERVICED_DOCKER_REGISTRY='${MHOST}':5000\n    export SERVICED_ENDPOINT='${MHOST}':4979\n    export SERVICED_LOG_ADDRESS='${MHOST}':5042\n    export SERVICED_LOGSTASH_ES='${MHOST}':9100\n    export SERVICED_STATS_PORT='${MHOST}':8443\n' \
-    -e 's/SERVICED_MASTER=1/SERVICED_MASTER=0/g' \
-    /etc/init/serviced.conf
+EXT=$(date +"%j-%T")
+sudo sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
+ -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
+ -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
+ -e 's|^#[^S]*\(SERVICED_MASTER=\).|\10|' \
+ -e 's|^#[^S]*\(SERVICED_MASTER_IP=\).*|\1'${MHOST}'|' \
+ -e '/=$SERVICED_MASTER_IP/ s|^#[^S]*||' \
+ /etc/default/serviced
 start serviced
+
