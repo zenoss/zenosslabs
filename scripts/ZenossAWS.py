@@ -526,6 +526,7 @@ def getDockerUserPassEmail():
 
 
 def deployEuropaSingleHostMaster():
+    #Docker Login
     username, password, email = getDockerUserPassEmail()
 
     #Instance Name
@@ -628,7 +629,12 @@ def deployEuropaSingleHostMaster():
 
 
 def deployEuropaMultihost():
+    #Docker Login
     username, password, email = getDockerUserPassEmail()
+
+    #Number of agent instances.
+    nInstances = promptInt("How many agents do you want? (minimum of one) ", min_val = 1)
+    print "\n" * 3
 
     #Instance Name
     getName = promptVal("What name prefix would you like to assign to these instances? ",
@@ -730,26 +736,28 @@ def deployEuropaMultihost():
     userdata = open(os.path.join(ROOT_PATH, "europa-multihost-minion-install.sh"), 'r').read()
     userdata = userdata.replace("{{in_MHOST}}", newInstance1.instances[0].private_ip_address)
 
-    newInstance2 = ec2conn.run_instances(image_id=sendAMI,
-            key_name=options.aws_key_name,
-            instance_initiated_shutdown_behavior='stop',
-            security_group_ids=[sendSecGroupID],
-            user_data=userdata,
-            instance_type=sendInstanceID,
-            subnet_id=sendSubnet)
-    print "Working... Please wait"
-    time.sleep(4)
-    newTags = {
-        'Name': getName + "-minion",
-        'Environment': selectedEnv.name,
-        'Customer': options.department,
-        'Owner': options.aws_username,
-        'ExtraTime': 0, 
-    }
-    tagresult = ec2conn.create_tags(newInstance2.instances[0].id, newTags)
-    if not tagresult:
-        print "We had a problem creating your instances. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
-        return
+    for i in range(nInstances):
+
+        agent = ec2conn.run_instances(image_id=sendAMI,
+                key_name=options.aws_key_name,
+                instance_initiated_shutdown_behavior='stop',
+                security_group_ids=[sendSecGroupID],
+                user_data=userdata,
+                instance_type=sendInstanceID,
+                subnet_id=sendSubnet)
+        print "Working on agent %d... Please wait" % (i + 1)
+        time.sleep(4)
+        newTags = {
+            'Name': "%s-agent-%02d" % (getName, i + 1),
+            'Environment': selectedEnv.name,
+            'Customer': options.department,
+            'Owner': options.aws_username,
+            'ExtraTime': 0, 
+        }
+        tagresult = ec2conn.create_tags(agent.instances[0].id, newTags)
+        if not tagresult:
+            print "We had a problem creating your instances. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
+            return
 
     print "Provisioning has commenced. Go to https://%s to see the Control Center. It may take a few minutes before it is up." % newInstance1.instances[0].private_ip_address
 

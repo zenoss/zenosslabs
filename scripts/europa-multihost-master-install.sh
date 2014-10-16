@@ -1,5 +1,5 @@
 #!/bin/bash
-wget -O - http://get.docker.io | sh
+curl -sSL https://get.docker.io/ubuntu/ | sudo sh
 usermod -aG docker $USER
 docker login -u {{DOCKER_USERNAME}} -p {{DOCKER_PASSWORD}} -e {{DOCKER_EMAIL}}
 mv /.dockercfg /root

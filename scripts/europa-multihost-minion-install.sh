@@ -1,5 +1,5 @@
 #!/bin/bash
-wget -O - http://get.docker.io | sh
+curl -sSL https://get.docker.io/ubuntu/ | sudo sh
 usermod -aG docker $USER
 printf "\n%s %s\n" `ifconfig eth0 | grep "inet addr" | tr ":" " " | awk {'print $3'}` `hostname` >> /etc/hosts
 apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7
