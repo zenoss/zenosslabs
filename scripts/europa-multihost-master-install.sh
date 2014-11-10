@@ -1,4 +1,11 @@
 #!/bin/bash
+parted -s /dev/xvdb mklabel msdos
+parted -s /dev/xvdb mkpartfs primary ext2 0 51200
+parted -s /dev/xvdb mkpartfs primary ext2 51200 102400
+mkdir /var/lib/docker
+mkdir -p /opt/serviced/var
+mount -t ext2 /dev/xvdb1 /var/lib/docker
+mount -t ext2 /dev/xvdb2 /opt/serviced/var
 echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
 printf "\n%s %s\n" `ifconfig eth0 | grep "inet addr" | tr ":" " " | awk {'print $3'}` `hostname` >> /etc/hosts
 apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7

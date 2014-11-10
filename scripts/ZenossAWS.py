@@ -31,7 +31,7 @@ AMI_LIST = (
     AWS_AMI('Ubuntu Server 12.04 LTS', 'ami-50f57b38'),
     #AWS_AMI('Ubuntu Server 12.04 LTC VNC', 'ami-8af330e2'),
     #AWS_AMI('Ubuntu Server 13.10', 'ami-87bab1ee'),
-    AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-58f37d30'),
+    AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-3a3db652'),
     #AWS_AMI('Ubuntu Server 14.04 LTS VNC', 'ami-1ef13276'),
     #AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-deeb28b6'),
     #AWS_AMI('Red Hat Enterprise Linux 6.5', 'ami-d0e427b8'),
@@ -41,14 +41,14 @@ AMI_LIST = (
     #AWS_AMI('Centos 6.3 x86_64', 'ami-48da1920'),
     #AWS_AMI('Centos 6.5 x86_64', 'ami-86e724ee'),
     #AWS_AMI('Centos 6.5 x86_64 VNC', 'ami-10f33078'),
-    AWS_AMI('CentOS 7.0 x86_64', 'ami-56e6683e'),
+    AWS_AMI('CentOS 7.0 x86_64', 'ami-8e32b9e6'),
     AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
     AWS_AMI('Windows 2008 Server', 'ami-98039cf1'),
     AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
 )
 
-EUROPA_AMI = AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-58f37d30')
+EUROPA_AMI = AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-3a3db652')
 
 # Limited list of instance types available. Many more exists but haven't been added here.
 AWS_INSTANCE = namedtuple('AWS_INSTANCE', ['description', 'id'])
