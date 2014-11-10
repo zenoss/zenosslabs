@@ -28,18 +28,19 @@ ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 # Feel free to add more AMIs here
 AWS_AMI = namedtuple('AMI', ['description', 'id'])
 AMI_LIST = (
-    AWS_AMI('Ubuntu Server 12.04 LTS', 'ami-aae625c2'),
-    AWS_AMI('Ubuntu Server 12.04 LTC VNC', 'ami-8af330e2'),
-    AWS_AMI('Ubuntu Server 13.10', 'ami-87bab1ee'),
-    AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-6e5e9606'),
-    AWS_AMI('Ubuntu Server 14.04 LTS VNC', 'ami-1ef13276'),
-    AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-deeb28b6'),
-    AWS_AMI('Red Hat Enterprise Linux 6.5', 'ami-d0e427b8'),
-    #AWS_AMI('Red Hat Enterprise Linux 7.0', 'ami-40df6928'),
-    AWS_AMI('CentOS 5.7 x86_64', 'ami-bbbbf5d2'),
-    AWS_AMI('Centos 6.3 x86_64', 'ami-48da1920'),
-    AWS_AMI('Centos 6.5 x86_64', 'ami-86e724ee'),
-    AWS_AMI('Centos 6.5 x86_64 VNC', 'ami-10f33078'),
+    AWS_AMI('Ubuntu Server 12.04 LTS', 'ami-50f57b38'),
+    #AWS_AMI('Ubuntu Server 12.04 LTC VNC', 'ami-8af330e2'),
+    #AWS_AMI('Ubuntu Server 13.10', 'ami-87bab1ee'),
+    AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-58f37d30'),
+    #AWS_AMI('Ubuntu Server 14.04 LTS VNC', 'ami-1ef13276'),
+    #AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-deeb28b6'),
+    #AWS_AMI('Red Hat Enterprise Linux 6.5', 'ami-d0e427b8'),
+    AWS_AMI('Red Hat Enterprise Linux 6.4', 'ami-ca830da2'),
+    AWS_AMI('Red Hat Enterprise Linux 7.0', 'ami-2c961844'),
+    #AWS_AMI('CentOS 5.7 x86_64', 'ami-bbbbf5d2'),
+    #AWS_AMI('Centos 6.3 x86_64', 'ami-48da1920'),
+    #AWS_AMI('Centos 6.5 x86_64', 'ami-86e724ee'),
+    #AWS_AMI('Centos 6.5 x86_64 VNC', 'ami-10f33078'),
     AWS_AMI('CentOS 7.0 x86_64', 'ami-56e6683e'),
     AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
@@ -47,24 +48,31 @@ AMI_LIST = (
     AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
 )
 
-EUROPA_AMI = AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-6e5e9606')
+EUROPA_AMI = AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-58f37d30')
 
 # Limited list of instance types available. Many more exists but haven't been added here.
 AWS_INSTANCE = namedtuple('AWS_INSTANCE', ['description', 'id'])
 INSTANCE_LIST = (
-    AWS_INSTANCE('Micro (1 CPU / 512MB / / Very Low Network) .02/hr - .24/day - 1.20/week - 5.20/month', 't1.micro'),
-    AWS_INSTANCE('Small (1 CPU / 1.7GB / 160GB / Low Network) .04/hr - .48/day - 2.40/week - 10.40/month', 'm1.small'),
-    AWS_INSTANCE('Medium (1 CPU / 3.75GB / 410GB/ Moderate Network) .09/hr - 1.08/day - 5.40/week - 23.40/month', 'm1.medium'),
+    #AWS_INSTANCE('Micro (1 CPU / 512MB / / Very Low Network) .02/hr - .24/day - 1.20/week - 5.20/month', 't1.micro'),
+    AWS_INSTANCE('Micro (1 CPU / 1GB / 100GB / Low Network) .01/hr - .24/day - 1.68/week - 7.27/month', 't2.micro'),
+    AWS_INSTANCE('Small (1 CPU / 2GB / 100GB / Low Network) .03/hr - .72/day - 5.04/week - 21.84/month', 't2.small'),
+    AWS_INSTANCE('Medium (1 CPU / 4GB / 100GB / Moderate Network) .07/hr - 1.68/day - 11.76/week - 50.96/month', 'm3.medium'),
+    AWS_INSTANCE('Large (2 CPU / 8GB / 100GB / Moderate Network) .14/hr - 3.36/day - 23.52/week - 101.92/month', 'm3.large'),
+    AWS_INSTANCE('X-Large (4 CPU / 15GB / 100GB / High Network) .28/hr - 6.72/day - 47.04/week - 203.84/month', 'm3.xlarge'),
+    AWS_INSTANCE('X-Large Mem (4 CPU / 31GB / 100GB / Moderate Network) .35/hr - 8.40/day - 58.80/week - 254.80/month', 'r3.xlarge'),
+    AWS_INSTANCE('XX-Large Mem (8 CPU / 61GB / 100GB / High Network) .70/hr - 16.80/day - 117.60/week - 509.60/month', 'r3.2xlarge'), 
+    #AWS_INSTANCE('Small (1 CPU / 1.7GB / 160GB / Low Network) .04/hr - .48/day - 2.40/week - 10.40/month', 'm1.small'),
+    #AWS_INSTANCE('Medium (1 CPU / 3.75GB / 410GB/ Moderate Network) .09/hr - 1.08/day - 5.40/week - 23.40/month', 'm1.medium'),
     #AWS_INSTANCE('Medium SSD (1 CPU / 3.75GB / 4GB SSD / Moderate Network) .07/hr - .84/day - 4.20/week - 18.20/month', 'm3.medium'),
-    AWS_INSTANCE('Large (2 CPU / 7.5GB / 2x420GB / Moderate Network) .18/hr - 2.26/day - 10.80/week - 46.80/month', 'm1.large'),
+    #AWS_INSTANCE('Large (2 CPU / 7.5GB / 2x420GB / Moderate Network) .18/hr - 2.26/day - 10.80/week - 46.80/month', 'm1.large'),
     #AWS_INSTANCE('Large SSD (2 CPU / 7.5GB / 32GB / Moderate Network) .14/hr - 1.68/day - 8.40/week - 36.40/month', 'm3.large'),
     #AWS_INSTANCE('Large SSD Mem Optimized (2 CPU / 15GB / 32GB / Moderate Network) .18/hr - 2.16/day - 10.80/week - 46.80/month', 'r3.large'),
-    AWS_INSTANCE('X-Large (4 CPU / 15GB / 4x420GB / Moderate Network) .35/hr - 4.20/day - 21.00/week - 91.00/month', 'm1.xlarge'),
-    AWS_INSTANCE('X-Large SSD (4 CPU / 15GB / 2x40GB / Moderate Network) .28/hr - 3.36/day - 16.80/week - 72.80/month', 'm3.xlarge'),
+    #AWS_INSTANCE('X-Large (4 CPU / 15GB / 4x420GB / Moderate Network) .35/hr - 4.20/day - 21.00/week - 91.00/month', 'm1.xlarge'),
+    #AWS_INSTANCE('X-Large SSD (4 CPU / 15GB / 2x40GB / Moderate Network) .28/hr - 3.36/day - 16.80/week - 72.80/month', 'm3.xlarge'),
     #AWS_INSTANCE('X-Large SSD Mem Optimized (4 CPU / 30GB / 80GB / Moderate Network) .35/hr - 4.20/day - 21.00/week - 91.00/month', 'r3.xlarge'),
-    AWS_INSTANCE('XX-Large (4 CPU / 34GB / 2x850GB / Moderate Network) .49/hr - 11.76/day - 82.32/week - 356.72/month', 'm2.2xlarge'),
-    AWS_INSTANCE('XXXX-Large (8 CPU / 68GB / 2x840GB / High Netork) .98/hr - 23.52/day - 164.64/week - 713.44/month', 'm2.4xlarge'),
-    AWS_INSTANCE('CentOS7 - XX-Large SSD Mem Optimized (8 CPU / 61GB / 160GB / High Network) .70/hr - 8.40/day - 42.00/week - 182/month', 'r3.2xlarge'), 
+    #AWS_INSTANCE('XX-Large (4 CPU / 34GB / 2x850GB / Moderate Network) .49/hr - 11.76/day - 82.32/week - 356.72/month', 'm2.2xlarge'),
+    #AWS_INSTANCE('XXXX-Large (8 CPU / 68GB / 2x840GB / High Netork) .98/hr - 23.52/day - 164.64/week - 713.44/month', 'm2.4xlarge'),
+    #AWS_INSTANCE('XX-Large SSD Mem Optimized (8 CPU / 61GB / 100GB / High Network) .70/hr - 8.40/day - 42.00/week - 182/month', 'r3.2xlarge'), 
     #AWS_INSTANCE('RHEL 2xLarge (8 CPU/ 61GB / 2x800 SSD / High Network) 1.84/hr - 44.16/day - 309.12/week - 1339.52/month', 'i2.2xlarge'),
 )
 
@@ -268,7 +276,7 @@ def changeTag(tagName='ExtraTime'):
     print "Or Type \"EXIT\" to quit"
 
     if tagName == 'ExtraTime':
-        selectedInstances = promptListMultiple("Which instances would you like to extend the usage on? ",
+        selectedInstances = promptListMultiple("Which instances would you like to extend the usage on?",
                                            instanceList, allow_exit=True)
 
     if tagName == 'Environment':
@@ -279,7 +287,7 @@ def changeTag(tagName='ExtraTime'):
         instance_ids = [instance.instances[0].id for instance in selectedInstances]
 
         if tagName == 'ExtraTime':
-            selectedVal = promptInt("How many hours would you like to add? ", min_val=1, max_val=24)
+            selectedVal = promptInt("How many hours would you like to add? (MAX 2 Hours) ", min_val=1, max_val=2)
 
         if tagName == 'Environment':
             print "\n" * 5
