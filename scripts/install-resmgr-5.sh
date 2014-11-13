@@ -20,7 +20,8 @@
 # Requires script to be run as root
 # Requires that all specified hostnames are resolvable to IPs via host command
 # Requires passwordless ssh to all specified hosts
-# Requires that btrfs filesystem is partitioned and mounted at /opt/serviced/var
+# Requires that btrfs filesystem is partitioned and mounted at:
+#    /opt/serviced/var and /var/lib/docker
 #
 # Instructions to run on master as root user:
 #    download this script to $HOME
@@ -119,6 +120,62 @@ function checkPrereqs
 }
 
 #==============================================================================
+function checkHosts
+{
+    local hosts="$@"
+    logInfo "Checking hosts: $hosts"
+    local numErrors=0
+
+    # check ssh and ip resolvable
+    for host in $hosts; do
+        if ! host $host; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        if ! ssh $host id; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        logInfo "host $host is a valid host"
+    done
+
+    logSummary "checked prereqs - found $numErrors errors"
+
+    return $numErrors
+}
+
+#==============================================================================
+function installRemotes
+{
+    local master="$1"
+    shift
+    local remotes="$@"
+    logInfo "Installing with specified master: $master on remotes: $remotes  "
+    local numErrors=0
+
+    # scp and launch script
+    for host in $hosts; do
+        if ! scp $0 $host:; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        if ! ssh $host nohup $0 remote $master $remotes; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        logInfo "scped and launched script on $remote"
+    done
+
+    logSummary "checked prereqs - found $numErrors errors"
+
+    return $numErrors
+}
+
+#==============================================================================
 function duplicateOutputToLogFile
 {
     local logfile="$1"
@@ -148,44 +205,48 @@ function main
     # ---- Check environment
     [ "root" != "$(whoami)" ] && die "user is not root - run this script as 'root' user"
 
-    local logdir="$HOME/log"
+    local logdir="$HOME/resmgr"
     [ ! -d "$logdir" ] && mkdir -p "$logdir"
-
     \cd $logdir || die "could not cd to logdir: $logdir"
 
     duplicateOutputToLogFile "$logdir/$(basename -- $0).log"
 
+    # ---- Show date and version of os
     logInfo "$(basename -- $0)  date:$(date +'%Y-%m-%d-%H%M%S-%Z')  uname-rm:$(uname -rm)"
     logInfo "installing as $cmd role with master $master with remotes: $remotes"
 
     # ---- Check prereqs
     checkPrereqs || die "prereqs not configured"
 
-    # TODO: check that each host is ip/hostname resolvable
+    # ---- check that each host is ip/hostname resolvable and passwordless ssh works
+    checkHosts $master $remotes || die "hosts checks failed"
 
-    # ---- Show date and version of os
+    # ---- install on remotes
+    case "$role" in
+        "master")
+            installRemotes $master $remotes
 
-    # TODO: install on remote
-    #   for each remote
-    #       scp this script to each
-    #       ssh and nohup launch the script with 'remote'
+            # TODO: install on master
+            #   install zenoss-resmgr
+            #          follow most of this
+            #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Master
+            #   add appropriate pools
+            #   add hosts to pools
+            #   wait for remote by continuously adding host and waiting for success
+            #   add template
+            #   start zenoss
+            #   wait for services to start
+            #   use dc-admin to add remote collector to collector pool
+            ;;
 
-    # TODO: install on master
-    #   install zenoss-resmgr
-    #          follow most of this
-    #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Master
-    #   add appropriate pools
-    #   add hosts to pools
-    #   wait for remote by continuously adding host and waiting for success
-    #   add template
-    #   start zenoss
-    #   wait for services to start
-    #   use dc-admin to add remote collector to collector pool
-
-    #   install zenoss-resmgr
-    #          follow most of this
-    #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Pool
-    #          
+        "remote")
+            # TODO: install on remote
+            #   install zenoss-resmgr
+            #          follow most of this
+            #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Pool
+            #
+            ;;
+    esac
 
     # ---- return with number of errors
     return $errors
