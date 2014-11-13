@@ -20,7 +20,8 @@
 # Requires script to be run as root
 # Requires that all specified hostnames are resolvable to IPs via host command
 # Requires passwordless ssh to all specified hosts
-# Requires that btrfs filesystem is partitioned and mounted at /opt/serviced/var
+# Requires that btrfs filesystem is partitioned and mounted at:
+#    /opt/serviced/var and /var/lib/docker
 #
 # Instructions to run on master as root user:
 #    download this script to $HOME
@@ -151,7 +152,7 @@ function installRemotes
     local master="$1"
     shift
     local remotes="$@"
-    logInfo "Installing specifying master: $master on remotes: $remotes  "
+    logInfo "Installing with specified master: $master on remotes: $remotes  "
     local numErrors=0
 
     # scp and launch script
@@ -204,7 +205,7 @@ function main
     # ---- Check environment
     [ "root" != "$(whoami)" ] && die "user is not root - run this script as 'root' user"
 
-    local logdir="$HOME/log"
+    local logdir="$HOME/resmgr"
     [ ! -d "$logdir" ] && mkdir -p "$logdir"
     \cd $logdir || die "could not cd to logdir: $logdir"
 
@@ -221,24 +222,31 @@ function main
     checkHosts $master $remotes || die "hosts checks failed"
 
     # ---- install on remotes
-    installRemotes $master $remotes
+    case "$role" in
+        "master")
+            installRemotes $master $remotes
 
-    # TODO: install on master
-    #   install zenoss-resmgr
-    #          follow most of this
-    #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Master
-    #   add appropriate pools
-    #   add hosts to pools
-    #   wait for remote by continuously adding host and waiting for success
-    #   add template
-    #   start zenoss
-    #   wait for services to start
-    #   use dc-admin to add remote collector to collector pool
+            # TODO: install on master
+            #   install zenoss-resmgr
+            #          follow most of this
+            #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Master
+            #   add appropriate pools
+            #   add hosts to pools
+            #   wait for remote by continuously adding host and waiting for success
+            #   add template
+            #   start zenoss
+            #   wait for services to start
+            #   use dc-admin to add remote collector to collector pool
+            ;;
 
-    #   install zenoss-resmgr
-    #          follow most of this
-    #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Pool
-    #          
+        "remote")
+            # TODO: install on remote
+            #   install zenoss-resmgr
+            #          follow most of this
+            #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Pool
+            #
+            ;;
+    esac
 
     # ---- return with number of errors
     return $errors
