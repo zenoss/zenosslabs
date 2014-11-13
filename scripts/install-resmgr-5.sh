@@ -119,6 +119,62 @@ function checkPrereqs
 }
 
 #==============================================================================
+function checkHosts
+{
+    local hosts="$@"
+    logInfo "Checking hosts: $hosts"
+    local numErrors=0
+
+    # check ssh and ip resolvable
+    for host in $hosts; do
+        if ! host $host; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        if ! ssh $host id; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        logInfo "host $host is a valid host"
+    done
+
+    logSummary "checked prereqs - found $numErrors errors"
+
+    return $numErrors
+}
+
+#==============================================================================
+function installRemotes
+{
+    local master="$1"
+    shift
+    local remotes="$@"
+    logInfo "Installing specifying master: $master on remotes: $remotes  "
+    local numErrors=0
+
+    # scp and launch script
+    for host in $hosts; do
+        if ! scp $0 $host:; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        if ! ssh $host nohup $0 remote $master $remotes; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        logInfo "scped and launched script on $remote"
+    done
+
+    logSummary "checked prereqs - found $numErrors errors"
+
+    return $numErrors
+}
+
+#==============================================================================
 function duplicateOutputToLogFile
 {
     local logfile="$1"
@@ -150,25 +206,22 @@ function main
 
     local logdir="$HOME/log"
     [ ! -d "$logdir" ] && mkdir -p "$logdir"
-
     \cd $logdir || die "could not cd to logdir: $logdir"
 
     duplicateOutputToLogFile "$logdir/$(basename -- $0).log"
 
+    # ---- Show date and version of os
     logInfo "$(basename -- $0)  date:$(date +'%Y-%m-%d-%H%M%S-%Z')  uname-rm:$(uname -rm)"
     logInfo "installing as $cmd role with master $master with remotes: $remotes"
 
     # ---- Check prereqs
     checkPrereqs || die "prereqs not configured"
 
-    # TODO: check that each host is ip/hostname resolvable
+    # ---- check that each host is ip/hostname resolvable and passwordless ssh works
+    checkHosts $master $remotes || die "hosts checks failed"
 
-    # ---- Show date and version of os
-
-    # TODO: install on remote
-    #   for each remote
-    #       scp this script to each
-    #       ssh and nohup launch the script with 'remote'
+    # ---- install on remotes
+    installRemotes $master $remotes
 
     # TODO: install on master
     #   install zenoss-resmgr
