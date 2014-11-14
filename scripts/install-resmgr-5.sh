@@ -15,31 +15,31 @@
 #
 ###############################################################################
 #
-# Requires about 5G of free space in ~/
+# Requires about 5G of free space in root's $HOME
 #
 # Requires script to be run as root
 # Requires that all specified hostnames are resolvable to IPs via host command
 # Requires passwordless ssh to all specified hosts
 # Requires that btrfs filesystem is partitioned and mounted at:
-#    /opt/serviced/var and /var/lib/docker
+#    /var/lib/docker     # all hosts
+#    /opt/serviced/var   # only master
 #
 # Instructions to run on master as root user:
-#    download this script to $HOME
+#    download this script to $HOME of the root user
 #    chmod +rx ~/install-resmgr-5.sh
-#    ~/install-resmgr-5.sh MASTER_HOSTNAME REMOTE_HOSTNAME REMOTE2_HOSTNAME ...
+#    ~/install-resmgr-5.sh master MASTER_HOSTNAME REMOTE_HOSTNAME REMOTE2_HOSTNAME ...
 #
 # Log files are stored in $HOME/resmgr/
 # 
 ###############################################################################
 
 export INSTALL_RESMGR_VERSION="0.1"
-export WORKDIR="$(\cd $HOME; /bin/pwd)"   # full path to temp work dir
 
 #==============================================================================
 function usage
 {
     cat <<EOF
-Usage: $0 master|remote MASTER_HOSTNAME REMOTE_HOSTNAME [OTHER_REMOTE_HOSTNAMES...]
+Usage: $0 { master | remote } MASTER_HOSTNAME REMOTE_HOSTNAME [OTHER_REMOTE_HOSTNAMES...]
     install resmgr 5 on master and remote host(s)
 
 Example(s):
@@ -94,46 +94,43 @@ function getLinuxDistro
 }
 
 #==============================================================================
-function checkPrereqs
+function checkFilesystems
 {
-    logInfo "Checking prereqs"
-
+    logInfo "Checking filesystems"
     local numErrors=0
+    local wantedFSType="$1"; shift
+    local paths="$@"
 
-    # check btrfs
-    for path in \
-        "/opt/serviced/var" \
-        "/var/lib/docker" \
-    ; do
+    for path in $paths; do
+        logInfo "checking that path $path is of the required type: $wantedFSType"
+
         if ! df -H $path; then
             logError "df was not able to find dir: $dir"
             numErrors=$(( numErrors + 1 ))
             continue
         fi
 
-        # TODO: check that each path is btrfs
+        if ! mount | grep "on $path type $wantedFSType"; then
+            logError "filesystem at path: $path is not $wantedFSType"
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
     done
 
-    logSummary "checked prereqs - found $numErrors errors"
+    logSummary "checked filesystems - found $numErrors errors"
 
     return $numErrors
 }
 
 #==============================================================================
-function checkHosts
+function checkHostsResolvable
 {
     local hosts="$@"
-    logInfo "Checking hosts: $hosts"
+    logInfo "Checking that hosts are resolvable: $hosts"
     local numErrors=0
 
-    # check ssh and ip resolvable
     for host in $hosts; do
         if ! host $host; then
-            numErrors=$(( numErrors + 1 ))
-            continue
-        fi
-
-        if ! ssh $host id; then
             numErrors=$(( numErrors + 1 ))
             continue
         fi
@@ -141,7 +138,26 @@ function checkHosts
         logInfo "host $host is a valid host"
     done
 
-    logSummary "checked prereqs - found $numErrors errors"
+    logSummary "checked that hosts are resolvable - found $numErrors errors"
+
+    return $numErrors
+}
+
+#==============================================================================
+function checkHostsSsh
+{
+    local hosts="$@"
+    logInfo "Checking that hosts have passwordless ssh: $hosts"
+    local numErrors=0
+
+    for host in $hosts; do
+        if ! ssh $host id >/dev/null; then
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+    done
+
+    logSummary "checked that hosts have passwordless ssh - found $numErrors errors"
 
     return $numErrors
 }
@@ -149,20 +165,20 @@ function checkHosts
 #==============================================================================
 function installRemotes
 {
-    local master="$1"
-    shift
+    local master="$1"; shift
     local remotes="$@"
-    logInfo "Installing with specified master: $master on remotes: $remotes  "
+    logInfo "Installing remotes with master: $master and remotes: $remotes"
     local numErrors=0
 
     # scp and launch script
-    for host in $hosts; do
-        if ! scp $0 $host:; then
+    for host in $remotes; do
+        if ! scp $SCRIPT $host:; then
             numErrors=$(( numErrors + 1 ))
             continue
         fi
 
-        if ! ssh $host nohup $0 remote $master $remotes; then
+        nohup ssh $host $SCRIPT remote $master $remotes &>/dev/null &
+        if [[ $? != 0 ]] ; then
             numErrors=$(( numErrors + 1 ))
             continue
         fi
@@ -170,7 +186,7 @@ function installRemotes
         logInfo "scped and launched script on $remote"
     done
 
-    logSummary "checked prereqs - found $numErrors errors"
+    logSummary "installed remotes - found $numErrors errors"
 
     return $numErrors
 }
@@ -179,11 +195,8 @@ function installRemotes
 function duplicateOutputToLogFile
 {
     local logfile="$1"
-
     local logdir=$(dirname $logfile)
-    if [ ! -d "$logdir" ]; then
-        \mkdir -p $logdir
-    fi
+    [[ ! -d "$logdir" ]] && \mkdir -p $logdir
 
     exec &> >(tee -a $logfile)
     echo -e "\n################################################################################" >> $logfile
@@ -194,36 +207,37 @@ function duplicateOutputToLogFile
 function main
 {
     INITPWD=$(pwd)
+    SCRIPT="$(\cd $(dirname $0); \pwd)/$(basename -- $0)"
+
     local errors=0
-    if [[ $# -lt 3 ]]; then
-        usage
-    fi
+    [[ $# -lt 3 ]] && usage
     local role="$1"; shift
     local master="$1"; shift
     local remotes="$@"
 
     # ---- Check environment
-    [ "root" != "$(whoami)" ] && die "user is not root - run this script as 'root' user"
+    [[ "root" != "$(whoami)" ]] && die "user is not root - run this script as 'root' user"
 
     local logdir="$HOME/resmgr"
-    [ ! -d "$logdir" ] && mkdir -p "$logdir"
+    [[ ! -d "$logdir" ]] && mkdir -p "$logdir"
     \cd $logdir || die "could not cd to logdir: $logdir"
 
     duplicateOutputToLogFile "$logdir/$(basename -- $0).log"
 
     # ---- Show date and version of os
     logInfo "$(basename -- $0)  date:$(date +'%Y-%m-%d-%H%M%S-%Z')  uname-rm:$(uname -rm)"
-    logInfo "installing as $cmd role with master $master with remotes: $remotes"
-
-    # ---- Check prereqs
-    checkPrereqs || die "prereqs not configured"
+    logInfo "installing as '$role' role with master $master with remotes: $remotes"
 
     # ---- check that each host is ip/hostname resolvable and passwordless ssh works
-    checkHosts $master $remotes || die "hosts checks failed"
+    checkHostsResolvable $master $remotes || die "failed to satisfy resolvable hosts prereq"
 
     # ---- install on remotes
     case "$role" in
         "master")
+            checkFilesystems "btrfs" "/var/lib/docker" "/opt/serviced/var" || die "failed to satisfy filesystem prereq"
+
+            checkHostsSsh $master $remotes || die "failed to satisfy passwordless ssh prereq"
+
             installRemotes $master $remotes
 
             # TODO: install on master
@@ -240,11 +254,17 @@ function main
             ;;
 
         "remote")
+            checkFilesystems "btrfs" "/var/lib/docker" || die "failed to satisfy filesystem prereq"
+
             # TODO: install on remote
             #   install zenoss-resmgr
             #          follow most of this
             #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Pool
             #
+            ;;
+
+        *)
+            die "prereqs not configured"
             ;;
     esac
 
