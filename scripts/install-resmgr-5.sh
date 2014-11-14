@@ -39,14 +39,14 @@ export INSTALL_RESMGR_VERSION="0.1"
 function usage
 {
     cat <<EOF
-Usage: $0 { master | remote } MASTER_HOSTNAME REMOTE_HOSTNAME [OTHER_REMOTE_HOSTNAMES...]
+Usage: $0 master MASTER_HOSTNAME REMOTE_HOSTNAME [OTHER_REMOTE_HOSTNAMES...]
     install resmgr 5 on master and remote host(s)
 
 Example(s):
-    $0 master zenoss-master zenoss-remote1 zenoss-remote2   # called on master host
-
-    $0 remote zenoss-master zenoss-remote1 zenoss-remote2   # called on remote host(s)
-
+    $0 master zmaster zremote1 zremote2   # called as root user on master host
+        # will:
+        #    install/configure software on remotes via ssh
+        #    install/configure/deploy software on master
 EOF
     exit 1
 }
@@ -192,6 +192,106 @@ function installRemotes
 }
 
 #==============================================================================
+function installHostSoftware
+{
+    logInfo "Installing software"
+    local numErrors=0
+
+    ufw disable
+
+    if test -f /etc/selinux/config && grep '^SELINUX=enforcing' /etc/selinux/config; then
+        EXT=$(date +'%Y%m%d-%H%M%S-%Z')
+        sudo sed -i.${EXT} -e 's/^SELINUX=.*/SELINUX=permissive/g' \
+              /etc/selinux/config && \
+              grep '^SELINUX=' /etc/selinux/config
+
+        die "SElinux was found and set to permissive - reboot server and rerun this script on master"
+    fi
+
+    set -e
+
+    curl -sSL https://get.docker.io/ubuntu/ | sh
+
+    usermod -aG docker $USER
+
+    apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7
+
+    REPO=http://get.zenoss.io/apt/ubuntu
+    sh -c 'echo "deb [ arch=amd64 ] '${REPO}' trusty universe" \
+          > /etc/apt/sources.list.d/zenoss.list'
+
+    apt-get update
+
+    apt-get install -y ntp
+
+    apt-get install -y zenoss-resmgr-service
+
+    logSummary "installed software"
+
+    return $numErrors
+}
+
+#==============================================================================
+function configureMaster
+{
+    logInfo "Configuring master"
+    local numErrors=0
+
+    set -e
+
+    EXT=$(date +'%Y%m%d-%H%M%S-%Z')
+    sed -i.${EXT} \
+          -e 's|^#[^S]*\(SERVICED_FS_TYPE=\).*$|\1btrfs|' \
+            /etc/default/serviced
+
+    sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
+          -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
+          -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
+          -e 's|^#[^S]*\(SERVICED_MASTER=\).|\11|' \
+                /etc/default/serviced
+
+    MYOPT="\nDOCKER_OPTS=\"--insecure-registry $(hostname -s):5000\""
+    sed -i.${EXT} -e '/DOCKER_OPTS=/ s|$|'"${MYOPT}"'|' \
+      /etc/default/docker
+    stop docker; start docker
+
+    start serviced
+
+    logSummary "configured master"
+
+    return $numErrors
+}
+
+#==============================================================================
+function configureRemote
+{
+    logInfo "Configuring remote"
+    local master="$1"
+    local numErrors=0
+
+    set -e
+
+    EXT=$(date +'%Y%m%d-%H%M%S-%Z')
+
+    MHOST=$(set -o pipefail; host $master | awk '{print $NF}')
+
+    test ! -z "${MHOST}" && \
+    sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
+      -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
+      -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
+      -e 's|^#[^S]*\(SERVICED_MASTER=\).|\10|' \
+      -e 's|^#[^S]*\(SERVICED_MASTER_IP=\).*|\1'${MHOST}'|' \
+      -e '/=$SERVICED_MASTER_IP/ s|^#[^S]*||' \
+      /etc/default/serviced
+
+    start serviced
+
+    logSummary "configured remote"
+
+    return $numErrors
+}
+
+#==============================================================================
 function duplicateOutputToLogFile
 {
     local logfile="$1"
@@ -225,7 +325,7 @@ function main
     duplicateOutputToLogFile "$logdir/$(basename -- $0).log"
 
     # ---- Show date and version of os
-    logInfo "$(basename -- $0)  date:$(date +'%Y-%m-%d-%H%M%S-%Z')  uname-rm:$(uname -rm)"
+    logInfo "$(basename -- $0)  date:$(date +'%Y%m%d-%H%M%S-%Z')  uname-rm:$(uname -rm)"
     logInfo "installing as '$role' role with master $master with remotes: $remotes"
 
     # ---- check that each host is ip/hostname resolvable and passwordless ssh works
@@ -240,10 +340,14 @@ function main
 
             installRemotes $master $remotes
 
-            # TODO: install on master
-            #   install zenoss-resmgr
-            #          follow most of this
-            #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Master
+            installHostSoftware
+
+            # TODO: sudo usermod -aG sudo $USER  - which user?
+            # TODO: how to ensure ~/.dockercfg for docker?
+
+            configureMaster
+
+            # TODO:
             #   add appropriate pools
             #   add hosts to pools
             #   wait for remote by continuously adding host and waiting for success
@@ -251,16 +355,19 @@ function main
             #   start zenoss
             #   wait for services to start
             #   use dc-admin to add remote collector to collector pool
+
+            logSummary "software is installed, deployed, and started on master"
+            logSummary "TODO: add pools, hosts, template; start services; add collector"
             ;;
 
         "remote")
             checkFilesystems "btrfs" "/var/lib/docker" || die "failed to satisfy filesystem prereq"
 
-            # TODO: install on remote
-            #   install zenoss-resmgr
-            #          follow most of this
-            #          https://github.com/control-center/serviced/wiki/Install-a-Build:-Ubuntu,-Pool
-            #
+            installHostSoftware
+
+            configureRemote $master
+
+            logSummary "software is installed, deployed, and started on remote"
             ;;
 
         *)
