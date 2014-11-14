@@ -92,6 +92,18 @@ function logSummary
 }
 
 #==============================================================================
+function duplicateOutputToLogFile
+{
+    local logfile="$1"
+    local logdir=$(dirname $logfile)
+    [[ ! -d "$logdir" ]] && \mkdir -p $logdir
+
+    exec &> >(tee -a $logfile)
+    echo -e "\n################################################################################" >> $logfile
+    return $?
+}
+
+#==============================================================================
 function set_LINUX_DISTRO 
 {               
     export LINUX_DISTRO=$([ -f "/etc/redhat-release" ] && echo RHEL || echo DEBIAN; [ "0" = $PIPESTATUS ] && true || false)
@@ -357,15 +369,48 @@ function configureRemote
 }
 
 #==============================================================================
-function duplicateOutputToLogFile
+function waitForServicedReady
 {
-    local logfile="$1"
-    local logdir=$(dirname $logfile)
-    [[ ! -d "$logdir" ]] && \mkdir -p $logdir
+    logInfo "Wait for serviced to be ready"
+    local timeout="$1"
+    local numErrors=0
 
-    exec &> >(tee -a $logfile)
-    echo -e "\n################################################################################" >> $logfile
-    return $?
+    until wget http://localhost:4979; do
+        if [[ $timeout -lt 1 ]]; then
+            logInfo "Timed out waiting for serviced!"
+            return 1
+        fi
+
+        logInfo "Not ready yet (countdown:$timeout). Checking again in 10 seconds."
+        timeout=$(( $timeout - 10 ))
+    done
+
+    logSummary "serviced is ready"
+    return $numErrors
+}
+
+#==============================================================================
+function addPoolAndHosts
+{
+    logInfo "add pool and hosts"
+    local timeout="$1"; shift
+    local pool="$1"; shift
+    local hosts="$@"
+    local numErrors=0
+
+    local rpcPort=4979
+
+    serviced pool add $pool
+    # TODO: verify pool is added
+    for host in $remotes; do
+        serviced host add $remote:$rpcPort $pool
+        #   wait for remote by continuously adding host and waiting for success
+    done
+
+    # TODO: verify hosts are added
+
+    logSummary "hosts are added"
+    return $numErrors
 }
 
 #==============================================================================
@@ -414,10 +459,14 @@ function main
 
             configureMaster
 
+            local timeout=3600
+            waitForServicedReady $timeout || die "serviced failed to be ready within $timeout seconds"
+
+            serviced host add $master:$rpcPort default
+
+            addPoolAndHosts $timeout pool1 $remotes || die "unable to add pools and hosts: $master $remotes"
+
             # TODO:
-            #   add appropriate pools
-            #   add hosts to pools
-            #   wait for remote by continuously adding host and waiting for success
             #   add template
             #   start zenoss
             #   wait for services to start
