@@ -23,6 +23,8 @@
 # Requires that btrfs filesystem is partitioned and mounted at:
 #    /var/lib/docker     # all hosts
 #    /opt/serviced/var   # only master
+# Requires env vars: SERVICED_USER DOCKERHUB_USER DOCKERHUB_EMAIL DOCKERHUB_PASS
+#    for convenience, set those in $HOME/install-resmgr-5.env
 #
 # Instructions to run on master as root user:
 #    download this script to $HOME of the root user
@@ -47,6 +49,12 @@ Example(s):
         # will:
         #    install/configure software on remotes via ssh
         #    install/configure/deploy software on master
+
+Required environment variables (can be set in ~root/$(basename -- $0 .sh).env):
+    SERVICED_USER=customer                  # host username allowed to log into CC UI
+    DOCKERHUB_USER=customer                 # username to be supplied to docker login
+    DOCKERHUB_EMAIL=customer@example.com    # email to be supplied to docker login
+    DOCKERHUB_PASS=somepassword             # password to be supplied to docker login
 EOF
     exit 1
 }
@@ -84,14 +92,49 @@ function logSummary
 }
 
 #==============================================================================
-function getLinuxDistro 
+function set_LINUX_DISTRO 
 {               
-    local linux_distro=$([ -f "/etc/redhat-release" ] && echo RHEL || echo DEBIAN; [ "0" = $PIPESTATUS ] && true || false)
+    export LINUX_DISTRO=$([ -f "/etc/redhat-release" ] && echo RHEL || echo DEBIAN; [ "0" = $PIPESTATUS ] && true || false)
     local result=$?
 
-    echo $linux_distro
+    echo $LINUX_DISTRO
     return $result
 }
+
+#==============================================================================
+function checkEnv
+{
+    logInfo "Checking environment variables"
+    local numErrors=0
+    local envfile="$1"
+
+    if [[ -f "$envfile" ]]; then
+        logInfo "sourcing env file: $envfile"
+        source "$envfile"
+        for var in $(grep -Po '^\s*\w+=' $envfile | sed -e 's/=//'); do
+            #echo "exporting $var"
+            export $var
+        done
+    fi
+
+    for var in \
+        "SERVICED_USER" \
+        "DOCKERHUB_USER" \
+        "DOCKERHUB_EMAIL" \
+        "DOCKERHUB_PASS" \
+    ; do
+        if ! env | grep "^$var="; then
+            logError "env var $var is not set"
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+    done
+
+    logSummary "checked environment variables - found $numErrors errors"
+
+    return $numErrors
+}
+
 
 #==============================================================================
 function checkFilesystems
@@ -232,6 +275,28 @@ function installHostSoftware
 }
 
 #==============================================================================
+function configureCredentials
+{
+    logInfo "Configuring credentials"
+    local numErrors=0
+
+    set -e
+
+    if [[ "RHEL" = $LINUX_DISTRO ]]; then
+        usermod -aG wheel "$SERVICED_USER"
+    else
+        usermod -aG sudo "$SERVICED_USER"
+    fi
+
+    (export HISTCONTROL=ignorespace; \
+        docker login -u '$DOCKERHUB_USER' -e '$DOCKERHUB_EMAIL' -p '$DOCKERHUB_PASS')
+
+    logSummary "configured credentials"
+
+    return $numErrors
+}
+
+#==============================================================================
 function configureMaster
 {
     logInfo "Configuring master"
@@ -328,6 +393,9 @@ function main
     logInfo "$(basename -- $0)  date:$(date +'%Y%m%d-%H%M%S-%Z')  uname-rm:$(uname -rm)"
     logInfo "installing as '$role' role with master $master with remotes: $remotes"
 
+    checkEnv "$HOME/$(basename -- $0 .sh).env" || die "failed to satisfy required environment variables"
+    set_LINUX_DISTRO 
+
     # ---- check that each host is ip/hostname resolvable and passwordless ssh works
     checkHostsResolvable $master $remotes || die "failed to satisfy resolvable hosts prereq"
 
@@ -342,8 +410,7 @@ function main
 
             installHostSoftware
 
-            # TODO: sudo usermod -aG sudo $USER  - which user?
-            # TODO: how to ensure ~/.dockercfg for docker?
+            configureCredentials
 
             configureMaster
 
