@@ -395,7 +395,7 @@ function configureRemote
 }
 
 #==============================================================================
-function retry()
+function retry
 {
     local timeout=$1; shift
     local name=$1; shift
@@ -413,13 +413,15 @@ function retry()
     return $result
 }
 
-test_serviced_ready() {
+function test_serviced_ready
+{
     local rpcport=$1
     wget http://localhost:$rpcport &>/dev/null
     return $?
 }
 
-host_add() {
+function host_add
+{
     local pool="$1"; shift
     local rpcport="$1"; shift
     local host="$1"
@@ -427,6 +429,13 @@ host_add() {
     serviced host list | grep "$pool.*$host.*$rpcport" &>/dev/null
     return $?
 }
+
+function wait_for_all_running
+{
+    serviced service status | awk '$1 != "NAME" && $3 != "" && $3 != "Running"{ notrunning++} END{exit notrunning}'
+    return $?
+}
+
 
 #==============================================================================
 function addPoolAndHosts
@@ -469,6 +478,20 @@ function deployTemplateAndStart
     serviced service start $template
 
     logSummary "deployed and started template"
+    return $numErrors
+}
+
+#==============================================================================
+function addZenossCollector
+{
+    logInfo "add zenoss collector"
+    local pool="$1"; shift
+    local numErrors=0
+
+    serviced service attach zope/0 su - zenoss -c "dc-admin add-hub --pool $pool $pool"
+    serviced service attach zope/0 su - zenoss -c "dc-admin add-collector --pool $pool --src-hub $pool $pool"
+
+    logSummary "added zenoss collector $collector to pool $pool"
     return $numErrors
 }
 
@@ -561,7 +584,12 @@ function main
 
             deployTemplateAndStart "Zenoss.resmgr"
 
-            logSummary "TODO: wait for services to start; add collector"
+            retry $timeout services-running wait_for_all_running || die "timed out waiting for all services to be running"
+
+            for pool in ${!COLLECTORS_OF_POOL[*]}; do
+                addZenossCollector $pool || die "unable to add collector to $pool"
+            done
+
             logSummary "software is installed, deployed, and started on master"
             ;;
 
