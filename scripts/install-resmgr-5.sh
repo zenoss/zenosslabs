@@ -242,7 +242,7 @@ function installRemotes
             continue
         fi
 
-        ssh $host ~/$(basename -- $SCRIPT) remote $master #&>/dev/null &
+        nohup ssh $host ~/$(basename -- $SCRIPT) remote $master &>/dev/null &
         if [[ $? != 0 ]] ; then
             numErrors=$(( numErrors + 1 ))
             continue
@@ -453,6 +453,26 @@ function addPoolAndHosts
 }
 
 #==============================================================================
+function deployTemplateAndStart
+{
+    logInfo "deploy and start template"
+    local template="$1"
+
+    local id=$(serviced template list | awk '/'$template'/{print $1; exit}')
+
+    if [[ -z "$id" ]]; then
+        logError "unable to find template $template"
+        return 1
+    fi
+    serviced template deploy "$id" default zenoss
+
+    serviced service start $template
+
+    logSummary "deployed and started template"
+    return $numErrors
+}
+
+#==============================================================================
 function genconf
 {
     local file="$1"
@@ -526,7 +546,7 @@ function main
 
             configureMaster
 
-            local timeout=3600
+            local timeout=1800
             local UIPORT=443
             retry $timeout serviced test_serviced_ready $UIPORT || die "serviced failed to be ready within $timeout seconds"
 
@@ -539,7 +559,9 @@ function main
                 addPoolAndHosts $timeout $pool $RPCPORT $remotes || die "unable to add pool $pool and hosts: $remotes"
             done
 
-            logSummary "TODO: add/deploy template; start zenoss services; wait for services to start; add collector"
+            deployTemplateAndStart "Zenoss.resmgr"
+
+            logSummary "TODO: wait for services to start; add collector"
             logSummary "software is installed, deployed, and started on master"
             ;;
 
