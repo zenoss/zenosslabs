@@ -23,13 +23,13 @@
 # Requires that btrfs filesystem is partitioned and mounted at:
 #    /var/lib/docker     # all hosts
 #    /opt/serviced/var   # only master
-# Requires config settings in $HOME/install-resmgr-5.cfg
+# Requires config settings in $HOME/.install-resmgr-5.rc
 #
 # Instructions to run on master as root user:
 #    download this script to $HOME of the root user
 #    chmod +rx ~root/install-resmgr-5.sh
 #    ~root/install-resmgr-5.sh genconf
-#       # edit and modify ~root/install-resmgr-5.cfg
+#       # edit and modify ~root/.install-resmgr-5.rc
 #    ~root/install-resmgr-5.sh master
 #
 # Log files are stored in $HOME/resmgr/
@@ -44,7 +44,7 @@ function usage
     cat <<EOF
 Usage:
     $0 genconf 
-        generate modifiable config file to ~root/$(basename -- $0 .sh)
+        generate modifiable config file to $RCFILE
 
     $0 master
         install resmgr 5 on master and remote host(s) based on config file
@@ -113,16 +113,16 @@ function set_LINUX_DISTRO
 function importConf
 {
     logInfo "Import required config"
-    local cfgfile="$1"
+    local rcfile="$1"
     local numErrors=0
 
-    if [[ ! -f "$cfgfile" ]]; then
-        logError "unable to find config file: $cfgfile"
+    if [[ ! -f "$rcfile" ]]; then
+        logError "unable to find config file: $rcfile"
         return 1
     fi
 
-    logInfo "sourcing config file: $cfgfile"
-    source "$cfgfile"
+    logInfo "sourcing config file: $rcfile"
+    source "$rcfile"
 
     for var in \
         "SERVICED_USERS" \
@@ -524,7 +524,7 @@ function main
 {
     INITPWD=$(pwd)
     SCRIPT="$(\cd $(dirname $0); \pwd)/$(basename -- $0)"
-    CONFIG=~/"$(basename -- $0 .sh).cfg"
+    RCFILE=~/".$(basename -- $0 .sh).rc"
 
     [[ $# -lt 1 ]] && usage
     local role="$1"; shift
@@ -533,7 +533,7 @@ function main
     [[ "root" != "$(whoami)" ]] && die "user is not root - run this script as 'root' user"
 
     if [[ "genconf" = "$role" ]]; then
-        genconf "$CONFIG"
+        genconf "$RCFILE"
         exit $?
     fi
 
@@ -552,7 +552,7 @@ function main
     # ---- install on master and remotes
     case "$role" in
         "master")
-            importConf "$CONFIG" || die "failed to satisfy required configuration variables"
+            importConf "$RCFILE" || die "failed to satisfy required configuration variables"
             logInfo "installing as '$role' role with master $MASTER with remotes: $REMOTES"
 
             checkHostsResolvable $MASTER $REMOTES || die "failed to satisfy resolvable hosts prereq"
@@ -576,7 +576,7 @@ function main
             local RPCPORT=4979
             serviced host add $MASTER:$RPCPORT default
 
-            source "$CONFIG"  # workaround for declare -A COLLECTORS_OF_POOL being local to function
+            source "$RCFILE"  # workaround for declare -A COLLECTORS_OF_POOL being local to function
             for pool in ${!COLLECTORS_OF_POOL[*]}; do
                 local remotes="${COLLECTORS_OF_POOL[${pool}]}"
                 addPoolAndHosts $timeout $pool $RPCPORT $remotes || die "unable to add pool $pool and hosts: $remotes"
