@@ -23,11 +23,14 @@
 # Requires that btrfs filesystem is partitioned and mounted at:
 #    /var/lib/docker     # all hosts
 #    /opt/serviced/var   # only master
+# Requires config settings in $HOME/.install-resmgr-5.rc
 #
 # Instructions to run on master as root user:
 #    download this script to $HOME of the root user
-#    chmod +rx ~/install-resmgr-5.sh
-#    ~/install-resmgr-5.sh master MASTER_HOSTNAME REMOTE_HOSTNAME REMOTE2_HOSTNAME ...
+#    chmod +rx ~root/install-resmgr-5.sh
+#    ~root/install-resmgr-5.sh genconf
+#       # edit and modify ~root/.install-resmgr-5.rc
+#    ~root/install-resmgr-5.sh master
 #
 # Log files are stored in $HOME/resmgr/
 # 
@@ -39,15 +42,17 @@ export INSTALL_RESMGR_VERSION="0.1"
 function usage
 {
     cat <<EOF
-Usage: $0 master MASTER_HOSTNAME REMOTE_HOSTNAME [OTHER_REMOTE_HOSTNAMES...]
-    install resmgr 5 on master and remote host(s)
+Usage:
+    $0 genconf 
+        generate modifiable config file to $RCFILE
 
-Example(s):
-    $0 master zmaster zremote1 zremote2   # called as root user on master host
-        # will:
-        #    install/configure software on remotes via ssh
-        #    install/configure/deploy software on master
+    $0 master
+        install resmgr 5 on master and remote host(s) based on config file
+
+Default config file:
 EOF
+    genconf /dev/stderr
+
     exit 1
 }
 
@@ -84,14 +89,74 @@ function logSummary
 }
 
 #==============================================================================
-function getLinuxDistro 
+function duplicateOutputToLogFile
+{
+    local logfile="$1"
+    local logdir=$(dirname $logfile)
+    [[ ! -d "$logdir" ]] && \mkdir -p $logdir
+
+    exec &> >(tee -a $logfile)
+    echo -e "\n################################################################################" >> $logfile
+    return $?
+}
+
+#==============================================================================
+function set_LINUX_DISTRO 
 {               
-    local linux_distro=$([ -f "/etc/redhat-release" ] && echo RHEL || echo DEBIAN; [ "0" = $PIPESTATUS ] && true || false)
+    export LINUX_DISTRO=$([ -f "/etc/redhat-release" ] && echo RHEL || echo DEBIAN; [ "0" = $PIPESTATUS ] && true || false)
     local result=$?
 
-    echo $linux_distro
     return $result
 }
+
+#==============================================================================
+function importConf
+{
+    logInfo "Import required config"
+    local rcfile="$1"
+    local numErrors=0
+
+    if [[ ! -f "$rcfile" ]]; then
+        logError "unable to find config file: $rcfile"
+        return 1
+    fi
+
+    logInfo "sourcing config file: $rcfile"
+    source "$rcfile"
+
+    for var in \
+        "SERVICED_USERS" \
+        "DOCKERHUB_USER" \
+        "DOCKERHUB_EMAIL" \
+        "DOCKERHUB_PASS" \
+        "MASTER" \
+    ; do
+        if [[ -z "${!var}" ]] ; then
+            logError "var $var is not set"
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+    done
+
+    if [[ -z "${!COLLECTORS_OF_POOL[*]}" ]]; then
+        logError "associative array COLLECTORS_OF_POOL is not set"
+        numErrors=$(( numErrors + 1 ))
+    fi
+    for pool in ${!COLLECTORS_OF_POOL[*]}; do
+        if [[ -z "${COLLECTORS_OF_POOL[${pool}]}" ]]; then
+            logError "associative array COLLECTORS_OF_POOL[$pool] is not set"
+            numErrors=$(( numErrors + 1 ))
+            continue
+        fi
+
+        REMOTES="$REMOTES ${COLLECTORS_OF_POOL[${pool}]}"
+    done
+
+    logSummary "imported required config - found $numErrors errors"
+
+    return $numErrors
+}
+
 
 #==============================================================================
 function checkFilesystems
@@ -177,7 +242,7 @@ function installRemotes
             continue
         fi
 
-        nohup ssh $host $SCRIPT remote $master $remotes &>/dev/null &
+        nohup ssh $host ~/$(basename -- $SCRIPT) remote $master &>/dev/null &
         if [[ $? != 0 ]] ; then
             numErrors=$(( numErrors + 1 ))
             continue
@@ -196,6 +261,7 @@ function installHostSoftware
 {
     logInfo "Installing software"
     local numErrors=0
+    local users="$@"
 
     ufw disable
 
@@ -212,11 +278,14 @@ function installHostSoftware
 
     curl -sSL https://get.docker.io/ubuntu/ | sh
 
-    usermod -aG docker $USER
+    for user in $users; do
+        usermod -aG docker "$user"
+    done
 
     apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7
 
-    REPO=http://get.zenoss.io/apt/ubuntu
+    REPO=http://testing.zenoss.io/apt/ubuntu
+    REPO=http://unstable.zenoss.io/apt/ubuntu   # TODO: use testing instead
     sh -c 'echo "deb [ arch=amd64 ] '${REPO}' trusty universe" \
           > /etc/apt/sources.list.d/zenoss.list'
 
@@ -226,7 +295,37 @@ function installHostSoftware
 
     apt-get install -y zenoss-resmgr-service
 
+    set +e
+
     logSummary "installed software"
+
+    return $numErrors
+}
+
+#==============================================================================
+function configureCredentials
+{
+    logInfo "Configuring credentials"
+    local numErrors=0
+
+    set -e
+
+    if [[ "RHEL" = $LINUX_DISTRO ]]; then
+        for user in $SERVICED_USERS; do
+            usermod -aG wheel "$user"
+        done
+    else
+        for user in $SERVICED_USERS; do
+            usermod -aG sudo "$user"
+        done
+    fi
+
+    (export HISTCONTROL=ignorespace; \
+        docker login -u "$DOCKERHUB_USER" -e "$DOCKERHUB_EMAIL" -p "$DOCKERHUB_PASS")
+
+    set +e
+
+    logSummary "configured credentials"
 
     return $numErrors
 }
@@ -257,6 +356,8 @@ function configureMaster
 
     start serviced
 
+    set +e
+
     logSummary "configured master"
 
     return $numErrors
@@ -286,21 +387,136 @@ function configureRemote
 
     start serviced
 
+    set +e
+
     logSummary "configured remote"
 
     return $numErrors
 }
 
 #==============================================================================
-function duplicateOutputToLogFile
+function retry
 {
-    local logfile="$1"
-    local logdir=$(dirname $logfile)
-    [[ ! -d "$logdir" ]] && \mkdir -p $logdir
+    local timeout=$1; shift
+    local name=$1; shift
+    local command="$@"
 
-    exec &> >(tee -a $logfile)
-    echo -e "\n################################################################################" >> $logfile
+    local result=1
+    until [[ $timeout -lt 1 ]]; do
+        $command; result=$?; [[ $result = 0 ]] && return 0 
+        
+        logInfo "$name not ready yet (countdown:$timeout). Checking again in 10 seconds."
+        sleep 10
+        timeout=$(( $timeout - 10 ))
+    done
+
+    return $result
+}
+
+function test_serviced_ready
+{
+    local rpcport=$1
+    wget http://localhost:$rpcport &>/dev/null
     return $?
+}
+
+function host_add
+{
+    local pool="$1"; shift
+    local rpcport="$1"; shift
+    local host="$1"
+    serviced host add $host:$rpcport $pool
+    serviced host list | grep "$pool.*$host.*$rpcport" &>/dev/null
+    return $?
+}
+
+function wait_for_all_running
+{
+    serviced service status | awk '$1 != "NAME" && $3 != "" && $3 != "Running"{ notrunning++} END{exit notrunning}'
+    return $?
+}
+
+
+#==============================================================================
+function addPoolAndHosts
+{
+    logInfo "add pool and hosts"
+    local timeout="$1"; shift
+    local pool="$1"; shift
+    local rpcport="$1"; shift
+    local hosts="$@"
+    local numErrors=0
+
+    serviced pool add $pool 0
+    if ! serviced pool list $pool |grep '"ID":.*"'$pool'"' >/dev/null; then
+        logError "unable to add pool $pool"
+        return 1
+    fi
+
+    for host in $hosts; do
+        retry $timeout "add host to pool" host_add $pool $rpcport $host || die "timed out adding host $host on rpcport $rpcport to pool $pool"
+    done
+
+    logSummary "added pool $pool on rpcport with hosts: $hosts"
+    return $numErrors
+}
+
+#==============================================================================
+function deployTemplateAndStart
+{
+    logInfo "deploy and start template"
+    local template="$1"
+
+    local id=$(serviced template list | awk '/'$template'/{print $1; exit}')
+
+    if [[ -z "$id" ]]; then
+        logError "unable to find template $template"
+        return 1
+    fi
+    serviced template deploy "$id" default zenoss
+
+    serviced service start $template
+
+    logSummary "deployed and started template"
+    return $numErrors
+}
+
+#==============================================================================
+function addZenossCollector
+{
+    logInfo "add zenoss collector"
+    local pool="$1"; shift
+    local numErrors=0
+
+    serviced service attach zope/0 su - zenoss -c "dc-admin add-hub --pool $pool $pool"
+    serviced service attach zope/0 su - zenoss -c "dc-admin add-collector --pool $pool --src-hub $pool $pool"
+
+    logSummary "added zenoss collector $collector to pool $pool"
+    return $numErrors
+}
+
+#==============================================================================
+function genconf
+{
+    local file="$1"
+    [[ "/dev/stderr" != $file ]] && logInfo "generate config file: $file"
+    local numErrors=0
+
+    cat <<-EOF >$file
+    SERVICED_USERS=""                       # host username(s) allowed to log into CC UI
+    DOCKERHUB_USER=""                       # username to be supplied to docker login
+    DOCKERHUB_EMAIL="customer@example.com"  # email to be supplied to docker login
+    DOCKERHUB_PASS=""                       # password to be supplied to docker login
+
+    MASTER=$(hostname -s)                          # hostname of serviced master
+
+    # define pools
+    declare -A COLLECTORS_OF_POOL
+    COLLECTORS_OF_POOL["pool1"]="remote-collector-hostname1 remote-collector-hostname2"
+EOF
+
+    [[ "/dev/stderr" != $file ]] && logSummary "generated config file"
+    return $numErrors
 }
 
 #==============================================================================
@@ -308,16 +524,20 @@ function main
 {
     INITPWD=$(pwd)
     SCRIPT="$(\cd $(dirname $0); \pwd)/$(basename -- $0)"
+    RCFILE=~/".$(basename -- $0 .sh).rc"
 
-    local errors=0
-    [[ $# -lt 3 ]] && usage
+    [[ $# -lt 1 ]] && usage
     local role="$1"; shift
-    local master="$1"; shift
-    local remotes="$@"
 
     # ---- Check environment
     [[ "root" != "$(whoami)" ]] && die "user is not root - run this script as 'root' user"
 
+    if [[ "genconf" = "$role" ]]; then
+        genconf "$RCFILE"
+        exit $?
+    fi
+
+    local errors=0
     local logdir="$HOME/resmgr"
     [[ ! -d "$logdir" ]] && mkdir -p "$logdir"
     \cd $logdir || die "could not cd to logdir: $logdir"
@@ -326,46 +546,64 @@ function main
 
     # ---- Show date and version of os
     logInfo "$(basename -- $0)  date:$(date +'%Y%m%d-%H%M%S-%Z')  uname-rm:$(uname -rm)"
-    logInfo "installing as '$role' role with master $master with remotes: $remotes"
 
-    # ---- check that each host is ip/hostname resolvable and passwordless ssh works
-    checkHostsResolvable $master $remotes || die "failed to satisfy resolvable hosts prereq"
+    set_LINUX_DISTRO 
 
-    # ---- install on remotes
+    # ---- install on master and remotes
     case "$role" in
         "master")
+            importConf "$RCFILE" || die "failed to satisfy required configuration variables"
+            logInfo "installing as '$role' role with master $MASTER with remotes: $REMOTES"
+
+            checkHostsResolvable $MASTER $REMOTES || die "failed to satisfy resolvable hosts prereq"
+
             checkFilesystems "btrfs" "/var/lib/docker" "/opt/serviced/var" || die "failed to satisfy filesystem prereq"
 
-            checkHostsSsh $master $remotes || die "failed to satisfy passwordless ssh prereq"
+            checkHostsSsh $MASTER $REMOTES || die "failed to satisfy passwordless ssh prereq"
 
-            installRemotes $master $remotes
+            installRemotes $MASTER $REMOTES
 
-            installHostSoftware
+            installHostSoftware $SERVICED_USERS
 
-            # TODO: sudo usermod -aG sudo $USER  - which user?
-            # TODO: how to ensure ~/.dockercfg for docker?
+            configureCredentials
 
             configureMaster
 
-            # TODO:
-            #   add appropriate pools
-            #   add hosts to pools
-            #   wait for remote by continuously adding host and waiting for success
-            #   add template
-            #   start zenoss
-            #   wait for services to start
-            #   use dc-admin to add remote collector to collector pool
+            local timeout=1800
+            local UIPORT=443
+            retry $timeout serviced test_serviced_ready $UIPORT || die "serviced failed to be ready within $timeout seconds"
+
+            local RPCPORT=4979
+            serviced host add $MASTER:$RPCPORT default
+
+            source "$RCFILE"  # workaround for declare -A COLLECTORS_OF_POOL being local to function
+            for pool in ${!COLLECTORS_OF_POOL[*]}; do
+                local remotes="${COLLECTORS_OF_POOL[${pool}]}"
+                addPoolAndHosts $timeout $pool $RPCPORT $remotes || die "unable to add pool $pool and hosts: $remotes"
+            done
+
+            deployTemplateAndStart "Zenoss.resmgr"
+
+            retry $timeout services-running wait_for_all_running || die "timed out waiting for all services to be running"
+
+            for pool in ${!COLLECTORS_OF_POOL[*]}; do
+                addZenossCollector $pool || die "unable to add collector to $pool"
+            done
 
             logSummary "software is installed, deployed, and started on master"
-            logSummary "TODO: add pools, hosts, template; start services; add collector"
             ;;
 
         "remote")
+            local MASTER="$1"
+            logInfo "installing as '$role' role with master $MASTER"
+
+            checkHostsResolvable $MASTER || die "failed to satisfy resolvable hosts prereq"
+
             checkFilesystems "btrfs" "/var/lib/docker" || die "failed to satisfy filesystem prereq"
 
-            installHostSoftware
+            installHostSoftware $SERVICED_USERS
 
-            configureRemote $master
+            configureRemote $MASTER
 
             logSummary "software is installed, deployed, and started on remote"
             ;;
