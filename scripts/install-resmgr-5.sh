@@ -36,7 +36,7 @@
 # 
 ###############################################################################
 
-export INSTALL_RESMGR_VERSION="0.1"
+export INSTALL_RESMGR_VERSION="0.2"
 
 #==============================================================================
 function usage
@@ -57,31 +57,10 @@ EOF
 }
 
 #==============================================================================
-function die
-{
-    echo "ERROR: ${*}" >&2
-    exit 1
-}
-
-#==============================================================================
-function logError
-{
-    echo "ERROR: ${*}" >&2
-}
-
-#==============================================================================
-function logWarning
-{
-    echo "WARNING: ${*}" >&2
-}
-
-#==============================================================================
-function logInfo
-{
-    echo "INFO: ${*}" >&2
-}
-
-#==============================================================================
+function die        { echo "ERROR: ${*}" >&2; exit 1; }
+function logError   { echo "ERROR: ${*}" >&2; }
+function logWarning { echo "WARNING: ${*}" >&2; }
+function logInfo    { echo "INFO: ${*}" >&2; }
 function logSummary
 {
     echo "INFO: ${*}" >&2
@@ -263,7 +242,11 @@ function installHostSoftware
     local numErrors=0
     local users="$@"
 
-    ufw disable
+    if [[ "RHEL" = $LINUX_DISTRO ]]; then
+        systemctl stop firewalld && systemctl disable firewalld
+    else
+        ufw disable
+    fi
 
     if test -f /etc/selinux/config && grep '^SELINUX=enforcing' /etc/selinux/config; then
         EXT=$(date +'%Y%m%d-%H%M%S-%Z')
@@ -271,30 +254,46 @@ function installHostSoftware
               /etc/selinux/config && \
               grep '^SELINUX=' /etc/selinux/config
 
-        die "SElinux was found and set to permissive - reboot server and rerun this script on master"
+        mkdir -p /selinux
+        echo 0 >/selinux/enforce   # this line allows us to continue without rebooting
+        # die "SElinux was found and set to permissive - reboot server and rerun this script on master"
     fi
 
     set -e
+    if [[ "RHEL" = $LINUX_DISTRO ]]; then
+        rpm -ivh http://get.zenoss.io/yum/zenoss-repo-1-1.x86_64.rpm
 
-    curl -sSL https://get.docker.io/ubuntu/ | sh
+        yum install -y dnsmasq
+        systemctl enable dnsmasq && systemctl start dnsmasq
 
-    for user in $users; do
-        usermod -aG docker "$user"
-    done
+        yum install -y ntp && systemctl enable ntpd && systemctl start ntpd
 
-    apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7
+        yum --enablerepo=zenoss-testing install -y zenoss-resmgr-service
+        systemctl start docker
 
-    REPO=http://testing.zenoss.io/apt/ubuntu
-    REPO=http://unstable.zenoss.io/apt/ubuntu   # TODO: use testing instead
-    sh -c 'echo "deb [ arch=amd64 ] '${REPO}' trusty universe" \
-          > /etc/apt/sources.list.d/zenoss.list'
+        for user in $users; do
+            usermod -aG docker "$user"
+        done
+    else
+        curl -sSL https://get.docker.io/ubuntu/ | sh
 
-    apt-get update
+        for user in $users; do
+            usermod -aG docker "$user"
+        done
 
-    apt-get install -y ntp
+        apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7
 
-    apt-get install -y zenoss-resmgr-service
+        REPO=http://testing.zenoss.io/apt/ubuntu
+        REPO=http://unstable.zenoss.io/apt/ubuntu   # TODO: use testing instead
+        sh -c 'echo "deb [ arch=amd64 ] '${REPO}' trusty universe" \
+              > /etc/apt/sources.list.d/zenoss.list'
 
+        apt-get update
+
+        apt-get install -y ntp
+
+        apt-get install -y zenoss-resmgr-service
+    fi
     set +e
 
     logSummary "installed software"
@@ -309,7 +308,6 @@ function configureCredentials
     local numErrors=0
 
     set -e
-
     if [[ "RHEL" = $LINUX_DISTRO ]]; then
         for user in $SERVICED_USERS; do
             usermod -aG wheel "$user"
@@ -322,7 +320,6 @@ function configureCredentials
 
     (export HISTCONTROL=ignorespace; \
         docker login -u "$DOCKERHUB_USER" -e "$DOCKERHUB_EMAIL" -p "$DOCKERHUB_PASS")
-
     set +e
 
     logSummary "configured credentials"
@@ -331,65 +328,59 @@ function configureCredentials
 }
 
 #==============================================================================
-function configureMaster
+function configureServiced
 {
-    logInfo "Configuring master"
-    local numErrors=0
-
-    set -e
-
-    EXT=$(date +'%Y%m%d-%H%M%S-%Z')
-    sed -i.${EXT} \
-          -e 's|^#[^S]*\(SERVICED_FS_TYPE=\).*$|\1btrfs|' \
-            /etc/default/serviced
-
-    sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
-          -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
-          -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
-          -e 's|^#[^S]*\(SERVICED_MASTER=\).|\11|' \
-                /etc/default/serviced
-
-    MYOPT="\nDOCKER_OPTS=\"--insecure-registry $(hostname -s):5000\""
-    sed -i.${EXT} -e '/DOCKER_OPTS=/ s|$|'"${MYOPT}"'|' \
-      /etc/default/docker
-    stop docker; start docker
-
-    start serviced
-
-    set +e
-
-    logSummary "configured master"
-
-    return $numErrors
-}
-
-#==============================================================================
-function configureRemote
-{
-    logInfo "Configuring remote"
+    logInfo "Configuring serviced"
     local master="$1"
     local numErrors=0
 
+    if [[ "RHEL" = $LINUX_DISTRO ]]; then
+        local defaultDockerDir="/etc/sysconfig"
+        local defaultServicedDir="/etc/default"
+    else
+        local defaultDockerDir="/etc/default"
+        local defaultServicedDir="/etc/default"
+    fi
+
     set -e
-
     EXT=$(date +'%Y%m%d-%H%M%S-%Z')
+    if [[ -z "$master" ]]; then
+        sed -i.${EXT} \
+            -e 's|^#[^S]*\(SERVICED_FS_TYPE=\).*$|\1btrfs|' \
+            $defaultServicedDir/serviced
 
-    MHOST=$(set -o pipefail; host $master | awk '{print $NF}')
+        sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
+            -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
+            -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
+            -e 's|^#[^S]*\(SERVICED_MASTER=\).|\11|' \
+            $defaultServicedDir/serviced
+    else
+        local MHOST=$(set -o pipefail; host $master | awk '{print $NF}')
 
-    test ! -z "${MHOST}" && \
-    sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
-      -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
-      -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
-      -e 's|^#[^S]*\(SERVICED_MASTER=\).|\10|' \
-      -e 's|^#[^S]*\(SERVICED_MASTER_IP=\).*|\1'${MHOST}'|' \
-      -e '/=$SERVICED_MASTER_IP/ s|^#[^S]*||' \
-      /etc/default/serviced
+        test ! -z "${MHOST}" && \
+        sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
+            -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
+            -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
+            -e 's|^#[^S]*\(SERVICED_MASTER=\).|\10|' \
+            -e 's|^#[^S]*\(SERVICED_MASTER_IP=\).*|\1'${MHOST}'|' \
+            -e '/=$SERVICED_MASTER_IP/ s|^#[^S]*||' \
+            -e 's|\($SERVICED_MASTER_IP\)|'${MHOST}'|' \
+            $defaultServicedDir/serviced
+    fi
 
-    start serviced
+    local ip=$(ip -o -4 addr show dev docker0 | awk '{print $4}' | cut -f1 -d/)
+    echo "DOCKER_OPTS='--dns=$ip -s btrfs'" >> $defaultDockerDir/docker
 
+    if [[ "RHEL" = $LINUX_DISTRO ]]; then
+        systemctl stop docker && systemctl start docker
+        systemctl start serviced
+    else
+        stop docker; start docker
+        start serviced
+    fi
     set +e
 
-    logSummary "configured remote"
+    logSummary "configured serviced"
 
     return $numErrors
 }
@@ -416,7 +407,7 @@ function retry
 function test_serviced_ready
 {
     local rpcport=$1
-    wget http://localhost:$rpcport &>/dev/null
+    curl http://localhost:$rpcport &>/dev/null
     return $?
 }
 
@@ -426,7 +417,8 @@ function host_add
     local rpcport="$1"; shift
     local host="$1"
     serviced host add $host:$rpcport $pool
-    serviced host list | grep "$pool.*$host.*$rpcport" &>/dev/null
+    # TODO: latest serviced should use this: serviced host list | grep "$pool.*$host.*$rpcport" &>/dev/null
+    serviced host list | grep "$pool.*$host" &>/dev/null
     return $?
 }
 
@@ -567,7 +559,7 @@ function main
 
             configureCredentials
 
-            configureMaster
+            configureServiced
 
             local timeout=1800
             local UIPORT=443
@@ -603,7 +595,7 @@ function main
 
             installHostSoftware $SERVICED_USERS
 
-            configureRemote $MASTER
+            configureServiced $MASTER
 
             logSummary "software is installed, deployed, and started on remote"
             ;;
