@@ -287,7 +287,7 @@ def changeTag(tagName='ExtraTime'):
         instance_ids = [instance.instances[0].id for instance in selectedInstances]
 
         if tagName == 'ExtraTime':
-            selectedVal = promptInt("How many hours would you like to add? (MAX 2 Hours) ", min_val=1, max_val=2)
+            selectedVal = promptInt("How many hours would you like to add? (MAX 2 Hours) ", min_val=1, max_val=3)
 
         if tagName == 'Environment':
             print "\n" * 5
