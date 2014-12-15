@@ -1,5 +1,5 @@
 #!/bin/bash
-apt-get install btrfs-tools
+apt-get install -y btrfs-tools
 parted -s /dev/xvdb mklabel msdos
 parted -s /dev/xvdb mkpartfs primary ext2 0 51200
 parted -s /dev/xvdb mkpartfs primary ext2 51200 102400
