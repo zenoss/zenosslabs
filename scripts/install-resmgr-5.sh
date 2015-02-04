@@ -18,7 +18,7 @@
 # Requires about 5G of free space in root's $HOME
 #
 # Requires script to be run as root
-# Requires that all specified hostnames are resolvable to IPs via host command
+# Requires that all specified hostnames are resolvable to IPs via getent ahosts command
 # Requires passwordless ssh to all specified hosts
 # Requires that btrfs filesystem is partitioned and mounted at:
 #    /var/lib/docker     # all hosts
@@ -118,8 +118,7 @@ function importConf
     done
 
     if [[ -z "${!COLLECTORS_OF_POOL[*]}" ]]; then
-        logError "associative array COLLECTORS_OF_POOL is not set"
-        numErrors=$(( numErrors + 1 ))
+        logWarning "associative array COLLECTORS_OF_POOL is not set - remotes will not be installed"
     fi
     for pool in ${!COLLECTORS_OF_POOL[*]}; do
         if [[ -z "${COLLECTORS_OF_POOL[${pool}]}" ]]; then
@@ -174,7 +173,7 @@ function checkHostsResolvable
     local numErrors=0
 
     for host in $hosts; do
-        if ! host $host; then
+        if ! getent ahosts $host; then
             numErrors=$(( numErrors + 1 ))
             continue
         fi
@@ -355,7 +354,7 @@ function configureServiced
             -e 's|^#[^S]*\(SERVICED_MASTER=\).|\11|' \
             $defaultServicedDir/serviced
     else
-        local MHOST=$(set -o pipefail; host $master | awk '{print $NF}')
+        local MHOST=$(set -o pipefail; getent ahosts $master | awk '{print $NF;exit}')
 
         test ! -z "${MHOST}" && \
         sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
