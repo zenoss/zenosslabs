@@ -18,8 +18,10 @@
 # Requires about 5G of free space in root's $HOME
 #
 # Requires script to be run as root
-# Requires that all specified hostnames are resolvable to IPs via getent ahosts command
-# Requires passwordless ssh to all specified hosts
+# Requires that all specified hostnames are IP resolvable via: getent ahosts HOST
+#     /etc/hosts, DNS, ...
+# Requires that all hosts resolve to IPv4 via: hostname -i
+# Requires passwordless ssh to all specified hosts when installing on remotes
 # Requires that btrfs filesystem is partitioned and mounted at:
 #    /var/lib/docker     # all hosts
 #    /opt/serviced/var   # only master
@@ -36,7 +38,7 @@
 # 
 ###############################################################################
 
-export INSTALL_RESMGR_VERSION="0.2"
+export INSTALL_RESMGR_VERSION="0.3"
 
 #==============================================================================
 function usage
@@ -57,10 +59,10 @@ EOF
 }
 
 #==============================================================================
-function die        { echo "ERROR: ${*}" >&2; exit 1; }
-function logError   { echo "ERROR: ${*}" >&2; }
-function logWarning { echo "WARNING: ${*}" >&2; }
-function logInfo    { echo "INFO: ${*}" >&2; }
+function die        { echo -e "ERROR: ${*}" >&2; exit 1; }
+function logError   { echo -e "ERROR: ${*}" >&2; }
+function logWarning { echo -e "WARNING: ${*}" >&2; }
+function logInfo    { echo -e "INFO: ${*}" >&2; }
 function logSummary
 {
     echo "INFO: ${*}" >&2
@@ -182,6 +184,28 @@ function checkHostsResolvable
     done
 
     logSummary "checked that hosts are resolvable - found $numErrors errors"
+
+    return $numErrors
+}
+
+#==============================================================================
+function checkHostnameToIP
+{
+    logInfo "Checking that hostname -i resolves to single IPv4"
+    local numErrors=0
+
+    ip="$(hostname -i)"
+    if [[ 0 != $? ]]; then
+        numErrors=$(( numErrors + 1 ))
+        logInfo "hostname -i failed to run\n\
+            try adding to /etc/hosts:  XX.XX.XX.XX  $(uname -n)"
+    elif ! ipcalc -4 --check "$ip"; then
+        logInfo "hostname -i output of '$ip' does not resolve to single IPv4\n\
+            try adding to /etc/hosts:  XX.XX.XX.XX  $(uname -n)"
+        numErrors=$(( numErrors + 1 ))
+    fi
+
+    logSummary "checked that hostname -i resolves to single IPv4 - found $numErrors errors"
 
     return $numErrors
 }
@@ -391,12 +415,13 @@ function retry
     local name=$1; shift
     local command="$@"
 
+    local interval="10s"
     local result=1
     until [[ $timeout -lt 1 ]]; do
         $command; result=$?; [[ $result = 0 ]] && return 0 
         
-        logInfo "$name not ready yet (countdown:$timeout). Checking again in 10 seconds."
-        sleep 10
+        logInfo "$name not ready yet (countdown:$timeout). Checking again in $interval."
+        sleep $interval
         timeout=$(( $timeout - 10 ))
     done
 
@@ -458,14 +483,24 @@ function deployTemplateAndStart
     logInfo "deploy and start template"
     local template="$1"
 
+    logInfo "adding template for $template"
     local id=$(serviced template list | awk '/'$template'/{print $1; exit}')
 
     if [[ -z "$id" ]]; then
         logError "unable to find template $template"
         return 1
     fi
+
+    sleep 10s   # HACK: allow logstash isvcs to restart
+
+    logInfo "deploying template $id"
+    logInfo "    watch serviced progress with: journalctl -u serviced -o cat -f"
+    logInfo "    watch docker pull progress with: watch -n 15 docker images"
     serviced template deploy "$id" default zenoss
 
+    sleep 15s   # HACK: allow logstash isvcs to restart
+
+    logInfo "starting template for $template"
     serviced service start $template
 
     logSummary "deployed and started template"
@@ -548,6 +583,8 @@ function main
 
             checkHostsResolvable $MASTER $REMOTES || die "failed to satisfy resolvable hosts prereq"
 
+            checkHostnameToIP || die "failed to satisfy hostname to ip via hostname -i"
+
             checkFilesystems "btrfs" "/var/lib/docker" "/opt/serviced/var" || die "failed to satisfy filesystem prereq"
 
             checkHostsSsh $MASTER $REMOTES || die "failed to satisfy passwordless ssh prereq"
@@ -589,6 +626,8 @@ function main
             logInfo "installing as '$role' role with master $MASTER"
 
             checkHostsResolvable $MASTER || die "failed to satisfy resolvable hosts prereq"
+
+            checkHostnameToIP || die "failed to satisfy hostname to ip via hostname -i"
 
             checkFilesystems "btrfs" "/var/lib/docker" || die "failed to satisfy filesystem prereq"
 
