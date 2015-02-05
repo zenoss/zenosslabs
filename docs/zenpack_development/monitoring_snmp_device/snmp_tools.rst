@@ -38,7 +38,7 @@ user.
       /etc/snmposter/agents/NetBotz.snmpwalk,127.0.1.113
       EOF
 
-2. Configure `snmpd` to only listen on 127.0.0.1.
+3. Configure `snmpd` to only listen on 127.0.0.1.
 
    1. Add the following line to the top of ``/etc/snmp/snmpd.conf``::
 
@@ -50,14 +50,14 @@ user.
 
          service snmpd restart
 
-3. Start SNMPoster.
+4. Start SNMPoster.
 
    .. sourcecode:: bash
 
       source /snmposter/bin/activate
       snmposter -f /etc/snmposter/agents.csv
 
-4. Test.
+5. Test.
 
    .. sourcecode:: bash
 

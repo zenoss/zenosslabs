@@ -511,7 +511,7 @@ display in the web interface.
       snippet above.
 
    2. Next we get a handle to the `Zenoss.component` ExtJS namespace and store
-      it in the `ZA` variable.
+      it in the `ZC` variable.
 
    3. Finally we actually register the name. The parameters to `registerName`
       are:
