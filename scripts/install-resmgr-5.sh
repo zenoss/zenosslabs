@@ -23,8 +23,10 @@
 # Requires that all hosts resolve to IPv4 via: hostname -i
 # Requires passwordless ssh to all specified hosts when installing on remotes
 # Requires that btrfs filesystem is partitioned and mounted at:
-#    /var/lib/docker     # all hosts
-#    /opt/serviced/var   # only master
+#    /var/lib/docker             # all hosts
+#    /opt/serviced/var           # only master
+#    /opt/serviced/var/volumes   # only master
+#    /opt/serviced/var/backups   # only master
 # Requires config settings in $HOME/.install-resmgr-5.rc
 #
 # Instructions to run on master as root user:
@@ -38,7 +40,7 @@
 # 
 ###############################################################################
 
-export INSTALL_RESMGR_VERSION="0.3"
+export INSTALL_RESMGR_VERSION="1.0"
 
 #==============================================================================
 function usage
@@ -50,6 +52,8 @@ Usage:
 
     $0 master
         install resmgr 5 on master and remote host(s) based on config file
+
+VERSION of $0: $INSTALL_RESMGR_VERSION
 
 Default config file:
 EOF
@@ -539,6 +543,8 @@ function genconf
     # define pools
     declare -A COLLECTORS_OF_POOL
     COLLECTORS_OF_POOL["pool1"]="remote-collector-hostname1 remote-collector-hostname2"
+        # comment out the above line for installing on single host by
+        # inserting a '#' at the beginning of the line
 EOF
 
     [[ "/dev/stderr" != $file ]] && logSummary "generated config file"
@@ -585,7 +591,8 @@ function main
 
             checkHostnameToIP || die "failed to satisfy hostname to ip via hostname -i"
 
-            checkFilesystems "btrfs" "/var/lib/docker" "/opt/serviced/var" || die "failed to satisfy filesystem prereq"
+            checkFilesystems "btrfs" "/var/lib/docker" "/opt/serviced/var/volumes" || die "failed to satisfy btrfs filesystem prereq"
+            checkFilesystems "xfs" "/opt/serviced/var" "/opt/serviced/var/backups" || die "failed to satisfy xfs filesystem prereq"
 
             checkHostsSsh $MASTER $REMOTES || die "failed to satisfy passwordless ssh prereq"
 
