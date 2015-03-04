@@ -40,7 +40,10 @@
 # 
 ###############################################################################
 
-export INSTALL_RESMGR_VERSION="1.0"
+export INSTALL_RESMGR_VERSION="1.1"
+
+echo "ERROR: this script is deprecated and unsupported - please refer to the Install Guide to install"
+exit 2
 
 #==============================================================================
 function usage
@@ -310,8 +313,8 @@ function installHostSoftware
 
         apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7
 
-        REPO=http://testing.zenoss.io/apt/ubuntu
         REPO=http://unstable.zenoss.io/apt/ubuntu   # TODO: use testing instead
+        REPO=http://testing.zenoss.io/apt/ubuntu
         sh -c 'echo "deb [ arch=amd64 ] '${REPO}' trusty universe" \
               > /etc/apt/sources.list.d/zenoss.list'
 
