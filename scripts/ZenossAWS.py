@@ -28,24 +28,27 @@ ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 # Feel free to add more AMIs here
 AWS_AMI = namedtuple('AMI', ['description', 'id'])
 AMI_LIST = (
-    AWS_AMI('Ubuntu Server 12.04 LTS', 'ami-50f57b38'),
+    AWS_AMI('Ubuntu Server 12.04 LTS (Not compatible with Micro/Small instances)', 'ami-50f57b38'),
     #AWS_AMI('Ubuntu Server 12.04 LTC VNC', 'ami-8af330e2'),
     #AWS_AMI('Ubuntu Server 13.10', 'ami-87bab1ee'),
-    AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-3a3db652'),
+    AWS_AMI('Ubuntu Server 14.04 LTS (Not compatible with Micro/Small instances)', 'ami-3a3db652'),
     #AWS_AMI('Ubuntu Server 14.04 LTS VNC', 'ami-1ef13276'),
     #AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-deeb28b6'),
     #AWS_AMI('Red Hat Enterprise Linux 6.5', 'ami-d0e427b8'),
-    AWS_AMI('Red Hat Enterprise Linux 6.4', 'ami-ca830da2'),
-    AWS_AMI('Red Hat Enterprise Linux 7.0', 'ami-2c961844'),
+    AWS_AMI('Red Hat Enterprise Linux 6.4', 'ami-50136b38'),
+    AWS_AMI('Red Hat Enterprise Linux 7.0', 'ami-e6a9c98e'),
+    AWS_AMI('Red Hat Enterprise Linux 7.1', 'ami-cab88fa2'),
     #AWS_AMI('CentOS 5.7 x86_64', 'ami-bbbbf5d2'),
     #AWS_AMI('Centos 6.3 x86_64', 'ami-48da1920'),
     #AWS_AMI('Centos 6.5 x86_64', 'ami-86e724ee'),
     #AWS_AMI('Centos 6.5 x86_64 VNC', 'ami-10f33078'),
     AWS_AMI('CentOS 7.0 x86_64', 'ami-8e32b9e6'),
+    AWS_AMI('CentOS 7.1 x86_64', 'ami-5cba8d34'),
     AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
     AWS_AMI('Windows 2008 Server', 'ami-98039cf1'),
-    AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
+    #AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
+    AWS_AMI('Windows 2012 Server', 'ami-866772ee'),
 )
 
 EUROPA_AMI = AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-3a3db652')
@@ -82,7 +85,7 @@ ENVIRONMENT = namedtuple('ENVIRONMENT', ['name', 'description'])
 #    ENVIRONMENT('Production', 'Never turn off'),
 
 ENV_LIST = (
-    ENVIRONMENT('Lab', 'Turn off every night at 8pm CST M-F.'),
+    ENVIRONMENT('Lab', 'Turn off every night at 7pm CST M-F.'),
     ENVIRONMENT('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
     ENVIRONMENT('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost'),
 )
@@ -276,12 +279,16 @@ def changeTag(tagName='ExtraTime'):
     print "Or Type \"EXIT\" to quit"
 
     if tagName == 'ExtraTime':
-        selectedInstances = promptListMultiple("Which instances would you like to extend the usage on?",
+        selectedInstances = promptListMultiple("On which instances would you like to extend the usage? ",
                                            instanceList, allow_exit=True)
 
     if tagName == 'Environment':
-        selectedInstances = promptListMultiple("Which instances would you like to change the Environment on? ",
+        selectedInstances = promptListMultiple("On which instances would you like to change the Environment? ",
                                            instanceList, allow_exit=True)
+
+    if tagName == 'Name':
+        selectedInstances = [promptList("On which instance would you like to change the name? ",
+                                           instanceList, allow_exit=True),]
 
     if selectedInstances:
         instance_ids = [instance.instances[0].id for instance in selectedInstances]
@@ -296,6 +303,9 @@ def changeTag(tagName='ExtraTime'):
             print "\n" * 2
             selectedVal = promptList("How do you classify this machine? ", ENV_LIST)
             selectedVal = selectedVal[0]
+
+        if tagName == 'Name':
+            selectedVal = promptVal("What is the new name of the instance? ", valid_fn=bool)
 
         ec2conn.create_tags(instance_ids, {tagName: selectedVal})
 
@@ -803,6 +813,10 @@ def jobList():
         Job('Change Environment',
             changeTag,
             tagName="Environment"
+        ),
+        Job('Change Instance Name',
+            changeTag,
+            tagName="Name"
         ),
         Job('Destroy instance', destroy),
         Job('Create new instance', deploy),
