@@ -1,39 +1,22 @@
 #!/bin/bash
-apt-get install -y btrfs-tools
-parted -s /dev/xvdb mklabel msdos
-parted -s /dev/xvdb mkpartfs primary ext2 0 51200
-parted -s /dev/xvdb mkpartfs primary ext2 51200 102400
-mkfs.btrfs -f /dev/xvdb1
-mkfs.btrfs -f /dev/xvdb2
-mkdir -p /var/lib/docker
-mkdir -p /opt/serviced/var
-echo -e "#!/bin/bash" >> /etc/init.d/ebs-init-mount
-echo -e "mount -o rw,noatime,nodatacow /dev/xvdb1 /var/lib/docker" >> /etc/init.d/ebs-init-mount
-echo -e "mount -o rw,noatime,nodatacow /dev/xvdb2 /opt/serviced/var" >> /etc/init.d/ebs-init-mount
-chmod +x /etc/init.d/ebs-init-mount
-/etc/init.d/ebs-init-mount
-update-rc.d ebs-init-mount defaults
-echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
 printf "\n%s %s\n" `ifconfig eth0 | grep "inet addr" | tr ":" " " | awk {'print $3'}` `hostname` >> /etc/hosts
-apt-key adv --keyserver keys.gnupg.net --recv-keys AA5A1AD7
-echo "deb [ arch=amd64 ] http://unstable.zenoss.io/apt/ubuntu trusty universe" > /etc/apt/sources.list.d/zenoss.list
-apt-get update
-apt-get install -y ntp
-apt-get install -y --force-yes zenoss-resmgr-service
-usermod -aG docker zenny
-usermod -aG sudo zenny
+rpm -ivh http://get.zenoss.io/yum/zenoss-repo-1-1.x86_64.rpm
+yum clean all
+yum --enablerepo=zenoss-unstable install -y zenoss-resmgr-service
+systemctl start docker
 docker login -u {{DOCKER_USERNAME}} -p {{DOCKER_PASSWORD}} -e {{DOCKER_EMAIL}}
 mv /.dockercfg /root
+echo 'DOCKER_OPTS="-s devicemapper --dns=172.17.42.1"' >> /etc/sysconfig/docker
+systemctl stop docker && systemctl start docker
 EXT=$(date +"%j-%T")
 sed -i.${EXT} -e 's|^#[^H]*\(HOME=/root\)|\1|' \
  -e 's|^#[^S]*\(SERVICED_REGISTRY=\).|\11|' \
  -e 's|^#[^S]*\(SERVICED_AGENT=\).|\11|' \
  -e 's|^#[^S]*\(SERVICED_MASTER=\).|\11|' \
  /etc/default/serviced
-EXT=$(date +"%j-%H%M%S")
-sed -i.${EXT} \
- -e 's|^#[^S]*\(SERVICED_FS_TYPE=\).*$|\1btrfs|' \
- /etc/default/serviced
-start serviced
+EXT=$(date +"%j-%H%M%S") sed -i.${EXT}  -e 's|^#[^S]*\(SERVICED_FS_TYPE=\).*$|\btrfs|' /etc/default/serviced
+systemctl start serviced
+sudo usermod -aG docker zenny
+usermod -aG wheel zenny
 rm /var/lib/cloud/instance/user-data.txt
 rm /var/lib/cloud/instance/user-data.txt.i

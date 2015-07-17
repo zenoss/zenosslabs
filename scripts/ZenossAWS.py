@@ -51,7 +51,8 @@ AMI_LIST = (
     AWS_AMI('Windows 2012 Server', 'ami-866772ee'),
 )
 
-EUROPA_AMI = AWS_AMI('Ubuntu Server 14.04 LTS', 'ami-3a3db652')
+EUROPA_AMI = AWS_AMI('Easy Button Centos 7.1', 'ami-d5e334be')
+EUROPA_MINION_AMI = AWS_AMI('Easy Button Minion Centos 7.1', 'ami-3fee3854')
 
 # Limited list of instance types available. Many more exists but haven't been added here.
 AWS_INSTANCE = namedtuple('AWS_INSTANCE', ['description', 'id'])
@@ -63,7 +64,7 @@ INSTANCE_LIST = (
     AWS_INSTANCE('Large (2 CPU / 8GB / 100GB / Moderate Network) .14/hr - 3.36/day - 23.52/week - 101.92/month', 'm3.large'),
     AWS_INSTANCE('X-Large (4 CPU / 15GB / 100GB / High Network) .28/hr - 6.72/day - 47.04/week - 203.84/month', 'm3.xlarge'),
     AWS_INSTANCE('X-Large Mem (4 CPU / 31GB / 100GB / Moderate Network) .35/hr - 8.40/day - 58.80/week - 254.80/month', 'r3.xlarge'),
-    AWS_INSTANCE('XX-Large Mem (8 CPU / 61GB / 100GB / High Network) .70/hr - 16.80/day - 117.60/week - 509.60/month', 'r3.2xlarge'), 
+    AWS_INSTANCE('XX-Large Mem (8 CPU / 61GB / 100GB / High Network) .70/hr - 16.80/day - 117.60/week - 509.60/month', 'r3.2xlarge'),
     #AWS_INSTANCE('Small (1 CPU / 1.7GB / 160GB / Low Network) .04/hr - .48/day - 2.40/week - 10.40/month', 'm1.small'),
     #AWS_INSTANCE('Medium (1 CPU / 3.75GB / 410GB/ Moderate Network) .09/hr - 1.08/day - 5.40/week - 23.40/month', 'm1.medium'),
     #AWS_INSTANCE('Medium SSD (1 CPU / 3.75GB / 4GB SSD / Moderate Network) .07/hr - .84/day - 4.20/week - 18.20/month', 'm3.medium'),
@@ -75,7 +76,7 @@ INSTANCE_LIST = (
     #AWS_INSTANCE('X-Large SSD Mem Optimized (4 CPU / 30GB / 80GB / Moderate Network) .35/hr - 4.20/day - 21.00/week - 91.00/month', 'r3.xlarge'),
     #AWS_INSTANCE('XX-Large (4 CPU / 34GB / 2x850GB / Moderate Network) .49/hr - 11.76/day - 82.32/week - 356.72/month', 'm2.2xlarge'),
     #AWS_INSTANCE('XXXX-Large (8 CPU / 68GB / 2x840GB / High Netork) .98/hr - 23.52/day - 164.64/week - 713.44/month', 'm2.4xlarge'),
-    #AWS_INSTANCE('XX-Large SSD Mem Optimized (8 CPU / 61GB / 100GB / High Network) .70/hr - 8.40/day - 42.00/week - 182/month', 'r3.2xlarge'), 
+    #AWS_INSTANCE('XX-Large SSD Mem Optimized (8 CPU / 61GB / 100GB / High Network) .70/hr - 8.40/day - 42.00/week - 182/month', 'r3.2xlarge'),
     #AWS_INSTANCE('RHEL 2xLarge (8 CPU/ 61GB / 2x800 SSD / High Network) 1.84/hr - 44.16/day - 309.12/week - 1339.52/month', 'i2.2xlarge'),
 )
 
@@ -514,7 +515,7 @@ def deploy():
         'Environment': selectedEnv.name,
         'Customer': options.department,
         'Owner': options.aws_username,
-        'ExtraTime': 0, 
+        'ExtraTime': 0,
     }
 
     newInstanceID = newInstance.instances[0].id
@@ -634,7 +635,7 @@ def deployEuropaSingleHostMaster():
         'Environment': selectedEnv.name,
         'Customer': options.department,
         'Owner': options.aws_username,
-        'ExtraTime': 0, 
+        'ExtraTime': 0,
     }
 
     newInstanceID = newInstance.instances[0].id
@@ -740,7 +741,7 @@ def deployEuropaMultihost():
         'Environment': selectedEnv.name,
         'Customer': options.department,
         'Owner': options.aws_username,
-        'ExtraTime': 0, 
+        'ExtraTime': 0,
     }
     tagresult = ec2conn.create_tags(newInstance1.instances[0].id, newTags)
     if not tagresult:
@@ -757,7 +758,7 @@ def deployEuropaMultihost():
 
     for i in range(nInstances):
 
-        agent = ec2conn.run_instances(image_id=sendAMI,
+        agent = ec2conn.run_instances(image_id=EUROPA_MINION_AMI.id,
                 key_name=options.aws_key_name,
                 instance_initiated_shutdown_behavior='stop',
                 security_group_ids=[sendSecGroupID],
@@ -771,7 +772,7 @@ def deployEuropaMultihost():
             'Environment': selectedEnv.name,
             'Customer': options.department,
             'Owner': options.aws_username,
-            'ExtraTime': 0, 
+            'ExtraTime': 0,
         }
         tagresult = ec2conn.create_tags(agent.instances[0].id, newTags)
         if not tagresult:
@@ -915,4 +916,3 @@ if __name__ == '__main__':
         jobList()
     except (KeyboardInterrupt, EOFError):
         print
-
