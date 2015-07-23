@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import optparse
+import commands
 from collections import namedtuple
 
 from boto.ec2.connection import EC2Connection as ec2
@@ -532,6 +533,8 @@ def deploy():
     else:
         print "We had a problem creating your instance. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
 
+class DockerLoginException(Exception):
+    pass
 
 def getDockerUserPassEmail():
     username = raw_input("Please enter your Docker Hub username: ")
@@ -542,12 +545,20 @@ def getDockerUserPassEmail():
         if password1 != password2:
             print "Passwords do not match."
     email = raw_input("Please enter the email address associated with your Docker Hub account: ")
+    status, output = commands.getstatusoutput("docker login -u %s -p %s -e %s" % (username, password1, email))
+    if status != 0:
+        raise DockerLoginException
     return username, password1, email
 
 
 def deployEuropaSingleHostMaster():
     #Docker Login
-    username, password, email = getDockerUserPassEmail()
+    try:
+        username, password, email = getDockerUserPassEmail()
+    except DockerLoginException:
+        print "\n\nYour Docker Hub login attempt failed. Aborting. Press enter to continue...\n\n"
+        raw_input()
+        return
 
     #Instance Name
     getName = promptVal("What name would you like to assign to this instance? ",
@@ -650,7 +661,12 @@ def deployEuropaSingleHostMaster():
 
 def deployEuropaMultihost():
     #Docker Login
-    username, password, email = getDockerUserPassEmail()
+    try:
+        username, password, email = getDockerUserPassEmail()
+    except DockerLoginException:
+        print "\n\nYour Docker Hub login attempt failed. Aborting. Press enter to continue...\n\n"
+        raw_input()
+        return
 
     #Number of agent instances.
     nInstances = promptInt("How many agents do you want? (minimum of one) ", min_val = 1)
