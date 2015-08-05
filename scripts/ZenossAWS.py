@@ -52,8 +52,7 @@ AMI_LIST = (
     AWS_AMI('Windows 2012 Server', 'ami-866772ee'),
 )
 
-EUROPA_AMI = AWS_AMI('Easy Button Centos 7.1', 'ami-d5e334be')
-EUROPA_MINION_AMI = AWS_AMI('Easy Button Minion Centos 7.1', 'ami-3fee3854')
+EUROPA_AMI = AWS_AMI('Easy Button Centos 7.1', 'ami-45b91b2e')
 
 # Limited list of instance types available. Many more exists but haven't been added here.
 AWS_INSTANCE = namedtuple('AWS_INSTANCE', ['description', 'id'])
@@ -221,14 +220,12 @@ def listAll(state=None, status=None):
     print "*" * 60
     print "All instances that belong to %s" % options.aws_username
     print "\n" * 3
-    print "LINE -- NAME -- RUNNING STATE -- PRIVATE IP -- ENVIRONMENT"
+    print "LINE -- NAME -- RUNNING STATE -- PRIVATE IP -- INSTANCE ID -- ENVIRONMENT"
     print ""
     for i, reservation in enumerate_with_offset(instanceList):
         instance = reservation.instances[0]
         if instance.state != 'terminated':
-            print "%s -- %s -- %s -- %s -- %s" % (i, instance.tags['Name'],
-                                instance.state, instance.private_ip_address,
-                                instance.tags['Environment'])
+            print "%s -- %s -- %s -- %s -- %s -- %s" % (i, instance.tags['Name'], instance.state, instance.private_ip_address, instance.id, instance.tags['Environment'])
 
     print "\n" * 3
     return instanceList
