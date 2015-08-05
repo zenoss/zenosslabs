@@ -13,41 +13,80 @@ import os
 import sys
 import time
 import optparse
+import commands
 from collections import namedtuple
 
 from boto.ec2.connection import EC2Connection as ec2
 from boto.vpc import VPCConnection as vpc
 
+import socket
+
+from getpass import getpass
+
+ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 # List of AMI offered to user.
 # Feel free to add more AMIs here
 AWS_AMI = namedtuple('AMI', ['description', 'id'])
 AMI_LIST = (
-    AWS_AMI('Ubuntu Server 12.04.1 LTS', 'ami-a2049bcb'),
-    AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-d0049bb9'),
-    AWS_AMI('Centos 5.7 x86_64', 'ami-2c235c45'),
-    AWS_AMI('Centos 6.3 x86_64', 'ami-bcbf27d5'),
-    AWS_AMI('Fedora 18 x86_64', 'ami-b71078de'),
-    AWS_AMI('Fedora 19 x86_64', 'ami-b22e5cdb'),
+    AWS_AMI('Ubuntu Server 12.04 LTS (Not compatible with Micro/Small instances)', 'ami-50f57b38'),
+    #AWS_AMI('Ubuntu Server 12.04 LTC VNC', 'ami-8af330e2'),
+    #AWS_AMI('Ubuntu Server 13.10', 'ami-87bab1ee'),
+    AWS_AMI('Ubuntu Server 14.04 LTS (Not compatible with Micro/Small instances)', 'ami-3a3db652'),
+    #AWS_AMI('Ubuntu Server 14.04 LTS VNC', 'ami-1ef13276'),
+    #AWS_AMI('Red Hat Enterprise Linux 6.3', 'ami-deeb28b6'),
+    #AWS_AMI('Red Hat Enterprise Linux 6.5', 'ami-d0e427b8'),
+    AWS_AMI('Red Hat Enterprise Linux 6.4', 'ami-50136b38'),
+    AWS_AMI('Red Hat Enterprise Linux 7.0', 'ami-e6a9c98e'),
+    AWS_AMI('Red Hat Enterprise Linux 7.1', 'ami-cab88fa2'),
+    #AWS_AMI('CentOS 5.7 x86_64', 'ami-bbbbf5d2'),
+    #AWS_AMI('Centos 6.3 x86_64', 'ami-48da1920'),
+    #AWS_AMI('Centos 6.5 x86_64', 'ami-86e724ee'),
+    #AWS_AMI('Centos 6.5 x86_64 VNC', 'ami-10f33078'),
+    AWS_AMI('CentOS 7.0 x86_64', 'ami-8e32b9e6'),
+    AWS_AMI('CentOS 7.1 x86_64', 'ami-5cba8d34'),
     AWS_AMI('Windows 2003 Server Domain', 'ami-62009f0b'),
     AWS_AMI('Windows 2008 Server Domain', 'ami-b8039cd1'),
     AWS_AMI('Windows 2008 Server', 'ami-98039cf1'),
-    AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
+    #AWS_AMI('Windows 2012 Server', 'ami-e45c3b8d'),
+    AWS_AMI('Windows 2012 Server', 'ami-866772ee'),
 )
+
+EUROPA_AMI = AWS_AMI('Easy Button Centos 7.1', 'ami-45b91b2e')
 
 # Limited list of instance types available. Many more exists but haven't been added here.
 AWS_INSTANCE = namedtuple('AWS_INSTANCE', ['description', 'id'])
 INSTANCE_LIST = (
-    AWS_INSTANCE('Micro', 't1.micro'),
-    AWS_INSTANCE('Small', 'm1.small'),
-    AWS_INSTANCE('Medium', 'm1.medium'),
-    AWS_INSTANCE('Large', 'm1.large'),
+    #AWS_INSTANCE('Micro (1 CPU / 512MB / / Very Low Network) .02/hr - .24/day - 1.20/week - 5.20/month', 't1.micro'),
+    AWS_INSTANCE('Micro (1 CPU / 1GB / 100GB / Low Network) .01/hr - .24/day - 1.68/week - 7.27/month', 't2.micro'),
+    AWS_INSTANCE('Small (1 CPU / 2GB / 100GB / Low Network) .03/hr - .72/day - 5.04/week - 21.84/month', 't2.small'),
+    AWS_INSTANCE('Medium (1 CPU / 4GB / 100GB / Moderate Network) .07/hr - 1.68/day - 11.76/week - 50.96/month', 'm3.medium'),
+    AWS_INSTANCE('Large (2 CPU / 8GB / 100GB / Moderate Network) .14/hr - 3.36/day - 23.52/week - 101.92/month', 'm3.large'),
+    AWS_INSTANCE('X-Large (4 CPU / 15GB / 100GB / High Network) .28/hr - 6.72/day - 47.04/week - 203.84/month', 'm3.xlarge'),
+    AWS_INSTANCE('X-Large Mem (4 CPU / 31GB / 100GB / Moderate Network) .35/hr - 8.40/day - 58.80/week - 254.80/month', 'r3.xlarge'),
+    AWS_INSTANCE('XX-Large Mem (8 CPU / 61GB / 100GB / High Network) .70/hr - 16.80/day - 117.60/week - 509.60/month', 'r3.2xlarge'),
+    #AWS_INSTANCE('Small (1 CPU / 1.7GB / 160GB / Low Network) .04/hr - .48/day - 2.40/week - 10.40/month', 'm1.small'),
+    #AWS_INSTANCE('Medium (1 CPU / 3.75GB / 410GB/ Moderate Network) .09/hr - 1.08/day - 5.40/week - 23.40/month', 'm1.medium'),
+    #AWS_INSTANCE('Medium SSD (1 CPU / 3.75GB / 4GB SSD / Moderate Network) .07/hr - .84/day - 4.20/week - 18.20/month', 'm3.medium'),
+    #AWS_INSTANCE('Large (2 CPU / 7.5GB / 2x420GB / Moderate Network) .18/hr - 2.26/day - 10.80/week - 46.80/month', 'm1.large'),
+    #AWS_INSTANCE('Large SSD (2 CPU / 7.5GB / 32GB / Moderate Network) .14/hr - 1.68/day - 8.40/week - 36.40/month', 'm3.large'),
+    #AWS_INSTANCE('Large SSD Mem Optimized (2 CPU / 15GB / 32GB / Moderate Network) .18/hr - 2.16/day - 10.80/week - 46.80/month', 'r3.large'),
+    #AWS_INSTANCE('X-Large (4 CPU / 15GB / 4x420GB / Moderate Network) .35/hr - 4.20/day - 21.00/week - 91.00/month', 'm1.xlarge'),
+    #AWS_INSTANCE('X-Large SSD (4 CPU / 15GB / 2x40GB / Moderate Network) .28/hr - 3.36/day - 16.80/week - 72.80/month', 'm3.xlarge'),
+    #AWS_INSTANCE('X-Large SSD Mem Optimized (4 CPU / 30GB / 80GB / Moderate Network) .35/hr - 4.20/day - 21.00/week - 91.00/month', 'r3.xlarge'),
+    #AWS_INSTANCE('XX-Large (4 CPU / 34GB / 2x850GB / Moderate Network) .49/hr - 11.76/day - 82.32/week - 356.72/month', 'm2.2xlarge'),
+    #AWS_INSTANCE('XXXX-Large (8 CPU / 68GB / 2x840GB / High Netork) .98/hr - 23.52/day - 164.64/week - 713.44/month', 'm2.4xlarge'),
+    #AWS_INSTANCE('XX-Large SSD Mem Optimized (8 CPU / 61GB / 100GB / High Network) .70/hr - 8.40/day - 42.00/week - 182/month', 'r3.2xlarge'),
+    #AWS_INSTANCE('RHEL 2xLarge (8 CPU/ 61GB / 2x800 SSD / High Network) 1.84/hr - 44.16/day - 309.12/week - 1339.52/month', 'i2.2xlarge'),
 )
 
+
 ENVIRONMENT = namedtuple('ENVIRONMENT', ['name', 'description'])
+#ENV_LIST = (
+#    ENVIRONMENT('Production', 'Never turn off'),
+
 ENV_LIST = (
-    ENVIRONMENT('Production', 'Never turn off'),
-    ENVIRONMENT('Lab', 'Turn off every night at 8pm CST M-F.'),
+    ENVIRONMENT('Lab', 'Turn off every night at 7pm CST M-F.'),
     ENVIRONMENT('Temporary', 'Destroy at 8pm CST. *WARNING* Data will be lost'),
     ENVIRONMENT('Short Use', 'Destroy after an hour of run time. *WARNING* Data will be lost'),
 )
@@ -181,14 +220,12 @@ def listAll(state=None, status=None):
     print "*" * 60
     print "All instances that belong to %s" % options.aws_username
     print "\n" * 3
-    print "LINE -- NAME -- RUNNING STATE -- PRIVATE IP -- ENVIRONMENT"
+    print "LINE -- NAME -- RUNNING STATE -- PRIVATE IP -- INSTANCE ID -- ENVIRONMENT"
     print ""
     for i, reservation in enumerate_with_offset(instanceList):
         instance = reservation.instances[0]
         if instance.state != 'terminated':
-            print "%s -- %s -- %s -- %s -- %s" % (i, instance.tags['Name'],
-                                instance.state, instance.private_ip_address,
-                                instance.tags['Environment'])
+            print "%s -- %s -- %s -- %s -- %s -- %s" % (i, instance.tags['Name'], instance.state, instance.private_ip_address, instance.id, instance.tags['Environment'])
 
     print "\n" * 3
     return instanceList
@@ -241,18 +278,22 @@ def changeTag(tagName='ExtraTime'):
     print "Or Type \"EXIT\" to quit"
 
     if tagName == 'ExtraTime':
-        selectedInstances = promptListMultiple("Which instances would you like to extend the usage on? ",
+        selectedInstances = promptListMultiple("On which instances would you like to extend the usage? ",
                                            instanceList, allow_exit=True)
 
     if tagName == 'Environment':
-        selectedInstances = promptListMultiple("Which instances would you like to change the Environment on? ",
+        selectedInstances = promptListMultiple("On which instances would you like to change the Environment? ",
                                            instanceList, allow_exit=True)
+
+    if tagName == 'Name':
+        selectedInstances = [promptList("On which instance would you like to change the name? ",
+                                           instanceList, allow_exit=True),]
 
     if selectedInstances:
         instance_ids = [instance.instances[0].id for instance in selectedInstances]
 
         if tagName == 'ExtraTime':
-            selectedVal = promptInt("How many hours would you like to add? ", min_val=1, max_val=24)
+            selectedVal = promptInt("How many hours would you like to add? (MAX 2 Hours) ", min_val=1, max_val=3)
 
         if tagName == 'Environment':
             print "\n" * 5
@@ -261,6 +302,9 @@ def changeTag(tagName='ExtraTime'):
             print "\n" * 2
             selectedVal = promptList("How do you classify this machine? ", ENV_LIST)
             selectedVal = selectedVal[0]
+
+        if tagName == 'Name':
+            selectedVal = promptVal("What is the new name of the instance? ", valid_fn=bool)
 
         ec2conn.create_tags(instance_ids, {tagName: selectedVal})
 
@@ -318,6 +362,25 @@ def createAMIInstance():
     listAll()
 
 
+def deregisterAMIImage():
+
+    COMB_AMI_LIST = []
+    amiListStart = 1
+    USER_AMI_LIST = ec2conn.get_all_images(filters={'tag:Owner': options.aws_username})
+
+    for i in USER_AMI_LIST:
+        COMB_AMI_LIST.append(
+            {'description': i.description,
+             'id': i.id})
+        print "%s - %s" % (amiListStart, i.description)
+        amiListStart += 1
+
+    print "\n" * 2
+    selectedAMI = promptList("What image would you like to remove? ", COMB_AMI_LIST)
+    ec2conn.deregister_image(image_id=selectedAMI['id'])
+    listAll()
+
+
 def deploy():
     #Instance Name
     getName = promptVal("What name would you like to assign to this instance? ",
@@ -372,7 +435,8 @@ def deploy():
     print "\n" * 5
 
     #Security Groups
-    awsSecGroups = filter(lambda x: x.name in ['LocalLabNetwork', 'LocalQANetwork'],
+    """
+    awsSecGroups = filter(lambda x: x.name in ['LocalQANetwork'],
                           ec2conn.get_all_security_groups())
     for i, secgroup in enumerate_with_offset(awsSecGroups):
         print "%s - %s \"%s\"" % (i, secgroup.name, secgroup.description)
@@ -383,9 +447,15 @@ def deploy():
     print "\n" * 5
 
     #VPC Subnets
-
-    filters = {'tag:Owner': options.aws_key_name}
+    filters = {'tag:Owner': 'qa'}
     filters['vpcId'] = vpcID
+    """
+    sgfilter = ['sg-09544f6b']
+
+    selectedSecGroup = ec2conn.get_all_security_groups(group_ids=sgfilter)[0]
+
+    filters = {'tag:Owner': options.department}
+    filters['vpcId'] = 'vpc-92b4bff0'
 
     awsSubnets = filter(lambda x: x.available_ip_address_count > 0,
                         vpcconn.get_all_subnets(filters=filters))
@@ -427,7 +497,14 @@ def deploy():
             security_group_ids=[sendSecGroupID],
             instance_type=sendInstanceID,
             subnet_id=sendSubnet)
-
+    """
+    newInstance = ec2conn.run_instances(image_id=sendAMI,
+            key_name='DefaultZenoss',
+            instance_initiated_shutdown_behavior='stop',
+            security_group_ids=[sendSecGroupID],
+            instance_type=sendInstanceID,
+            subnet_id=sendSubnet)
+    """
     print "Working... Please wait"
     time.sleep(4)
 
@@ -452,6 +529,270 @@ def deploy():
         print "The public key that was used is: %s" % newInstance.instances[0].key_name
     else:
         print "We had a problem creating your instance. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
+
+class DockerLoginException(Exception):
+    pass
+
+def getDockerUserPassEmail():
+    username = raw_input("Please enter your Docker Hub username: ")
+    password1, password2 = "a", "b"
+    while password1 != password2:
+        password1 = getpass("Please enter your Docker Hub password: ")
+        password2 = getpass("Please enter your Docker Hub password (again): ")
+        if password1 != password2:
+            print "Passwords do not match."
+    email = raw_input("Please enter the email address associated with your Docker Hub account: ")
+    status, output = commands.getstatusoutput("docker login -u %s -p %s -e %s" % (username, password1, email))
+    if status != 0:
+        raise DockerLoginException
+    return username, password1, email
+
+
+def deployEuropaSingleHostMaster():
+    #Docker Login
+    try:
+        username, password, email = getDockerUserPassEmail()
+    except DockerLoginException:
+        print "\n\nYour Docker Hub login attempt failed. Aborting. Press enter to continue...\n\n"
+        raw_input()
+        return
+
+    #Instance Name
+    getName = promptVal("What name would you like to assign to this instance? ",
+                        valid_fn=lambda x: len(x) > 1)
+    print "\n" * 3
+
+    #Environment
+    for i, env in enumerate_with_offset(ENV_LIST):
+        print "%s - %s - %s" % (i, env.name, env.description)
+
+    print "\n" * 2
+    selectedEnv = promptList("How do you classify this machine? ", ENV_LIST)
+
+    print "\n" * 5
+
+    #Instance Type
+    for i, instance in enumerate_with_offset(INSTANCE_LIST):
+        print "%s - %s" % (i, instance.description)
+
+    print "\n" * 2
+    selectedInstance = promptList("What size instance would you like to deploy? ",
+                                  INSTANCE_LIST)
+
+    print "\n" * 5
+
+    #Security Groups
+    sgfilter = ['sg-09544f6b']
+
+    selectedSecGroup = ec2conn.get_all_security_groups(group_ids=sgfilter)[0]
+
+    filters = {'tag:Owner': options.department}
+    filters['vpcId'] = 'vpc-92b4bff0'
+
+    awsSubnets = filter(lambda x: x.available_ip_address_count > 0,
+                        vpcconn.get_all_subnets(filters=filters))
+
+    if len(awsSubnets) == 0:
+        print "*" * 60
+        print "*" * 60
+        print "Well sorry about that but you don't have any subnets assigned to you"
+        print "in this VPC. Either select another VPC or ask the administrator"
+        print "for a subnet assignment."
+        print "*" * 60
+        print "*" * 60
+        return
+
+    for i, subnet in enumerate_with_offset(awsSubnets):
+        netname = subnet.tags.get('Name', '')
+        print "%s - %s \"%s\" -- %s" % (i, subnet.id, subnet.cidr_block, netname)
+
+    print "\n" * 2
+    selectedSubnet = promptList("What Subnet would you like to assign this instance? ",
+                                awsSubnets)
+    print "\n" * 5
+
+    #Deploy new instance
+    print options.aws_key_name
+    sendSecGroupID = str(selectedSecGroup.id)
+    sendInstanceID = selectedInstance.id
+    sendSubnet = str(selectedSubnet.id)
+    sendAMI = EUROPA_AMI.id
+
+    print sendAMI
+    print sendSecGroupID
+    print sendInstanceID
+    print sendSubnet
+
+    userdata = open(os.path.join(ROOT_PATH, "europa-singlehost-install.sh"), 'r').read()
+    userdata = userdata.replace("{{DOCKER_USERNAME}}", username)
+    userdata = userdata.replace("{{DOCKER_PASSWORD}}", password)
+    userdata = userdata.replace("{{DOCKER_EMAIL}}", email)
+
+    newInstance = ec2conn.run_instances(image_id=sendAMI,
+            key_name=options.aws_key_name,
+            instance_initiated_shutdown_behavior='stop',
+            security_group_ids=[sendSecGroupID],
+            user_data=userdata,
+            instance_type=sendInstanceID,
+            subnet_id=sendSubnet)
+    print "Working... Please wait"
+    time.sleep(4)
+
+    newTags = {
+        'Name': getName,
+        'Environment': selectedEnv.name,
+        'Customer': options.department,
+        'Owner': options.aws_username,
+        'ExtraTime': 0,
+    }
+
+    newInstanceID = newInstance.instances[0].id
+    tagresult = ec2conn.create_tags(newInstanceID, newTags)
+
+    if not tagresult:
+        print "We had a problem creating your instance. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
+        return
+
+    print "Provisioning has commenced. Go to https://%s to see the Control Center. It may take a few minutes before it is up." % newInstance.instances[0].private_ip_address
+
+
+def deployEuropaMultihost():
+    #Docker Login
+    try:
+        username, password, email = getDockerUserPassEmail()
+    except DockerLoginException:
+        print "\n\nYour Docker Hub login attempt failed. Aborting. Press enter to continue...\n\n"
+        raw_input()
+        return
+
+    #Number of agent instances.
+    nInstances = promptInt("How many agents do you want? (minimum of one) ", min_val = 1)
+    print "\n" * 3
+
+    #Instance Name
+    getName = promptVal("What name prefix would you like to assign to these instances? ",
+                        valid_fn=lambda x: len(x) > 1)
+    print "\n" * 3
+
+    #Environment
+    for i, env in enumerate_with_offset(ENV_LIST):
+        print "%s - %s - %s" % (i, env.name, env.description)
+
+    print "\n" * 2
+    selectedEnv = promptList("How do you classify these machines? ", ENV_LIST)
+
+    print "\n" * 5
+
+    #Instance Type
+    for i, instance in enumerate_with_offset(INSTANCE_LIST):
+        print "%s - %s" % (i, instance.description)
+
+    print "\n" * 2
+    selectedInstance = promptList("What size instances would you like to deploy? ", INSTANCE_LIST)
+
+    print "\n" * 5
+
+    #Security Groups
+    sgfilter = ['sg-09544f6b']
+
+    selectedSecGroup = ec2conn.get_all_security_groups(group_ids=sgfilter)[0]
+
+    filters = {'tag:Owner': options.department}
+    filters['vpcId'] = 'vpc-92b4bff0'
+
+    awsSubnets = filter(lambda x: x.available_ip_address_count > 0,
+                        vpcconn.get_all_subnets(filters=filters))
+
+    if len(awsSubnets) == 0:
+        print "*" * 60
+        print "*" * 60
+        print "Well sorry about that but you don't have any subnets assigned to you"
+        print "in this VPC. Either select another VPC or ask the administrator"
+        print "for a subnet assignment."
+        print "*" * 60
+        print "*" * 60
+        return
+
+    for i, subnet in enumerate_with_offset(awsSubnets):
+        netname = subnet.tags.get('Name', '')
+        print "%s - %s \"%s\" -- %s" % (i, subnet.id, subnet.cidr_block, netname)
+
+    print "\n" * 2
+    selectedSubnet = promptList("What Subnet would you like to assign these instances? ",
+                                awsSubnets)
+    print "\n" * 5
+
+    #Deploy new instance
+    print options.aws_key_name
+    sendSecGroupID = str(selectedSecGroup.id)
+    sendInstanceID = selectedInstance.id
+    sendSubnet = str(selectedSubnet.id)
+    sendAMI = EUROPA_AMI.id
+
+    print sendAMI
+    print sendSecGroupID
+    print sendInstanceID
+    print sendSubnet
+
+    userdata = open(os.path.join(ROOT_PATH, "europa-multihost-master-install.sh"), 'r').read()
+    userdata = userdata.replace("{{DOCKER_USERNAME}}", username)
+    userdata = userdata.replace("{{DOCKER_PASSWORD}}", password)
+    userdata = userdata.replace("{{DOCKER_EMAIL}}", email)
+
+    newInstance1 = ec2conn.run_instances(image_id=sendAMI,
+            key_name=options.aws_key_name,
+            instance_initiated_shutdown_behavior='stop',
+            security_group_ids=[sendSecGroupID],
+            user_data=userdata,
+            instance_type=sendInstanceID,
+            subnet_id=sendSubnet)
+    print "Working... Please wait"
+    time.sleep(4)
+
+    newTags = {
+        'Name': getName + "-master",
+        'Environment': selectedEnv.name,
+        'Customer': options.department,
+        'Owner': options.aws_username,
+        'ExtraTime': 0,
+    }
+    tagresult = ec2conn.create_tags(newInstance1.instances[0].id, newTags)
+    if not tagresult:
+        print "We had a problem creating your instances. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
+        return
+
+    print "Waiting for master ip address..."
+    while newInstance1.instances[0].private_ip_address == None:
+        time.sleep(1)
+        newInstance1.instances[0].update()
+
+    userdata = open(os.path.join(ROOT_PATH, "europa-multihost-minion-install.sh"), 'r').read()
+    userdata = userdata.replace("{{in_MHOST}}", newInstance1.instances[0].private_ip_address)
+
+    for i in range(nInstances):
+
+        agent = ec2conn.run_instances(image_id=EUROPA_MINION_AMI.id,
+                key_name=options.aws_key_name,
+                instance_initiated_shutdown_behavior='stop',
+                security_group_ids=[sendSecGroupID],
+                user_data=userdata,
+                instance_type=sendInstanceID,
+                subnet_id=sendSubnet)
+        print "Working on agent %d... Please wait" % (i + 1)
+        time.sleep(4)
+        newTags = {
+            'Name': "%s-agent-%02d" % (getName, i + 1),
+            'Environment': selectedEnv.name,
+            'Customer': options.department,
+            'Owner': options.aws_username,
+            'ExtraTime': 0,
+        }
+        tagresult = ec2conn.create_tags(agent.instances[0].id, newTags)
+        if not tagresult:
+            print "We had a problem creating your instances. Not sure what happened so you will need to contact the Zenoss AWS Administrator for your department."
+            return
+
+    print "Provisioning has commenced. Go to https://%s to see the Control Center. It may take a few minutes before it is up." % newInstance1.instances[0].private_ip_address
 
 
 def jobList():
@@ -487,9 +828,16 @@ def jobList():
             changeTag,
             tagName="Environment"
         ),
+        Job('Change Instance Name',
+            changeTag,
+            tagName="Name"
+        ),
         Job('Destroy instance', destroy),
         Job('Create new instance', deploy),
+        Job('Create new Europa single host master instance', deployEuropaSingleHostMaster),
+        Job('Create new Europa multihost environment', deployEuropaMultihost),
         Job('Create AMI from instance', createAMIInstance),
+        Job('Destroy AMI', deregisterAMIImage),
         Job('Exit', sys.exit),
     ]
 
