@@ -5,6 +5,13 @@ Zenoss Labs
 Herein lies documentation created by Zenoss Labs. This will have to do until a
 better home can be found.
 
+.. warning::
+
+   The `zenpacklib documentation`_ has replaced the ZenPack Development Guide
+   that used to be here.
+
+.. _zenpacklib documentation: http://zenpacklib.zenoss.com/
+
 
 Contents
 ===============================================================================
@@ -12,7 +19,6 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   zenpack_development/index
    zenpack_documentation
    zenpack_taxonomy
 
