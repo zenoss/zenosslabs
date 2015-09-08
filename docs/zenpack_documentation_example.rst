@@ -15,7 +15,7 @@ monitor the device does not require root access or special privileges.
 In addition to the previously described modeling and monitoring features this
 ZenPack also enables Resource Manager to model and monitor Sun Solaris LDOM 
 servers. Resource Manager will model devices utilizing the Simple Network
-Management Protocol (SNMP) to collect LDOM information when a divice resides 
+Management Protocol (SNMP) to collect LDOM information when a device resides 
 in either the /Server/Solaris or /Server/SSH/Solaris device classes. The
 discovered LDOM information will be displayed as components of the LDOM host
 server. 
@@ -370,7 +370,7 @@ Monitoring Templates
 
   - Volumes
 
-Appendex B: Required Daemons
+Appendix B: Required Daemons
 -------------------------------------------------------------------------------
 
 In addition to the core platform daemons the following optional daemons are
