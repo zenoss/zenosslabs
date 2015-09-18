@@ -34,8 +34,8 @@ must be suspended.
 File Locations
 ===============================================================================
 
-The location of specific files within a ZenPack’s directory structure is
-technically mandated in some circumstances, and open to the developer’s desires
+The location of specific files within a ZenPack's directory structure is
+technically mandated in some circumstances, and open to the developer's desires
 in others. To make it easier for other developers to more easily get up to
 speed with the ZenPack in the future, the following recommendations for file
 locations should be used.
@@ -43,7 +43,10 @@ locations should be used.
 * ``ZenPacks.<namespace.PackName>/``
 * ``ZenPacks.<namespace.PackName>/ZenPacks/namespace/PackName/``
 
-  * ``browser/``
+  * ``analytics/``
+    The analytics bundle in .zip format: ``analytics-bundle.zip``
+
+  * ``browser/`` (Note: Pre-ZPL only. See /resources below)
 
     * ``configure.zcml``
       All ZCML definitions related to defining browser views or wiring
@@ -52,9 +55,29 @@ locations should be used.
 
     * ``resources/``
 
-      * ``css/`` - All stylesheets loaded by users’ browsers.
-      * ``img/`` - All images loaded by users’ browsers.
-      * ``js/`` - All javascript loaded by users’ browser.
+      * ``css/`` - All stylesheets loaded by users' browsers.
+      * ``img/`` - All images loaded by users' browsers.
+      * ``js/`` - All javascript loaded by users' browser.
+
+  * ``resources/`` (Note: ZPL, See /browser above)
+    Any javascript code that modifies views go here.
+    Especially note these JS file correlations:
+
+    * ``device.js`` - Modifies the default device page.
+    * ``ComponentClass.js`` - Modifies the component ComponentClass page.
+
+    Folders inside ``resources`` have the following properties:
+
+    * ``icon/`` (Note: ZPL)
+      All images and icons loaded by the browser.
+      Within this folder note the following name correspondence:
+
+      * ``DeviceClass.png``` - Icon used in top left corner.
+      * ``ComponentClass.png``` - Icon used in Impact diagrams for component.
+
+  * ``datasources/``
+    All datasources plugin files. Ensure your datasource has a descriptive name
+    that closely correlates to the plugin name.
 
   * ``lib/``
     Any third-party modules included with the ZenPack should be located in this
@@ -67,6 +90,12 @@ locations should be used.
     Any scripts intended to be run by the zencommand daemon must be located in
     this directory.
 
+  * ``migrate/``
+    All migration code.
+
+  * ``modeler/``
+    All modeling plugins.
+
   * ``objects/``
     There should only ever be a single file called objects.xml in this
     directory. While the ZenPack installation code will load objects from any
@@ -74,6 +103,29 @@ locations should be used.
     will dump all objects back to ``objects.xml`` so creating other files only
     creates future confusion between installation and export.
 
+  * ``parsers/``
+    All custom parsers.
+
+  * ``patches/``
+    All monkeypatches. Note: your patches/__init__.py must specify patch
+    loading.
+
+  * ``protocols/``
+    AMQP schema: Javascript code is read into the AMQP protocol to modify
+    queues and exchanges.
+
+  * ``services/``
+    Custom collector services plugins.
+
+  * ``service-definition/`` (Note: 5.X+)
+    Service definitions for 5.X services containers.
+
+  * ``skins/``
+    All TAL template skins in .pt format. These change the UI look.
+
+  * ``tests/``
+    All unit tests.
+ 
   * ``facades.py``
     All facades (classes implementing ``Products.Zuul.interfaces.IFacade``)
     should be defined in this file. In ZenPacks where this single file becomes
@@ -122,7 +174,7 @@ following public style guides.
 
 * ZCML
 
-  * Zope’s ZCML Style Guide
+  * Zope's ZCML Style Guide
 
 
 Monitoring Template Standards
@@ -254,13 +306,13 @@ Code Documentation
 Python code must be documented in docstrings in the locations specified in
 PEP-8 and according to the style of PEP-257. Links to these standards can be
 found in the `Coding Standards`_ section. Inline code comments should also be
-used when the code isn’t obvious.
+used when the code isn't obvious.
 
 Testing
 ===============================================================================
 
 The following types of testing must be performed. All test results should be
-recorded in the ZenPack’s test result matrix. The matrix will have the ZenPack
+recorded in the ZenPack's test result matrix. The matrix will have the ZenPack
 version on one axis and the Zenoss version on the other axis. At the
 intersection will be the result of unit testing, internal integration testing
 and live integration testing.
@@ -278,7 +330,7 @@ Internal Integration Testing
 ZenPacks must be tested internally using the packaged .egg that is will be
 delivered to the customer. The test server must be the exact same version of
 Zenoss being used by the customer. The test environment must match the
-customer’s environment as closely as possible. The only exception to internal
+customer's environment as closely as possible. The only exception to internal
 integration testing is cases where it is not possible to replicate the test
 environment internally.
 
@@ -298,7 +350,7 @@ The first feature-complete ZenPack delivered to a customer should be version
 only bugfixes or tweaks (i.e. 1.0.1.) Subsequent versions must increment the
 minor version if the contain new features (i.e. 1.1.0.)
 
-A ZenPack’s version must be incremented each time it is delivered to a customer
+A ZenPack's version must be incremented each time it is delivered to a customer
 if there has been any change to it whatsoever.
 
 
@@ -337,5 +389,5 @@ context the same environment is defined as the following.
 * Same major version of operating system
 * Same architecture (i.e. i386 or x86_64)
 
-All files including documentation must be delivered to customers in a Parature
+All files including documentation must be delivered to customers in a ZenDesk
 ticket.
