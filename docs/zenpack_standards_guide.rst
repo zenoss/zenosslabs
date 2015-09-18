@@ -34,8 +34,8 @@ must be suspended.
 File Locations
 ===============================================================================
 
-The location of specific files within a ZenPack’s directory structure is
-technically mandated in some circumstances, and open to the developer’s desires
+The location of specific files within a ZenPack's directory structure is
+technically mandated in some circumstances, and open to the developer's desires
 in others. To make it easier for other developers to more easily get up to
 speed with the ZenPack in the future, the following recommendations for file
 locations should be used.
@@ -55,9 +55,9 @@ locations should be used.
 
     * ``resources/``
 
-      * ``css/`` - All stylesheets loaded by users’ browsers.
-      * ``img/`` - All images loaded by users’ browsers.
-      * ``js/`` - All javascript loaded by users’ browser.
+      * ``css/`` - All stylesheets loaded by users' browsers.
+      * ``img/`` - All images loaded by users' browsers.
+      * ``js/`` - All javascript loaded by users' browser.
 
   * ``resources/`` (Note: ZPL, See /browser above)
     Any javascript code that modifies views go here.
@@ -174,7 +174,7 @@ following public style guides.
 
 * ZCML
 
-  * Zope’s ZCML Style Guide
+  * Zope's ZCML Style Guide
 
 
 Monitoring Template Standards
@@ -306,13 +306,13 @@ Code Documentation
 Python code must be documented in docstrings in the locations specified in
 PEP-8 and according to the style of PEP-257. Links to these standards can be
 found in the `Coding Standards`_ section. Inline code comments should also be
-used when the code isn’t obvious.
+used when the code isn't obvious.
 
 Testing
 ===============================================================================
 
 The following types of testing must be performed. All test results should be
-recorded in the ZenPack’s test result matrix. The matrix will have the ZenPack
+recorded in the ZenPack's test result matrix. The matrix will have the ZenPack
 version on one axis and the Zenoss version on the other axis. At the
 intersection will be the result of unit testing, internal integration testing
 and live integration testing.
@@ -330,7 +330,7 @@ Internal Integration Testing
 ZenPacks must be tested internally using the packaged .egg that is will be
 delivered to the customer. The test server must be the exact same version of
 Zenoss being used by the customer. The test environment must match the
-customer’s environment as closely as possible. The only exception to internal
+customer's environment as closely as possible. The only exception to internal
 integration testing is cases where it is not possible to replicate the test
 environment internally.
 
@@ -350,7 +350,7 @@ The first feature-complete ZenPack delivered to a customer should be version
 only bugfixes or tweaks (i.e. 1.0.1.) Subsequent versions must increment the
 minor version if the contain new features (i.e. 1.1.0.)
 
-A ZenPack’s version must be incremented each time it is delivered to a customer
+A ZenPack's version must be incremented each time it is delivered to a customer
 if there has been any change to it whatsoever.
 
 
