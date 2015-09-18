@@ -64,19 +64,19 @@ locations should be used.
     Especially note these JS file correlations:
 
     * ``device.js`` - Modifies the default device page.
-    * ``ThisClass.js`` - Modifies the component ThisClass page.
+    * ``ComponentClass.js`` - Modifies the component ComponentClass page.
 
     Folders inside ``resources`` have the following properties:
 
     * ``icon/`` (Note: ZPL)
       All images and icons loaded by the browser.
-      Within this folder note the following name correspondance:
+      Within this folder note the following name correspondence:
 
       * ``DeviceClass.png``` - Icon used in top left corner.
       * ``ComponentClass.png``` - Icon used in Impact diagrams for component.
 
   * ``datasources/``
-    All datasources pluggin files. Ensure your datasource has a descriptive name
+    All datasources plugin files. Ensure your datasource has a descriptive name
     that closely correlates to the plugin name.
 
   * ``lib/``
@@ -389,5 +389,5 @@ context the same environment is defined as the following.
 * Same major version of operating system
 * Same architecture (i.e. i386 or x86_64)
 
-All files including documentation must be delivered to customers in a Parature
+All files including documentation must be delivered to customers in a ZenDesk
 ticket.
