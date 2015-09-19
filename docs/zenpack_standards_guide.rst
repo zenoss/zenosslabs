@@ -44,11 +44,13 @@ locations should be used.
 * ``ZenPacks.<namespace.PackName>/ZenPacks/namespace/PackName/``
 
   * ``analytics/``
+
     The analytics bundle in .zip format: ``analytics-bundle.zip``
 
   * ``browser/`` (Note: Pre-ZPL only. See /resources below)
 
     * ``configure.zcml``
+
       All ZCML definitions related to defining browser views or wiring
       browser-only concerns. This ``configure.zcml`` should be included by the
       default ``configure.zcml`` in its parent directory.
@@ -58,8 +60,9 @@ locations should be used.
       * ``css/`` - All stylesheets loaded by users' browsers.
       * ``img/`` - All images loaded by users' browsers.
       * ``js/`` - All javascript loaded by users' browser.
-
+    |
   * ``resources/`` (Note: ZPL, See /browser above)
+
     Any javascript code that modifies views go here.
     Especially note these JS file correlations:
 
@@ -69,6 +72,7 @@ locations should be used.
     Folders inside ``resources`` have the following properties:
 
     * ``icon/`` (Note: ZPL)
+
       All images and icons loaded by the browser.
       Within this folder note the following name correspondence:
 
@@ -76,10 +80,12 @@ locations should be used.
       * ``ComponentClass.png``` - Icon used in Impact diagrams for component.
 
   * ``datasources/``
+
     All datasources plugin files. Ensure your datasource has a descriptive name
     that closely correlates to the plugin name.
 
   * ``lib/``
+
     Any third-party modules included with the ZenPack should be located in this
     directory. In the case of pure-Python modules they can be located directly
     here. In the case of binary modules the build process must install them
@@ -87,16 +93,20 @@ locations should be used.
     how to properly handle third-party content.
 
   * ``libexec/``
+
     Any scripts intended to be run by the zencommand daemon must be located in
     this directory.
 
   * ``migrate/``
+
     All migration code.
 
   * ``modeler/``
+
     All modeling plugins.
 
   * ``objects/``
+
     There should only ever be a single file called objects.xml in this
     directory. While the ZenPack installation code will load objects from any
     file in this directory with a ``.xml`` extension, the ZenPack export code
@@ -104,47 +114,58 @@ locations should be used.
     creates future confusion between installation and export.
 
   * ``parsers/``
+
     All custom parsers.
 
   * ``patches/``
+
     All monkeypatches. Note: your patches/__init__.py must specify patch
     loading.
 
   * ``protocols/``
+
     AMQP schema: Javascript code is read into the AMQP protocol to modify
     queues and exchanges.
 
   * ``services/``
+
     Custom collector services plugins.
 
   * ``service-definition/`` (Note: 5.X+)
+
     Service definitions for 5.X services containers.
 
   * ``skins/``
+
     All TAL template skins in .pt format. These change the UI look.
 
   * ``tests/``
+
     All unit tests.
  
   * ``facades.py``
+
     All facades (classes implementing ``Products.Zuul.interfaces.IFacade``)
     should be defined in this file. In ZenPacks where this single file becomes
     hard to maintain, a facades/ directory should be created containing
     individual files named for the group of facades they contain.
 
   * ``info.py``
+
     All info adapters (classes implementing ``Products.Zuul.interfaces.IInfo``)
     should be defined in this file. In ZenPacks where this single file becomes
     hard to maintain, an ``info/`` directory should be created containing
     individual files named for the group of info adapters they contain.
 
   * ``interfaces.py``
+
     All interfaces (classes extending ``zope.interface.Interface``) should be
     defined in this file. In ZenPacks where this single file becomes hard to
     maintain, an ``interfaces/`` directory should be created containing
     individual files named for the group of interfaces they contain.
 
   * ``routers.py``
+
     All routers (classes extending ``Products.ZenUtils.Ext.DirectRouter``)
     should be defined in this file. In ZenPacks where this single file becomes
     hard to maintain, a ``routers/`` directory should be created containing
