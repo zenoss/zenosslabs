@@ -47,7 +47,7 @@ locations should be used.
 
     The analytics bundle in .zip format: ``analytics-bundle.zip``
 
-  * ``browser/`` (Note: Pre-ZPL only. See /resources below)
+  * ``browser/`` (Note: Pre-ZPL only. See resources/ below)
 
     * ``configure.zcml``
 
@@ -61,7 +61,7 @@ locations should be used.
       * ``img/`` - All images loaded by users' browsers.
       * ``js/`` - All javascript loaded by users' browser.
     |
-  * ``resources/`` (Note: ZPL, See /browser above)
+  * ``resources/`` (Note: ZPL, See browser/ above)
 
     Any javascript code that modifies views go here.
     Especially note these JS file correlations:
